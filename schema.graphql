@@ -1,1 +1,2424 @@
-"directive @fsApplyExclusion on FIELD_DEFINITION\n\ndirective @fsHasPolicy(service: Service!) on FIELD_DEFINITION | ARGUMENT_DEFINITION\n\ndirective @fsRecordAPIUsage(service: APIUsageService!) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION\n\ndirective @fsValidation(constraint: String!) on INPUT_FIELD_DEFINITION | ARGUMENT_DEFINITION\n\ndirective @goField(forceResolver: Boolean, name: String) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION\n\nenum APIUsageService {\n  LOCATION\n  FEMA\n  FLOODADAPTATION\n  FLOODENVIRONMENTAL\n  FLOODHISTORIC\n  FLOODCOMMUNITYRISK\n  FLOODECONOMIC\n  FLOODPROBABILITY\n  FLOODINSURANCE\n  FIREHISTORIC\n  FIREECONOMIC\n  FIREPROBABILITY\n  FIREINSURANCE\n  FIRECOMMUNITYRISK\n  AVM\n}\n\n# The AVM Provider provides metadata for an AVM provider.\ntype AVMProvider {\n  # The canonical provider ID that provides the AVM\n  id: Int64!\n\n  # Provides the name of the AVM provider.\n  name: String\n\n  # A URL representation of the providers company logo.\n  logo: String\n}\n\n# The bounding box GeoJSON (Polygon)\ntype Bbox {\n  # GeoJSON geometry type Polygon.\n  type: String\n\n  # Coordinates of the Polygon.\n  #\n  # Example: *[[[-76.963460575,39.400443189],[-76.963460575,39.400823574],[-76.962570569,39.400823574],[-76.962570569,39.400443189],[-76.963460575,39.400443189]]]*\n  coordinates: [[[Float!]]]\n}\n\n# Building characteristic for a Property\ntype Building {\n  # Whether or not the property has a basement.\n  #\n  # Example: true\n  hasBasement: Boolean\n\n  # Number of units in Property\n  #\n  # Example: 1\n  units: Int64\n\n  # Number of stories for the Property\n  #\n  # Example: 2\n  stories: Int64\n\n  # Construction characteristics\n  construction: BuildingConstruction\n\n  # Roof characteristics\n  roof: BuildingRoof\n}\n\ntype BuildingConstruction implements BuildingMaterial {\n  # Material used for exterior walls of the structure\n  material: String\n  combustibility: CombustibilityRating\n}\n\ninterface BuildingMaterial {\n  # The material for the specified building node\n  material: String\n  combustibility: CombustibilityRating\n}\n\ntype BuildingRoof implements BuildingMaterial {\n  # Material used for the roof\n  material: String\n  combustibility: CombustibilityRating\n}\n\n# The center GeoJSON (Point)\ntype Center {\n  # GeoJSON geometry type Point.\n  type: String\n\n  # Coordinates of the Point\n  #\n  # Example: *[-76.96286,39.40059]*\n  coordinates: [Float!]\n}\n\n# Place (County Subdivision in New England) as provided by the US Census Bureau.\ntype City implements Location {\n  # First Street ID (FSID) is a unique identifier assigned to each location.\n  #\n  # Example: *5301920*\n  fsid: Int64!\n\n  # Name of the city.\n  #\n  # Example: *Redmond*\n  name: String\n\n  # The legal/statistical area description (LSAD) as provided by the census which describes the particular typology for each geographic entity; that is, whether the entity is a borough, city, town, or township, among others.\n  #\n  # Example: *57*\n  LSAD: Int64\n\n  # ZCTAs that are within geographical limits of the city.\n  zcta: [Zcta]\n\n  # Counties that are within geographical limits of the city.\n  county: [County]\n\n  # County subdivisions that are within geographical limits of the city.\n  cousub: [CountySubdivision]\n\n  # State that City resides in.\n  state: State\n\n  # A collection of nodes that represents geographical information for the city.\n  geometry: LocationGeometry\n\n  # List of the neighborhood(s) the city is associated with, as a connection. This encompasses macro neighborhoods, neighborhood, sub-neighborhoods and residential districts (e.g. subdivisions and apartment complexes).\n  neighborhoodConnection(\n    # Number of records(edges) to return. A number between 0 and 100.\n    first: Int\n\n    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.\n    after: String\n  ): PageConnection\n\n  # Flood data for the city.\n  flood: LocalityFlood\n\n  # Fire details for the city.\n  fire: LocalityFire\n\n  # fsfLink is First Street's link to the neighborhood on FirstStreet's website.\n  #\n  # Example: *https://floodfactor.com/city/5301920_fsid?utm_medium=overlay*\n  fsfLink: String\n\n  # List of properties in the city, as a connection.\n  propertyConnection(\n    # Number of records(edges) to return. A number between 0 and 100.\n    first: Int\n\n    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.\n    after: String\n\n    # Filter the properties of this city.\n    filter: PropertyFilters\n  ): PageConnection\n}\n\n# The combustibility rating of a building material\nenum CombustibilityRating {\n  LOW\n  MEDIUM\n  HIGH\n}\n\n# Congressional District for the 116th Congress (not available in Flood Factor)\ntype CongressionalDistrict implements Location {\n  # First Street ID (FSID) is a unique identifier assigned to each location.\n  #\n  # Example: *3904*\n  fsid: Int64!\n\n  # The name associated with the congressional district.\n  #\n  # Example: *Ohio Congressional District 4*\n  name: String\n\n  # Denotes the session of congress from which the boundary was drawn.\n  #\n  # Example: *116*\n  congress: Int64\n\n  # The county or counties the congressional district is associated with.\n  county: [County]\n\n  # The county subdivision(s) the congressional district is associated with, as a connection.\n  cousubConnection(\n    # Number of records(edges) to return. A number between 0 and 100.\n    first: Int\n\n    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.\n    after: String\n  ): PageConnection\n\n  # Congressional district's state.\n  state: State\n\n  # A collection of nodes that represents geographical information for the congressional district.\n  geometry: LocationGeometry\n\n  # Flood data for the congressional district.\n  flood: LocalityFlood\n  fire: LocalityFire\n\n  # fsfLink is always null for congressional districts, as they are not displayed on FirstStreet's website.\n  fsfLink: String\n\n  # List of properties within the congressional district, as a connection.\n  propertyConnection(\n    # Number of records(edges) to return. A number between 0 and 100.\n    first: Int\n\n    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.\n    after: String\n\n    # Filter the properties of this congressional district.\n    filter: PropertyFilters\n  ): PageConnection\n}\n\n# County or county-equivalents as provided by the US Census Bureau\ntype County implements Location {\n  # First Street ID (FSID) is a unique identifier assigned to each location.\n  #\n  # Example: *1003*\n  fsid: Int64!\n\n  # The Federal Information Processing Standards code which uniquely identified counties and county equivalents, and certain freely associated states.\n  #\n  # Example: *1003*\n  FIPS: Int64\n\n  # Name of the county.\n  #\n  # Example: *Baldwin*\n  name: String\n\n  # A boolean field indicating if the county is in a coastal area.\n  isCoastal: Boolean\n\n  # The city or cities the county is associated with, as a connection.\n  cityConnection(\n    # Number of records(edges) to return. A number between 0 and 100.\n    first: Int\n\n    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.\n    after: String\n  ): PageConnection\n\n  # The county's ZIP code tabulation area(s) (ZCTA) provided by the Census Bureau.\n  zcta: [Zcta]\n\n  # The congressional district(s) the county is associated with.\n  cd: [CongressionalDistrict]\n\n  # The county's state.\n  state: State\n\n  # A collection of nodes that represents geographical information for the county.\n  geometry: LocationGeometry\n\n  # Flood details for the county.\n  flood: LocalityFlood\n\n  # Fire details for the county.\n  fire: LocalityFire\n\n  # fsfLink is First Street's link to the neighborhood on FirstStreet's website.\n  #\n  # Example: *https://floodfactor.com/county/1003_fsid?utm_medium=overlay*\n  fsfLink: String\n\n  # The neighborhood(s) the city is associated with, as a connection. This encompasses macro neighborhoods, neighborhood, sub-neighborhoods and residential districts (e.g. subdivisions and apartment complexes).\n  neighborhoodConnection(\n    # Number of records(edges) to return. A number between 0 and 100.\n    first: Int\n\n    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.\n    after: String\n  ): PageConnection\n\n  # List of properties in the county, as a connection.\n  propertyConnection(\n    # Number of records(edges) to return. A number between 0 and 100.\n    first: Int\n\n    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.\n    after: String\n\n    # Filter the properties of this county.\n    filter: PropertyFilters\n  ): PageConnection\n}\n\n# County subdivision\ntype CountySubdivision implements Location {\n  # First Street ID (FSID) is a unique identifier assigned to each location.\n  #\n  # Example: *5303391392*\n  fsid: Int64!\n\n  # Name of the county subdivision.\n  #\n  # Example: *Issaquah Plateau*\n  name: String\n\n  # The county the county subdivision belongs to.\n  county: County\n\n  # The county subdivision's state\n  state: State\n\n  # The legal/statistical area description (LSAD) as provided by the census which describes the particular typology for each geographic entity.\n  #\n  # Example: *22*\n  LSAD: Int64\n\n  # Flood details for the county subdivision.\n  flood: LocalityFlood\n\n  # Fire details for the subdivision.\n  fire: LocalityFire\n\n  # A collection of nodes that represents geographical information for the county subdivision.\n  geometry: LocationGeometry\n\n  # fsfLink is First Street's link to the neighborhood on FirstStreet's website.\n  #\n  # Example: *https://floodfactor.com/cousub/5303391392_fsid?utm_medium=overlay*\n  fsfLink: String\n}\n\n# Remap Graphql Types to Go Types\nscalar Date\n\ninterface Excluding {\n  exclusion: Exclusion\n}\n\n# Exclusion details.\ntype Exclusion {\n  description: String\n}\n\nenum FindOperator {\n  EQ\n  NE\n  GT\n  GE\n  LT\n  LE\n}\n\nunion FindResultItem = Property | City | State | County | CongressionalDistrict | Zcta | Tract | Neighborhood | CountySubdivision\n\ntype FindResultItemConnection {\n  edges: [FindResultItemEdge]\n  pageInfo: PageInfo!\n}\n\ntype FindResultItemEdge {\n  node: FindResultItem\n  cursor: String!\n}\n\ntype FireHistoricConnection {\n  # Returns a list type that wraps edge type.\n  edges: [FireHistoricEdge!]!\n\n  # Pagination information in relation to current page.\n  pageInfo: PageInfo!\n\n  # Total number of records for the connection.\n  #\n  # Example: *15382*\n  totalCount: Int64\n}\n\n# Represents one record for the current page.\ntype FireHistoricEdge {\n  # Cursor is a string that can be used in subsequent request as value of a connection \"after\" argument, to request page starting after this item.\n  #\n  # Example: *Y3Vyc29yOjEyNTI0MA==*\n  cursor: String\n\n  # Contains one page record data.\n  node: FireHistoricPageResult!\n}\n\n# The information associated with the event(s) for event(s) where the area of the model simulation of the historic event overlaps any area of the location.\ninterface FireHistoricEvent {\n  # A unique identifier to each modeled historic event from First Street\n  eventId: Int64!\n\n  # The name of the modeled historic event if it exists.\n  name: String!\n\n  # Categorization of event type (wildfire, prescribed fire, wildland fire use, unknown, out of area responses, or complex).\n  type: String!\n\n  # The year when the event occured.\n  year: Int64!\n\n  # The month when the event occured.\n  month: Int64!\n\n  # Area of the historic event's polygon in square kilometers.\n  area: Int64!\n\n  # The total count of parcels affected by the historic event.\n  eventAffectedProperties: Int64!\n\n  # A collection of nodes that represents geographical information for the historic event.\n  geometry: LocationGeometry\n}\n\n# Filters to narrow the list of historic events.\ninput FireHistoricEventFilter {\n  # Restrict event types that will be returned\n  type: [FireHistoricEventType]\n\n  # Maximum property distance from the event. Only applicable to Property events. Ignored for Locality events.\n  distance: Int64\n}\n\n# Details for a single historic fire event.\ntype FireHistoricEventRecord implements FireHistoricEvent {\n  # A unique First Street identifier assigned to each modeled historic event.\n  eventId: Int64!\n\n  # The name of the modeled historic event if it exists.\n  name: String!\n\n  # Categorization of event type (wildfire, prescribed fire, wildland fire use, unknown, out of area responses, or complex).\n  type: String!\n\n  # The year when the event occured.\n  year: Int64!\n\n  # The month when the event occured.\n  month: Int64!\n\n  # Area of the historic event's polygon in square kilometers.\n  area: Int64!\n\n  # The total count of parcels that had the building footprint within the mapped area of the historic event's geometry.\n  eventAffectedProperties: Int64!\n\n  # The total count of parcels that were closer than 32187 meters from the building footprint to the historic event's geometry.\n  eventNearbyProperties: Int64!\n\n  # A collection of nodes that represents geographical information for the historic event.\n  geometry: LocationGeometry\n}\n\nenum FireHistoricEventType {\n  WILDFIRE\n  PRESCRIBED_FIRE\n  WILDLAND_FIRE_USE\n  UNKNOWN\n  OUT_OF_AREA_RESPONSES\n  COMPLEX\n}\n\nunion FireHistoricPageResult = PropertyFireHistoric | LocalityFireHistoric\n\n# Query to obtain fire-related data.\ntype FireQuery {\n  # Map lookup.  Returns map metadata such as legends.\n  mapLegend: MapLegend!\n\n  # Historic event batch lookup. Can lookup up to 35 historic events.\n  historicEvents(eventIds: [Int64!]!): [FireHistoricEventRecord]\n}\n\ninterface FireStatistics {\n  # The sign of future burn probability minus current burn probability (-1 is decreasing, 0 is unchanging, 1 is increasing)\n  riskDirection: Int64\n}\n\n# Provides information from community-wide grey and green adaptation projects across the United States categorized into 40 different Adaptation Types.\n#   Returns data as a connection.\n#\n#   **Features**\n#\n#   - Identify all large-scale adaptation projects that serve an area\n#   - Understand how many properties served by a particular adaptation structure or project\n#   - Recognize to what extent, an area is protected or what level of event a project can withstand\n#   - Access information for large-scale adaptation projects across the country\ntype FloodAdaptation {\n  # A unique First Street identifier assigned to each adaptation project\n  #\n  # Example: *23456*\n  adaptationId: Int64!\n\n  # The name of the adaptation project\n  #\n  # Example: *Kearsley Reservoir Dam*\n  name: String\n\n  # The type(s) categorization of the adaptation project from 40 categories inclusive of grey and green adaptation projects.\n  #\n  # Example: *['dam', 'levee', 'seawall']*\n  type: [String!]\n\n  # The type(s) of flooding the adaptation project protects against (pluvial, fluvial or tidal).\n  #\n  # Example: *['pluvial', 'tidal']*\n  scenario: [String!]\n\n  # Applicable for structures that convey certain amounts of water during pluvial and fluvial events.\n  # Adaptation structures with conveyance are incorporated into the model without completely removing flooding from within the area served.\n  hasConveyance: Boolean\n\n  # The flooding event that the adaptation can withstand. For example, a 1 in 100 flood.\n  returnPeriod: Int64\n\n  # Count of locations that the adaptation project is serving, broken down by location type.\n  serving: FloodAdaptationServing!\n\n  # A collection of nodes that represents geographical information for the adaptation.\n  geometry: LocationGeometry\n}\n\n# Count of locations that the adaptation project is serving as [AdaptationServing], broken down by location type.\ntype FloodAdaptationServing {\n  # The count of properties that the adaptation project is serving.\n  property: Int64!\n\n  # The count of neighborhoods that the adaptation project is serving.\n  neighborhood: Int64!\n\n  # The count of zctas that the adaptation project is serving.\n  zcta: Int64!\n\n  # The count of tracts that the adaptation project is serving.\n  tract: Int64!\n\n  # The count of cities that the adaptation project is serving.\n  city: Int64!\n\n  # The count of counties that the adaptation project is serving.\n  county: Int64!\n\n  # The count of congressional districts that the adaptation project is serving.\n  cd: Int64!\n\n  # The count of states that the adaptation project is serving.\n  state: Int64!\n}\n\n# The information associated with the event(s) for event(s) where the area of the model simulation of the historic event overlaps any area of the location.\n# Available depth bins begin at 5-10cm of flooding (displayed as \"5\") and are provided in 5 cm increments up to 120-125cm of flooding (displayed as \"120\"). Everything with greater than 125cm of flooding is bulked together at 125.\ninterface FloodHistoricEvent {\n  # A unique identifier to each modeled historic event from First Street\n  eventId: Int64!\n\n  # The name of the modeled historic event if it exists (note: several were strong pluvial events).\n  name: String!\n\n  # Categorization of event type (hurricane, fluvial, nor'easter, or tropical storm).\n  type: String!\n\n  # The year when the event occured.\n  year: Int64!\n\n  # The month when the event occured.\n  month: Int64!\n\n  # The estimated recurrence interval of the event, or the inverse of the annual likelihood. For example a 1 in 500 annual likelihood event.\n  returnPeriod: Int64\n\n  # The total count of parcels that had any flooding (>0) to the building footprint that are within the mapped area of the historic event's geometry.\n  affectedProperties: Int64!\n\n  # A collection of nodes that represents geographical information for the historic event.\n  geometry: LocationGeometry\n}\n\n# Details for a single historic flooding event.\ntype FloodHistoricEventRecord implements FloodHistoricEvent {\n  # A unique First Street identifier assigned to each modeled historic event.\n  eventId: Int64!\n\n  # The name of the modeled historic event if it exists (note: several were strong pluvial events).\n  name: String!\n\n  # Categorization of event type (hurricane, fluvial, nor'easter, or tropical storm).\n  type: String!\n\n  # The year when the event occured.\n  year: Int64!\n\n  # The month when the event occured.\n  month: Int64!\n\n  # The estimated recurrence interval of the event, or the inverse of the annual likelihood. For example a 1 in 500 annual likelihood event.\n  returnPeriod: Int64\n\n  # The total count of parcels that are within the mapped area of the historic event's geometry.\n  totalProperties: Int64!\n\n  # The total count of parcels that had any flooding (>0) to the building footprint that are within the mapped area of the historic event's geometry.\n  affectedProperties: Int64!\n\n  # A collection of nodes that represents geographical information for the historic event.\n  geometry: LocationGeometry\n}\n\nenum FloodInsuranceRequirement {\n  # Flood insurance is required by federally regulated or insured mortgage lenders.\n  REQUIRED\n\n  # Flood insurance is recommended but is likely not federally required.\n  RECOMMENDED\n\n  # Flood insurance requirement is unknown.\n  NULL\n}\n\n# Query to obtain flood-related data.\ntype FloodQuery {\n  # Historic event batch lookup. Can lookup up to 35 historic events.\n  historicEvents(eventIds: [Int64!]!): [FloodHistoricEventRecord]\n\n  # Tide station details batch lookup.\n  tideStations(tideStationIds: [Int64!]!): [TideStation]\n\n  # Adaptation project batch lookup. Can lookup up to 35 adaptations.\n  adaptations(adaptationIds: [Int64!]!): [FloodAdaptation]\n\n  # Map lookup.  Returns map metadata such as legends.\n  mapLegend: MapLegend!\n}\n\n# Flood indicators.\ninterface FloodStatistic {\n  # The location's risk direction represented in a numeric value based on the change in risk for the location from 2020 to 2050 for the climate model realization of the RCP 4.5 mid emissions scenario.\n  #\n  # -1 = decreasing\n  # 0 = stationary\n  # 1 = increasing\n  riskDirection: Int64\n\n  # Denotes what environmental risks impact the location represented in a numeric value.\n  #\n  # 1 = precipitation\n  # 2 = precipitation and sea level rise\n  # 3 = precipitation, sea level rise and hurricane storm surge\n  #\n  # Coastal areas on the East Coast and Hawaii will return 3, other coastal areas will return 2 and all other locations will return 1.\n  environmentalRisk: Int64\n}\n\nenum InsuranceClassification {\n  HO3\n  HO4\n  HO6\n}\n\ntype InsuranceHippoRate {\n  # The URL to purchase the insurance\n  link: String!\n\n  # The policy's classification.\n  # There will always only 1 of each type of policy classification.\n  # (For example, HO3 will only appear on the list once, but can appear alongside HO4)\n  #\n  # HO3: Single family\n  # HO4: Renters\n  # HO6: Condos/Townhomes\n  # N/A: Unavailable\n  classification: InsuranceClassification!\n\n  # The minimum price for the policy\n  minPrice: Int!\n\n  # The maximum price for the policy\n  maxPrice: Int!\n\n  # Number of providers available for the policy (Can be 0)\n  providers: Int!\n\n  # The amount the coverage is intended for in the following order\n  contentsCoverage: Int\n  homeCoverage: Int\n  dwellingCoverage: Int\n}\n\n# Insurance provider details.\ntype InsuranceProvider {\n  # Insurance provider name.\n  name: String\n\n  # Insurance provider logo.\n  logo: String\n}\n\nscalar Int64\n\n# Fire details for locality.\ntype LocalityFire implements FireStatistics & Excluding {\n  # Overall direction of risk, computed by taking a weighted average of risk directions at parcels and infrastructure facilities here\n  # (-1 is decreasing, 0 is unchanging, 1 is increasing)\n  riskDirection: Int64\n\n  # Risk Factor Fire Factor report link\n  link: String!\n\n  # Fire probabilty details for locality.\n  probability: LocalityFireProbability\n\n  # The locality's fire historical events, as a connection. Sorted in reverse chronological order.\n  historicConnection(\n    # Number of records(edges) to return. A number between 0 and 100.\n    first: Int\n\n    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.\n    after: String\n\n    # Filter fire historic events\n    filter: FireHistoricEventFilter\n  ): FireHistoricConnection\n\n  # Data about fire risk for locality infrastructure and community facilities.\n  communityRisk: LocalityFireFacilityRisk\n\n  # If locality is excluded, the reason for exclusion.\n  exclusion: Exclusion\n}\n\ntype LocalityFireFacilityRisk {\n  # Total number of facilities serving the locality. For road centerlines, the count is in meters.\n  facilitiesCount: Int64!\n\n  # A categorical 0-5 score for each county in each category.\n  score: Int64\n\n  # Overall direction of risk for the facility.\n  #\n  # (-1 is decreasing, 0 is unchanging, 1 is increasing)\n  riskDirection: Int64!\n\n  # Facility category.\n  facilitiesCategory: [LocalityFireFacilityRiskCategorySummary]\n}\n\n# Community fire risk facility category statistics.\ntype LocalityFireFacilityRiskCategoryStat {\n  # Year used for the model.\n  year: Int64!\n\n  # Year relative to this year.\n  relativeYear: Int64!\n\n  # Count of facilities (with this category in this county in this year) that have the burn probability exceeding threshold.\n  facilitiesFireRisk: Int64\n}\n\n# Facility category\ntype LocalityFireFacilityRiskCategorySummary {\n  # Id of the category.\n  #\n  # Example: *10*\n  facilityCategoryId: Int64!\n\n  # Count of features (with this category in this county in this year) that have some fire risk.\n  facilitiesCount: Int64!\n\n  # Overall direction of risk for the facility category.\n  # (-1 is decreasing, 0 is unchanging, 1 is increasing)\n  riskDirection: Int64\n\n  # A categorical 0-5 score for each category.\n  score: Int64\n\n  # Fire risk category statistics.\n  risks: [LocalityFireFacilityRiskCategoryStat]\n}\n\n# The information associated with the event(s) for event(s) where the area of the model simulation of the historic event overlaps any area of the location.\n# This includes event ID (unique First Street ID assigned to all modeled historic events), type, name and fire impact to the location.\ntype LocalityFireHistoric implements FireHistoricEvent {\n  # An id assigned to this locality - historic event relationship.\n  id: Int64!\n\n  # A unique First Street identifier assigned to each modeled historic event.\n  eventId: Int64!\n\n  # The name of the modeled historic event if it exists.\n  name: String!\n\n  # Categorization of event type (wildfire, prescribed fire, wildland fire use, unknown, out of area responses, or complex).\n  type: String!\n\n  # The year when the event occured.\n  year: Int64!\n\n  # The month when the event occured.\n  month: Int64!\n\n  # Area of the historic event's polygon in square kilometers.\n  area: Int64!\n\n  # The count of parcels that had the building footprint within the mapped area of the historic event's geometry intersecting locality.\n  affectedProperties: Int64!\n\n  # The total count of parcels that had the building footprint within the mapped area of the historic event's geometry.\n  eventNearbyProperties: Int64!\n\n  # The total count of parcels that had the building footprint within the mapped area of the historic event's geometry.\n  eventAffectedProperties: Int64!\n\n  # A collection of nodes that represents geographical information for the historic event.\n  geometry: LocationGeometry\n}\n\n# Total count of properties with fire risk broken down by year\ntype LocalityFireProbability {\n  count: [LocalityFireProbabilityCount]\n}\n\ntype LocalityFireProbabilityCount {\n  count: Int64!\n  year: Int64!\n  relativeYear: Int64!\n}\n\n# Flood details for locality.\ntype LocalityFlood implements FloodStatistic & Excluding {\n  # The location's risk direction represented in a numeric value based on the change in risk for the location from 2020 to 2050 for the climate model realization of the RCP 4.5 mid emissions scenario.\n  #\n  # -1 = decreasing\n  # 0 = stationary\n  # 1 = increasing\n  riskDirection: Int64\n\n  # Risk Factor link to Flood Report for the locality\n  link: String!\n\n  # Denotes what environmental risks impact the location represented in a numeric value.\n  #\n  # 1 = precipitation\n  # 2 = precipitation and sea level rise\n  # 3 = precipitation, sea level rise and hurricane storm surge\n  #\n  # Coastal areas on the East Coast and Hawaii will return 3, other coastal areas will return 2 and all other locations will return 1.\n  environmentalRisk: Int64\n\n  # Flood probabilty details for locality.\n  probability: LocalityFloodProbability\n\n  # Provides the number of residential properties with any loss and the average dollar value loss broken down by Flood Factor score.\n  AAL: LocalityFloodAAL\n\n  # The list of modeled historic events that inundated the location.\n  # Inundation is defined as having flood depth >0 for property queries or >1 property with >0 flood depth for higher-level locations.\n  # Flood depth is calculated at the lowest elevation of the building footprint (largest if more than 1 exists, or property centroid where footprint does not exist).\n  historic: [LocalityFloodHistoric]\n\n  # Provides information from community-wide grey and green adaptation projects across the United States categorized into 40 different Adaptation Types.\n  # Returns data as a connection.\n  #\n  # **Features**\n  #\n  # - Identify all large-scale adaptation projects that serve an area\n  # - Understand how many properties served by a particular adaptation structure or project\n  # - Recognize to what extent, an area is protected or what level of event a project can withstand\n  # - Access information for large-scale adaptation projects across the country\n  adaptationConnection(\n    # Number of records(edges) to return. A number between 0 and 100.\n    first: Int\n\n    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.\n    after: String\n  ): PageConnection\n\n  # Data about flood risk for locality infrastructure and community facilities.\n  communityRisk: LocalityFloodFacilityRisk\n\n  # The Social Vulnerability Index\n  SoVI: LocalityFloodSovi\n\n  # Details about flood environmental details, such as precipitation, sea level and tide stations.\n  environmental: LocalityFloodEnvironmental\n\n  # If locality is excluded, the reason for exclusion.\n  exclusion: Exclusion\n}\n\n# Tthe number of residential properties with any loss and the average dollar value loss broken down by Flood Factor score.\ntype LocalityFloodAAL {\n  # It provides an array with the count and dollar loss for properties with loss in that location along with associated year and Flood Factor score.\n  # The low, mid, and high count of residential properties with value loss due to flood risk.\n  annualLoss: [LocalityFloodAnnualLoss]\n\n  # It provides an array with the count and dollar loss for properties with loss in that location along with associated year.\n  # The low, mid, and high count of residential properties with value loss due to flood risk.\n  annualLossByYear(\n    # One or more relative year values to create annual loss for.\n    # Default: *0, 30*\n    relativeYear: [Int64!]\n  ): [LocalityFloodAnnualLossesByYear]\n}\n\n# Details for locality flood losses.\n#\n# The low, mid, high are based on 3 potential climate model realizations of the RCP 4.5 emissions scenario.\n#\n# Losses are determined by using the USACE depth damage functions for Riverine and Surge flooding. Damage due to precipitation flooding is given by a conservative depth damage function developed by First Street Foundation.\ntype LocalityFloodAnnualLoss implements OverTime {\n  # The year (2020, 2025, 2030, 2035, 2040, 2045, or 2050) the dollar loss was calculated for.\n  year: Int64!\n\n  # The year relative to 2020.\n  relativeYear: Int64!\n\n  # The total US dollar loss for all properties with the associated Flood Factor level of risk in the location based on the low scenario of the RCP 4.5 emissions curve.\n  totalLossLow: Int64!\n\n  # The total US dollar loss for all properties with the associated Flood Factor level of risk in the location based on the mid scenario of the RCP 4.5 emissions curve.\n  totalLossMid: Int64!\n\n  # The total US dollar loss for all properties with the associated Flood Factor level of risk in the location based on the high scenario of the RCP 4.5 emissions curve.\n  totalLossHigh: Int64!\n\n  # The count of properties with value loss due to flood risk in the location based on the low scenario of the RCP 4.5 emissions curve.\n  countLow: Int64!\n\n  # The count of properties with value loss due to flood risk in the location based on the mid scenario of the RCP 4.5 emissions curve.\n  countMid: Int64!\n\n  # The count of properties with value loss due to flood risk in the location based on the high scenario of the RCP 4.5 emissions curve.\n  countHigh: Int64!\n\n  # The property's Flood Factor, a numeric integer from 1-10 (where 1 = minimal and 10 = extreme) based on flooding risk to the building footprint.\n  floodFactor: Int64\n}\n\n# The number of residential properties with any loss and the average dollar value loss broken down by year.\ntype LocalityFloodAnnualLossesByYear implements OverTime {\n  # The year (2020, 2025, 2030, 2035, 2040, 2045, or 2050) the dollar loss was calculated for.\n  year: Int64!\n\n  # The year relative to 2020.\n  relativeYear: Int64!\n\n  # The total US dollar loss for all properties with the associated Flood Factor level of risk in the location based on the low scenario of the RCP 4.5 emissions curve.\n  totalLossLow: Int64!\n\n  # The total US dollar loss for all properties with the associated Flood Factor level of risk in the location based on the mid scenario of the RCP 4.5 emissions curve.\n  totalLossMid: Int64!\n\n  # The total US dollar loss for all properties with the associated Flood Factor level of risk in the location based on the high scenario of the RCP 4.5 emissions curve.\n  totalLossHigh: Int64!\n\n  # The count of properties with value loss due to flood risk in the location based on the low scenario of the RCP 4.5 emissions curve.\n  countLow: Int64!\n\n  # The count of properties with value loss due to flood risk in the location based on the mid scenario of the RCP 4.5 emissions curve.\n  countMid: Int64!\n\n  # The count of properties with value loss due to flood risk in the location based on the high scenario of the RCP 4.5 emissions curve.\n  countHigh: Int64!\n}\n\n# Details about flood environmental details, such as precipitation, sea level and tide stations.\ntype LocalityFloodEnvironmental {\n  # Delivers the future projections for 2020, 2035 and 2050, from the average change in extreme precipitation event intensity using historical data for the county.\n  precipitation: LocalityFloodEnvironmentalPrecipitation\n\n  # Delivers the tide station names and IDs for all tide stations associated with the state.\n  seaLevel: LocalityFloodEnvironmentalSeaLevel\n}\n\n# Delivers the future projections for 2020, 2035 and 2050, from the average change in extreme precipitation event intensity using historical data for the county.\ntype LocalityFloodEnvironmentalPrecipitation {\n  # The projections for 2020, 2035, and 2050 with the low, mid and high countywide average change (using historical precipitation data from 1980-2010 (centered on 1995)) in extreme precipitation event intensity based on 3 potential climate model realizations of the RCP 4.5 emissions scenario.\n  projected: [LocalityFloodEnvironmentalPrecipitationProjected]\n}\n\n# The projections for 2020, 2035, and 2050 with the low, mid and high countywide average change (using historical precipitation data from 1980-2010 (centered on 1995)) in extreme precipitation event intensity based on 3 potential climate model realizations of the RCP 4.5 emissions scenario.\ntype LocalityFloodEnvironmentalPrecipitationProjected implements OverTime {\n  # The year (2020, 2030, 2040, or 2050) of the projection.\n  year: Int64!\n\n  # The year relative to 2020.\n  relativeYear: Int64!\n\n  # The projected level of modeled flooding for the location for the associated year based on the low scenario of the RCP 4.5 emissions curve.\n  low: Float\n\n  # The projected level of modeled flooding for the location for the associated year based on the mid scenario of the RCP 4.5 emissions curve.\n  mid: Float\n\n  # The projected level of modeled flooding for the location for the associated year based on the high scenario of the RCP 4.5 emissions curve.\n  high: Float\n}\n\n# Delivers the tide station names and IDs for all tide stations associated with the state.\ntype LocalityFloodEnvironmentalSeaLevel {\n  # A TideStation provides metadata as well as the annual observed mean sea level rise (1980-2020), and sea level rise projection by 10 year increments (2020-2050).\n  tideStation: [TideStation]\n}\n\n# Details about community facility categories.\ntype LocalityFloodFacilityCategory {\n  # CategoryId as assigned by FirstStreet.\n  facilityCategoryId: Int64!\n\n  # Facility category name.\n  name: String\n\n  # Facility category description.\n  description: String\n}\n\n# Details about community facility/infrastructure.\ntype LocalityFloodFacilityMetadata {\n  # Community facility category.\n  category: [LocalityFloodFacilityCategory]\n\n  # Community facility type.\n  type: [LocalityFloodFacilityType]\n}\n\n# Flood risk for locality infrastructure and community facilities.\ntype LocalityFloodFacilityRisk {\n  # Total number of facilities serving the locality. For road centerlines, the count is in meters.\n  facilitiesCount: Int64!\n\n  # A categorical 0-5 score for each county in each category.\n  score: Int64\n\n  # The location's risk direction represented in a numeric value based on the change in risk for the location from 2020 to 2050 for the climate model realization of the RCP 4.5 mid emissions scenario.\n  #\n  # -1 = decreasing\n  # 0 = stationary\n  # 1 = increasing\n  riskDirection: Int64!\n\n  # Facility category.\n  facilitiesCategory: [LocalityFloodFacilityRiskCategorySummary]\n}\n\n# Community flood risk facility category statistics.\ntype LocalityFloodFacilityRiskCategoryStat {\n  # Year used for the model.\n  year: Int64!\n\n  # Year relative to 2020.\n  relativeYear: Int64!\n\n  # Count of facilities (with this category in this county in this year) that have some flood risk. For road centerlines, the count is in meters.\n  facilitiesOperationalRisk: Int64\n\n  # Count of facilities (with this category in this county in this year) that have an expected depth that exceeds the threshold. For road centerlines, the count is in meters\n  facilitiesWaterRisk: Int64\n}\n\n# Facility category\ntype LocalityFloodFacilityRiskCategorySummary {\n  # Id of the category.\n  #\n  # Example: *10*\n  facilityCategoryId: Int64!\n\n  # Count of features (with this category in this county in this year) that have some flood risk. For road centerlines, the count is in meters.\n  facilitiesCount: Int64!\n\n  # The location's risk direction represented in a numeric value based on the change in risk for the location from 2020 to 2050 for the climate model realization of the RCP 4.5 mid emissions scenario.\n  #\n  # -1 = decreasing\n  # 0 = stationary\n  # 1 = increasing\n  riskDirection: Int64\n\n  # A categorical 0-5 score for each category.\n  score: Int64\n\n  # Flood risk category statistics.\n  risks: [LocalityFloodFacilityRiskCategoryStat]\n}\n\n# Details about community facility types.\ntype LocalityFloodFacilityType {\n  # TypeId as assigned by FirstStreet.\n  facilityTypeId: Int64!\n\n  # CategoryId as assigned by FirstStreet.\n  facilityCategoryId: Int64!\n\n  # Facility type name.\n  name: String\n}\n\n# The information associated with the event(s) for event(s) where the area of the model simulation of the historic event overlaps any area of the location.\n# This includes event ID (unique First Street ID assigned to all modeled historic events), type, name and flood impact to the location.\n# Impact includes the total count of affected properties broken down by depth bin.\n# Available depth bins begin at 5-10cm of flooding (displayed as \"5\") and are provided in 5 cm increments up to 120-125cm of flooding (displayed as \"120\"). Everything with greater than 125cm of flooding is bulked together at 125.\ntype LocalityFloodHistoric implements FloodHistoricEvent {\n  # A unique First Street identifier assigned to each modeled historic event.\n  eventId: Int64!\n\n  # The name of the modeled historic event if it exists (note: several were strong pluvial events).\n  name: String!\n\n  # Categorization of event type (hurricane, fluvial, nor'easter, or tropical storm).\n  type: String!\n\n  # The year when the event occured.\n  year: Int64!\n\n  # The month when the event occured.\n  month: Int64!\n\n  # The estimated recurrence interval of the event, or the inverse of the annual likelihood. For example a 1 in 500 annual likelihood event.\n  returnPeriod: Int64\n\n  # The total count of parcels that had any flooding (>0) to the building footprint that are within the mapped area of the historic event's geometry.\n  affectedProperties: Int64!\n\n  # A collection of nodes that represents geographical information for the historic event.\n  geometry: LocationGeometry\n\n  # Historic summary by depth.\n  data: [LocalityFloodHistoricData]\n}\n\n# Historic summary by depth.\ntype LocalityFloodHistoricData {\n  # The depth of flooding (in centimeters ) from the historic event.\n  # Available depth bins begin at 5-10cm of flooding (displayed as \"5\") and are provided in 5 cm increments up to 120-125cm of flooding (displayed as \"120\").\n  # Everything with greater than 125cm of flooding is bulked together at 125.\n  # Flood depth is calculated at the lowest elevation of the building footprint (largest if more than 1 exists, or property centroid where footprint does not exist).\n  bin: Int64!\n\n  # The total count of affected properties for the specified depth bin for the location.\n  count: Int64!\n}\n\n# Details about insurance for specific locality\ntype LocalityFloodInsurance {\n  # Count of properties requiring insurance\n  propertyInsuranceCount: Int64\n\n  # Insurance premium based on 125000$ coverage minimum.\n  premium125Min: Int64\n\n  # Insurance premium based on 125000$ coverage maximum.\n  premium125Max: Int64\n\n  # Insurance premium based on 250000$ coverage minimum.\n  premium250Min: Int64\n\n  # Insurance premium based on 250000$ coverage maximum.\n  premium250Max: Int64\n\n  # Insurance provider details.\n  provider: InsuranceProvider!\n\n  # Insurance provider disclaimer(s).\n  disclaimer: [String]\n\n  # URL to the insurance provider's website for insurance purchase.\n  purchaseLink: String!\n}\n\n# Delivers the total count of properties with flood risk within the location broken down by depth threshold, return period and year.\ntype LocalityFloodProbability {\n  # Counts of affected properties.\n  count: [LocalityFloodProbabilityCount]\n\n  # Flood probability rate over 30 years.\n  risks: LocalityFloodRisks\n  countSummary(\n    # One or more relative year values to create summary for.\n    # Default: *0, 15, 30*\n    relativeYear: [Int64!]\n\n    # One or more return period values to create summary for.\n    # Default: *5, 20, 100, 250, 500*\n    returnPeriod: [Int64!]\n  ): [LocalityFloodProbabilityCountSummary]\n}\n\n# Locality Specific Probablity. Returns total count of properties with flood risk within the location broken down by depth threshold, return period and year.\ntype LocalityFloodProbabilityCount implements OverTime {\n  # The year (2020 or 2050) the probability was calculated for.\n  year: Int64!\n\n  # The year relative to 2020.\n  relativeYear: Int64!\n\n  # The return period (500, 100, 20, 5, or 2 years) that the depth was calculated for.\n  returnPeriod: Int64!\n\n  # The depth of flooding (in centimeters) that the probability was calculated for.\n  # Available depth bins begin at 0-5cm of flooding (displayed as “0”) and are provided in 5 cm increments up to 120-125cm of flooding (displayed as “120\").\n  # Everything with greater than 125cm of flooding is bulked together at 125.\n  # Flood depth is calculated at the lowest elevation of the building footprint (largest if more than 1 exists, or property centroid where footprint does not exist).\n  threshold: Int64!\n\n  # The total count of properties that exist in that return period and depth bin, based on the low scenario of the RCP 4.5 emissions curve.\n  low: Int64\n\n  # The total count of properties that exist in that return period and depth bin, based on the mid scenario of the RCP 4.5 emissions curve.\n  mid: Int64\n\n  # The total count of properties that exist in that return period and depth bin, based on the high scenario of the RCP 4.5 emissions curve.\n  high: Int64\n}\n\n# Delivers the total count of properties with flood risk within the location broken down by year and return period.\ntype LocalityFloodProbabilityCountSummary implements OverTime {\n  # The year (2020, 2025, 2030, 2035, 2040, 2045, or 2050) the depth was calculated for.\n  year: Int64!\n\n  # The year relative to 2020.\n  relativeYear: Int64!\n\n  # The return period (500, 250, 100, 50, 20, 10, 5, or 2 years) that the sum was calculated for.\n  returnPeriod: Int64!\n\n  # The depth in centimeters for the specified return period based on the low scenario of the RCP 4.5 emissions curve.\n  low: Int64\n\n  # The depth in centimeters for the specified return period based on the mid scenario of the RCP 4.5 emissions curve.\n  mid: Int64\n\n  # The depth in centimeters for the specified return period based on the hihg scenario of the RCP 4.5 emissions curve.\n  high: Int64\n}\n\n# Summarizes flood probability counts for 30 years.\ntype LocalityFloodRisks {\n  # Flood risk on national level\n  national: LocalityFloodRisksData\n\n  # Flood risk for the locality\n  regional: LocalityFloodRisksData\n}\n\ntype LocalityFloodRisksData {\n  # Percentage of growth of the number of properties at risk of flooding over the next 30 year.\n  riskCountChangePercent: Float\n}\n\n# The Social Vulnerability Index details.\ntype LocalityFloodSovi {\n  # TODO: need definition.\n  percentile: Float\n}\n\n# Provides information on the number of policies, number of claims, amount of coverage, and amount paid on claims for buildings and contents as well as the increased cost of compliance for the location.\ntype LocalityNFIP {\n  # The total count of entries in the claims dataset for the location. The claims data is sourced from FEMA's release of anonymized claims data in March of 2019. For county and tract queries, the geography is matched to the FIPS code. For ZIP queries, the reported ZIP of the property is used.\n  claimCount: Int64\n\n  # The total count of National Flood Insurance Program (NFIP) insurance policies for the location from the Federal Emergency Management Agency (FEMA) dataset.\n  policyCount: Int64\n\n  # The total sum cost in US dollars paid on the claims related to buildings. The claims data is sourced from FEMA's release of anonymized claims data in March of 2019. For county and tract queries, the geography is matched to the FIPS code. For ZIP queries, the reported ZIP of the property is used.\n  buildingPaid: Int64\n\n  # The total sum cost in US dollars paid on the claims related to the contents of buildings. The claims data is sourced from FEMA's release of anonymized claims data in March of 2019. For county and tract queries, the geography is matched to the FIPS code. For ZIP queries, the reported ZIP of the property is used.\n  contentPaid: Int64\n\n  # The total sum in US dollars of insurance coverage on buildings through National Flood Insurance Program (NFIP) insurance policies for the location.\n  buildingCoverage: Int64\n\n  # The total sum in US dollars of insurance coverage on contents of buildings through National Flood Insurance Program (NFIP) insurance policies for the location.\n  contentCoverage: Int64\n\n  # The total sum in US dollars paid on the Increased Cost of Compliance (ICC) claims for the location. ICC coverage is one of several flood insurances resources for policyholders who need additional help rebuilding after a flood. It provides up to $30,000 to help cover the cost of mitigation measures that will reduce the flood risk.\n  ICCPaid: Int64\n}\n\n# A `location` is a parcel that is represented in the First Street API. Each location has a unique `fsid` that is canonically attached to its parcel, based on its type.\n#\n# It is important to note that FSIDs may collide when referencing different location types.  For example, a `property` location may have an `FSID of 1` while a `state` location may also have an `FSID of 1`.\ninterface Location {\n  fsid: Int64!\n}\n\n# Geographical metadata for a Location, represented in GeoJSON\n#\n# Warning: *Retrieving geometry is a resource-intensive operation and should be kept to a minimum.\ntype LocationGeometry {\n  bbox: Bbox\n  center: Center\n  polygon: Polygon\n}\n\nenum LocationType {\n  PROPERTY\n  CITY\n  COUNTY\n  STATE\n  ZCTA\n  TRACT\n  CD\n  NEIGHBORHOOD\n  COUSUB\n}\n\n# Different types of supported lookups\nenum LookupType {\n  ADDRESS\n  COORDINATE\n  FSID\n  LOCID\n  APN\n}\n\n# Map legend\ntype MapLegend {\n  colors: [MapLegendColor]\n}\n\n# Map legend - color\ntype MapLegendColor {\n  # What the given color represents.\n  represents: MapLegendColorRepresentation!\n\n  # HEX value of the color\n  color: String!\n}\n\ntype MapLegendColorRepresentation {\n  min: Float\n  max: Float\n  unit: String!\n}\n\n# Neighborhood data.\n#\n# Encompasses macro neighborhoods, neighborhood, sub-neighborhoods and residential districts (e.g. subdivisions and apartment complexes)\ntype Neighborhood implements Location {\n  # First Street ID (FSID) is a unique identifier assigned to each location.\n  #\n  # Example: 68501\n  fsid: Int64!\n\n  # The neighborhood's city.\n  city: [City]\n\n  # The neighborhood's name. This encompasses macro neighborhoods, neighborhood, sub-neighborhoods and residential districts (e.g. subdivisions and apartment complexes).\n  #\n  # Example: *Union Hill-Novelty Hill*\n  name: String\n\n  # The neighborhood's subtype code. Macro neighborhoods = M, neighborhood = N, sub-neighborhoods = S and residential districts = R\n  subtype: String\n\n  # The neighborhood's county.\n  county: [County]\n\n  # The neighborhood's county subdivision.\n  cousub: [CountySubdivision]\n\n  # The neighborhood's state.\n  state: State\n\n  # A collection of nodes that represents geographical information for the neighborhood.\n  geometry: LocationGeometry\n\n  # Flood details for the neighborhood.\n  flood: LocalityFlood\n\n  # Fire details for the neighborhood.\n  fire: LocalityFire\n\n  # fsfLink is First Street's link to the neighborhood on FirstStreet's website.\n  #\n  # Example: *https://floodfactor.com/neighborhood/68501_fsid?utm_medium=overlay*\n  fsfLink: String\n\n  # List of properties in the neighborhood, as a connection.\n  propertyConnection(\n    # Number of records(edges) to return. A number between 0 and 100.\n    first: Int\n\n    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.\n    after: String\n\n    # Filter the properties of this neighborhood.\n    filter: PropertyFilters\n  ): PageConnection\n}\n\n# Represents data over years\ninterface OverTime {\n  # The year in which the represented data is categorized for\n  year: Int64!\n\n  # A relative representation of `year`\n  relativeYear: Int64!\n}\n\n# Pagination information built based on [Relay](https://relay.dev/graphql/connections.htm) standard.\ntype PageConnection {\n  # Returns a list type that wraps edge type.\n  edges: [PageEdge!]!\n\n  # Pagination information in relation to current page.\n  pageInfo: PageInfo!\n\n  # Total number of records for the connection.\n  #\n  # Example: *15382*\n  totalCount: Int64\n}\n\n# Represents one record for the current page.\ntype PageEdge {\n  # Cursor is a string that can be used in subsequent request as value of a connection \"after\" argument, to request page starting after this item.\n  #\n  # Example: *Y3Vyc29yOjEyNTI0MA==*\n  cursor: String\n\n  # Contains one page record data\n  node: PagePreview!\n}\n\n# PageInfo is returned for a connection. It contains pagination-related info, as well as connection edges (page entries).\ntype PageInfo {\n  # hasPreviousPage informs if there is a previous page\n  hasPreviousPage: Boolean!\n\n  # hasNextPage informs if there is a next page\n  hasNextPage: Boolean!\n\n  # startCursor refers to the cursor at start of the first page.\n  #\n  # Example: *Y3Vyc29yOjEwMDU=*\n  startCursor: String\n\n  # endCursor refers to the the last item of the last page.\n  #\n  # Example: *Y3Vyc29yOjEwMTI=*\n  endCursor: String\n}\n\n# PagePreview contains the minimal amount of data to allow detailed lookups on as-needed basis.\ntype PagePreview {\n  # FSID of the item.\n  id: Int64!\n\n  # Name of the item.\n  name: String\n\n  # Additional information about the item as available.\n  descriptor: String\n}\n\n# The polygon GeoJSON (MultiPoint)\ntype Polygon {\n  # GeoJSON geometry type MultiPoint.\n  type: String\n\n  # Coordinates of the MultiPoint\n  #\n  # Example: *[[[[-76.963417312,39.400443189],[-76.963460575,39.400683755],[-76.962656664,39.400823574],[-76.962570569,39.400561332],[-76.963417312,39.400443189]]]]*\n  coordinates: [[[[Float!]]]]\n}\n\n# Property details.\n#\n# Based on the legal boundary of a property as recognized by a state or local government.\ntype Property implements Location {\n  # First Street ID (FSID) is a unique identifier assigned to each location.\n  #\n  # Example: 392804911\n  fsid: Int64!\n\n  # The property's address fields.\n  address: PropertyAddress\n\n  # The property's alternative addresses.\n  alternativeAddresses: [PropertyAddress]\n\n  # The property's city.\n  city: City\n\n  # The property's state.\n  state: State\n\n  # The property's county.\n  county: County\n\n  # The property's congressional district including the FSID and name.\n  cd: CongressionalDistrict\n\n  # The property's ZIP code tabulation area (ZCTA) provided by the Census Bureau including the zcta FSID and name.\n  zcta: Zcta\n\n  # The property's census tract provided by the Census Bureau, including the tract FSID and name.\n  tract: Tract\n\n  # The neighborhood(s) the property is associated with as an array, including each associated neighborhood's name and FSID.\n  # This encompasses macro neighborhoods, neighborhood, sub-neighborhoods and residential districts (e.g. subdivisions and apartment complexes).\n  neighborhood: [Neighborhood]\n\n  # The property's county subdivision, including the county subdivision FSID and name.\n  cousub: CountySubdivision\n\n  # The Federal Emergency Management Agency (FEMA) flood zone designation name. These zones are used by FEMA to designate the Special Flood Hazard Areas (SFHA) and for insurance rating purposes.\n  #\n  # Example: Zone A\n  femaZone: String\n\n  # A collection of nodes that represents geographical information for the property.\n  geometry: LocationGeometry\n\n  # Indicates whether First Street has information about the largest building footprint on the property from which the property's flood risk stats are calculated.\n  #\n  # Example: 5\n  footprint: Boolean\n\n  # The height in centimeters associated with the floor elevation for the building.\n  #\n  # Example: 23\n  floorElevation: Int64\n\n  # Indicates if the property is used for residential purposes.\n  #\n  # Example: true\n  isResidential: Boolean\n\n  # Information about the building the property is located in, as applicable.\n  building: Building\n\n  # The Automated Valuation Model (AVM) provides the modeled real estate market value for the property as well as the providerId for the provider of the AVM model.\n  AVM: PropertyAVM\n\n  # fsfLink is First Street's link to the property on FirstStreet's website.\n  #\n  # Example: *https://floodfactor.com/property/240652458_fsid?utm_medium=overlay&utm_source=realtor*\n  fsfLink: String @deprecated(reason: \"fsfLink is deprecated, use the child `link` field within the climate peril.\")\n\n  # Flood details for the property.\n  flood: PropertyFlood\n\n  # Fire details for the property.\n  fire: PropertyFire\n}\n\n# PropertyAVM is modeled real estate market value for the property as well as the providerId for the provider of the AVM model. Default provider is First Street Foundation (providerId: 2).\ntype PropertyAVM {\n  # First Street AVM lower bound.\n  low: Int64\n\n  # First Street automated valuation model.\n  mid: Int64\n\n  # First Street AVM upper bound.\n  high: Int64\n}\n\ntype PropertyAddress {\n  # The property's complete street address name.\n  #\n  # Example: *123 Main St Chicago 60106 IL*\n  formattedAddress: String\n}\n\n# Property filters related to flood factor\ninput PropertyFilterFloodFactor {\n  floodFactorGE: Int64\n  floodFactorLE: Int64\n}\n\n# Property filters related to flood risk\ninput PropertyFilterFloodRisk {\n  atRisk: Boolean\n}\n\n# Filters to narrow the list of properties.\n# Please define one sub-node only.  Filters don't work if, for example, floodFactor and floodRisk are defined.\ninput PropertyFilters {\n  floodFactor: PropertyFilterFloodFactor\n  floodRisk: PropertyFilterFloodRisk\n  floodAdaptation: PropertyFiltersFloodAdaptation\n  includeExcludedInTotalCount: Boolean\n}\n\n# Property filters related to flood adaptation\ninput PropertyFiltersFloodAdaptation {\n  hasAdaptation: Boolean\n}\n\ntype PropertyFire implements FireStatistics & Excluding {\n  # The property's Fire Factor\n  fireFactor: Int64\n\n  # Risk Factor link to Fire Report for the property\n  link: String!\n\n  # US Forest Service Relative Risk Rank\n  usfsRelativeRisk: Float\n\n  # The level of combustibility associated with open space around the main building on this property. Adding open, defensible space around a building reduces fire risk.\n  defensibleSpace: CombustibilityRating\n\n  # The sign of future burn probability minus current burn probability (-1 is decreasing, 0 is unchanging, 1 is increasing)\n  riskDirection: Int64\n\n  # The property's fire historical events, as a connection. Sorted in reverse chronological order and descending by distance.\n  historicConnection(\n    # Number of records(edges) to return. A number between 0 and 100.\n    first: Int\n\n    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.\n    after: String\n\n    # Filter fire historic events\n    filter: FireHistoricEventFilter\n  ): FireHistoricConnection\n\n  # Probability data for the property\n  probability: PropertyFireProbability\n\n  # Insurance quote from Hippo Insurance\n  insuranceHippo(\n    # Class to return. By default quotes for all insurance classes will be returned.\n    classification: InsuranceClassification\n  ): PropertyInsuranceHippo\n\n  # If property is excluded, the reason for exclusion.\n  exclusion: Exclusion\n}\n\n# The information associated with the event(s) for event(s) where the area of the model simulation of the historic event overlaps any area of the location.\n# This includes event ID (unique First Street ID assigned to all modeled historic events), type, name and fire impact to the location.\ntype PropertyFireHistoric implements FireHistoricEvent {\n  # An id assigned to this property - historic event relationship.\n  id: Int64!\n\n  # A unique First Street identifier assigned to each modeled historic event.\n  eventId: Int64!\n\n  # The name of the modeled historic event if it exists.\n  name: String!\n\n  # Categorization of event type (wildfire, prescribed fire, wildland fire use, unknown, out of area responses, or complex).\n  type: String!\n\n  # The year when the event occured.\n  year: Int64!\n\n  # The month when the event occured.\n  month: Int64!\n\n  # Area of the historic event's polygon in square kilometers.\n  area: Int64!\n\n  # The total count of parcels that had the building footprint within the mapped area of the historic event's geometry.\n  eventAffectedProperties: Int64!\n\n  # The total count of parcels that were closer than 32187 meters from the building footprint to the historic event's geometry.\n  eventNearbyProperties: Int64!\n\n  # The distance from the parcel centroid to the burn perimeter in meters.\n  distance: Int64\n\n  # A collection of nodes that represents geographical information for the historic event.\n  geometry: LocationGeometry\n}\n\n# Fire probability details for property.\ntype PropertyFireProbability {\n  burn: [PropertyFireProbabilityBurn]\n  cumulative: [PropertyFireProbabilityCumulative]\n  damage: PropertyFireProbabilityDamage\n}\n\n# Fire probability details for property\ntype PropertyFireProbabilityBurn {\n  year: Int64!\n\n  # Year relative to 2020.\n  relativeYear: Int64!\n\n  # The percent chance of burn for the given year\n  percent: Float\n\n  # Max height of flame length\n  flameMax: Float!\n\n  # Mean height of flame length\n  flameMean: Float!\n\n  # Distribution of expected flame heights, represented in feet\n  # 0 - 2 feet, 2-4 feet, 4-8 feet, 8 - 12 feet, 12-20 feet, 20 feet+\n  flameBin: [Float!]\n\n  # A boolean flag that determines if the property is in an area that would experience embers from a nearby wildfire\n  emberZone: Boolean!\n}\n\n# The wildfire risk likelihood (% probability) to the building footprint by cumulative year.\ntype PropertyFireProbabilityCumulative {\n  # Year asscociated with the point.\n  year: Int64!\n\n  # Year increments in relation to this year.\n  relativeYear: Int64!\n\n  # The max height of the y axis when the data point is being represented on a graph (from 0-100, where 100 is the max value).\n  yMax: Int\n\n  # The data point.\n  point: Float\n}\n\n# Fire damage probability.\ntype PropertyFireProbabilityDamage {\n  conditional: [PropertyFireProbabilityDamageConditional]\n}\n\n# The likelihood a structure ignites if it is within a fire. This field is beta and is subject to change.\ntype PropertyFireProbabilityDamageConditional {\n  year: Int64!\n  relativeYear: Int64!\n  flameLossConditional: Float\n  flameTimeConditional: Float\n  flameLoss: Float\n  flameTime: Float\n  emberLoss: Float\n  emberTime: Float\n}\n\n# Flood details for property.\ntype PropertyFlood implements FloodStatistic & Excluding {\n  # The property's Flood Factor, a numeric integer from 1-10 (where 1 = minimal and 10 = extreme) based on flooding risk to the building footprint.\n  # Flood risk is defined as a combination of cumulative risk over 30 years and flood depth.\n  # Flood depth is calculated at the lowest elevation of the building footprint (largest if more than 1 exists, or property centroid where footprint does not exist).\n  floodFactor: Int64\n\n  # Risk Factor link to Flood Report for the property\n  link: String!\n\n  # The location's risk direction represented in a numeric value based on the change in risk for the location from 2020 to 2050 for the climate model realization of the RCP 4.5 mid emissions scenario.\n  #\n  # -1 = decreasing\n  # 0 = stationary\n  # 1 = increasing\n  riskDirection: Int64\n\n  # Denotes what environmental risks impact the location represented in a numeric value.\n  #\n  # 1 = precipitation\n  # 2 = precipitation and sea level rise\n  # 3 = precipitation, sea level rise and hurricane storm surge\n  #\n  # Coastal areas on the East Coast and Hawaii will return 3, other coastal areas will return 2 and all other locations will return 1.\n  environmentalRisk: Int64\n\n  # The predominant form of flooding for the property: inland fluvial, inland pluvial, coastal, or none.\n  #\n  # For inland areas, flooding depths are provided as the maximum of pluvial and fluvial models. In coastal areas, a coupled model merges the three flooding sources into a single coastal data set.\n  #\n  # Example: inland pluvial\n  floodType: String\n\n  # Flood probabilty details for property.\n  probability: PropertyFloodProbability\n\n  # The list of modeled historic events that inundated the location.\n  # Inundation is defined as having flood depth >0 for property queries or >1 property with >0 flood depth for higher-level locations.\n  # Flood depth is calculated at the lowest elevation of the building footprint (largest if more than 1 exists, or property centroid where footprint does not exist).\n  historic: [PropertyFloodHistoric]\n\n  # The Average Annual Loss (AAL) API provides the US dollar value loss due to modeled flood risk for the location in 2020 and 2050 for residential properties.\n  # Property level queries can also append their own AVM, depth or building detail parameters to the query to receive the loss for those specific parameters.\n  #\n  # When an input parameter is not provided, we will use best-available value for the property for the calculations.\n  AAL(\n    # The Automated Valuation Model (AVM) or the modeled real estate market value in US dollars for the property. Minimum: 1000.\n    #\n    # Example: *23564*\n    AVM: Int64\n\n    # The depth in cm of the flood event that the damage should be calculated for. Multiple values accepted, delineated with a comma.\n    # Maximum number of depths: 35, each depth is a whole number (non-negative integer) under 1000.\n    #\n    # Example: *30, 45*\n    # Default: *5,15,30*\n    depths: [Int64!]\n\n    # Whether or not the building contains a basement.\n    hasBasement: Boolean\n\n    # The height in centimeters associated with the floor elevation for the building. Additional information can be acquired by quering the Location-FloodElevation product.\n    # Has to be a whole number (non-negative integer) under 1000.\n    #\n    # Example: *22*\n    floorElevation: Int64\n\n    # The total number of units the building contains.\n    #\n    # Example: *2*\n    units: Int64\n\n    # The total number of stories the building contains.\n    #\n    # Example: *3*\n    stories: Int64\n  ): PropertyFloodAAL\n\n  # Provides information from community-wide grey and green adaptation projects across the United States categorized into 40 different Adaptation Types.\n  # Returns data as a connection.\n  #\n  # **Features**\n  #\n  # - Identify all large-scale adaptation projects that serve an area\n  # - Understand how many properties served by a particular adaptation structure or project\n  # - Recognize to what extent, an area is protected or what level of event a project can withstand\n  # - Access information for large-scale adaptation projects across the country\n  adaptationConnection(\n    # Number of records(edges) to return. A number between 0 and 100.\n    first: Int\n\n    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.\n    after: String\n  ): PageConnection\n\n  # Details about flood environmental details, such as precipitation, sea level and tide stations.\n  environmental: LocalityFloodEnvironmental\n\n  # Provides insurance quotes from insurance providers. TODO: need more precise definition.\n  insurance: [PropertyFloodInsurance] @deprecated(reason: \"Insurance field is deprecated. Use insuranceHippo.\")\n\n  # Insurance quote from Hippo Insurance\n  insuranceHippo(\n    # Class to return. By default quotes for all insurance classes will be returned.\n    classification: InsuranceClassification\n  ): PropertyInsuranceHippo\n\n  # Requirements for flood insurance\n  insuranceRequirement: FloodInsuranceRequirement!\n\n  # If property is excluded, the reason for exclusion.\n  exclusion: Exclusion\n}\n\n# Details for property flood losses.\n#\n# The low, mid, high are based on 3 potential climate model realizations of the RCP 4.5 emissions scenario.\n#\n# Losses are determined by using the USACE depth damage functions for Riverine and Surge flooding. Damage due to precipitation flooding is given by a conservative depth damage function developed by First Street Foundation.\ntype PropertyFloodAAL {\n  # Provides the loss in US dollars due to flood risk for the property by depth.\n  # The dollar loss is returned with the associated depth. 3cm, 15cm, or 31cm are returned automatically if no specific depth is appended to the query.\n  # Losses are determined by using the USACE depth damage functions for Riverine and Surge flooding and a conservative depth damage function of Precipitation flooding developed by First Street Foundation.\n  depthLoss: [PropertyFloodDepthLoss!]\n\n  # For residential properties, it provides the annual loss in US dollars due to flood risk for the property by in 5 year increments from 2020 to 2050.\n  # The low, mid, high loss is returned within the associated year.\n  # Property level queries can also append their own AVM, depth or building detail parameters to the query to receive the loss for those specific parameters.\n  annualLoss: [PropertyFloodAnnualLoss!]\n}\n\n# Property flood AAL details.\ntype PropertyFloodAnnualLoss implements OverTime {\n  # The year (2020, 2025, 2030, 2035, 2040, 2045, or 2050) the dollar loss was calculated for.\n  year: Int64!\n\n  # The year relative to 2020.\n  relativeYear: Int64!\n\n  # The loss in US dollars due to modeled flooding for the location for the associated year based on the low scenario of the RCP 4.5 emissions curve.\n  low: Int64\n\n  # The loss in US dollars due to modeled flooding for the location for the associated year based on the mid scenario of the RCP 4.5 emissions curve.\n  mid: Int64\n\n  # The loss in US dollars due to modeled flooding for the location for the associated year based on the high scenario of the RCP 4.5 emissions curve.\n  high: Int64\n}\n\ntype PropertyFloodDepthLoss {\n  # The depth in centimeters that the dollar loss was calculated for.\n  depth: Int64!\n\n  # The loss in US dollars due to modeled flooding for the location for the associated depth.\n  # Losses are determined by using the USACE depth damage functions for riverine and surge flooding.\n  # Damage due to precipitation flooding is given by a conservative depth damage function developed by First Street Foundation.\n  loss: Int64\n}\n\n# The information associated with the event(s) for event(s) where the area of the model simulation of the historic event overlaps any area of the location.\n# This includes event ID (unique First Street ID assigned to all modeled historic events), type, name and flood impact to the location.\n# Impact includes the depth of flooding (in centimeters) to the building footprint for property searches.\ntype PropertyFloodHistoric implements FloodHistoricEvent {\n  # A unique First Street identifier assigned to each modeled historic event.\n  eventId: Int64!\n\n  # The name of the modeled historic event if it exists (note: several were strong pluvial events).\n  name: String!\n\n  # Categorization of event type (hurricane, fluvial, nor'easter, or tropical storm).\n  type: String!\n\n  # The year when the event occured.\n  year: Int64!\n\n  # The month when the event occured.\n  month: Int64!\n\n  # The estimated recurrence interval of the event, or the inverse of the annual likelihood. For example a 1 in 500 annual likelihood event.\n  returnPeriod: Int64\n\n  # The total count of parcels that had any flooding (>0) to the building footprint that are within the mapped area of the historic event's geometry.\n  affectedProperties: Int64!\n\n  # A collection of nodes that represents geographical information for the historic event.\n  geometry: LocationGeometry\n\n  # The depth of flooding (in centimeters) to the building footprint for property searches.\n  # Flood depth is calculated at the lowest elevation of the building footprint (largest if more than 1 exists, or property centroid where footprint does not exist).\n  depth: Int64\n}\n\n# TODO: need more details here\n# Insurance provider information for property\ntype PropertyFloodInsurance {\n  # Insurance price quote, in cents.\n  price: Int64\n\n  # The total sum in US dollars of insurance coverage on buildings.\n  homeCoverage: Int64\n\n  # The total sum in US dollars of insurance coverage on contents of buildings.\n  contentsCoverage: Int64\n\n  # Insurance provider details.\n  provider: InsuranceProvider!\n\n  # Date when the quote expires.\n  expires: Date\n\n  # Insurance provider disclaimer(s).\n  disclaimer: [String]\n\n  # URL to the insurance provider's website for insurance purchase.\n  purchaseLink: String!\n}\n\n# Flood probability details for property.\ntype PropertyFloodProbability {\n  # Delivers the flood depth (in centimeters) for flooding to the building footprint broken down by return period and year of annual risk.\n  #\n  # The low, mid, high likelihood is returned within the associated threshold and year. Available depth thresholds include >0cm, >15cm, and >30cm, and are broken down by the following years within the model - 2020, 2025, 2030, 2035, 2040, 2045, and 2050.\n  depth(filter: PropertyFloodProbabilityFilter): [PropertyFloodProbabilityDepth]\n\n  # Delivers the risk likelihood (% probability) for flooding to the building footprint broken down by depth threshold and year of annual risk.\n  chance(\n    filter: PropertyFloodProbabilityFilter\n\n    # Optional depth values for calculating chance. One of: 5, 15, 30.\n    depths: [Int64!]\n  ): [PropertyFloodProbabilityChance]\n\n  # Delivers the risk likelihood (% probability) for flooding to the building footprint broken down by depth threshold and cumulative year.\n  cumulative(\n    filter: PropertyFloodProbabilityFilter\n\n    # Optional depth values for calculating cumulative flooding. One of: 5, 15, 30.\n    depths: [Int64!]\n  ): [PropertyFloodProbabilityCumulative]\n}\n\n# The risk likelihood (% probability) for flooding to the building footprint broken down by depth threshold and year of annual risk.\ntype PropertyFloodProbabilityChance implements OverTime {\n  # The year (2020, 2025, 2030, 2035, 2040, 2045, or 2050) the probability was calculated for.\n  year: Int64!\n\n  # The year relative to 2020.\n  relativeYear: Int64!\n\n  # The depth threshold in centimeters (5cm, 15cm, or 30cm) that the probability was calculated for.\n  threshold: Int64!\n\n  # The likelihood (% probability) of flooding given as a value from 0-1 (rounded to two decimal places) at the specified depth based on the low scenario of the RCP 4.5 emissions curve.\n  low: Float\n\n  # The likelihood (% probability) of flooding given as a value from 0-1 (rounded to two decimal places) at the specified depth based on the mid scenario of the RCP 4.5 emissions curve.\n  mid: Float\n\n  # The likelihood (% probability) of flooding given as a value from 0-1 (rounded to two decimal places) at the specified depth based on the high scenario of the RCP 4.5 emissions curve.\n  high: Float\n}\n\n# The risk likelihood (% probability) for flooding to the building footprint broken down by depth threshold and cumulative year.\ntype PropertyFloodProbabilityCumulative implements OverTime {\n  # The year (2020, 2025, 2030, 2035, 2040, 2045, or 2050) the probability was calculated for.\n  year: Int64!\n\n  # The year relative to 2020.\n  relativeYear: Int64!\n\n  # The depth threshold in centimeters (5cm, 15cm, or 30cm) that the probability was calculated for.\n  threshold: Int64!\n\n  # The likelihood (% probability) of flooding given as a value from 0-1 (rounded to two decimal places) at the specified depth based on the low scenario of the RCP 4.5 emissions curve.\n  low: Float\n\n  # The likelihood (% probability) of flooding given as a value from 0-1 (rounded to two decimal places) at the specified depth based on the mid scenario of the RCP 4.5 emissions curve.\n  mid: Float\n\n  # The likelihood (% probability) of flooding given as a value from 0-1 (rounded to two decimal places) at the specified depth based on the high scenario of the RCP 4.5 emissions curve.\n  high: Float\n\n  # The max height of the y axis when the low point is being represented on a graph (from 0-100, where 100 is the max value).\n  yMaxLow: Int!\n\n  # The max height of the y axis when the mid point is being represented on a graph (from 0-100, where 100 is the max value).\n  yMaxMid: Int!\n\n  # The max height of the y axis when the high point is being represented on a graph (from 0-100, where 100 is the max value).\n  yMaxHigh: Int!\n}\n\n# The flood depth (in centimeters) for flooding to the building footprint broken down by return period and year of annual risk.\ntype PropertyFloodProbabilityDepth implements OverTime {\n  # The year (2020, 2025, 2030, 2035, 2040, 2045, or 2050) the depth was calculated for.\n  year: Int64!\n\n  # The year relative to 2020.\n  relativeYear: Int64!\n\n  # The return period (500, 250, 100, 50, 20, 10, 5, or 2 years) that the depth was calculated for.\n  returnPeriod: Int64!\n\n  # The depth in centimeters for the specified return period based on the low scenario of the RCP 4.5 emissions curve.\n  low: Int64\n\n  # The depth in centimeters for the specified return period based on the mid scenario of the RCP 4.5 emissions curve.\n  mid: Int64\n\n  # The depth in centimeters for the specified return period based on the high scenario of the RCP 4.5 emissions curve.\n  high: Int64\n}\n\n# Filter probability flood data by provided value(s).\n# Will choose Threshold or ReturnPeriod filter as applicable.\ninput PropertyFloodProbabilityFilter {\n  year: [Int64]\n  relativeYear: [Int64]\n  threshold: [Int64]\n  returnPeriod: [Int64]\n}\n\ntype PropertyInsuranceHippo {\n  provider: InsuranceProvider!\n  rates: [InsuranceHippoRate]\n  disclaimer: String\n}\n\n# The National Flood Insurance Program (NFIP) premiums are the cost of flood insurance for coverage of the building and the contents in the building based on the current NFIP insurance rate tables. There are two hypothetical insurance premiums for coverage of the structure and contents at $250k/$125k and $125k/$50k.\ntype PropertyNFIP {\n  # Estimated premium for a policy in US dollars.\n  estimate: Int64!\n\n  # The dollar amount of building coverage for estimate in US dollars.\n  building: Int64!\n\n  # The dollar amount of contents coverage for estimate in US dollars.\n  contents: Int64!\n}\n\n# Top-level queries\ntype Query {\n  # Property lookup by FSID.\n  property(fsid: Int64!): Property\n\n  # Property lookup by coordinate. This lookup will check the coordinates to see if that point intersects within a boundary of a parcel from the database.\n  propertyByCoordinate(lat: Float!, lng: Float!): Property\n\n  # Property lookup by address. An address can be a `city name`, `home address`, or `business address`. `City` and `State` need to be included within the `address` query.\n  #\n  # Optionally include the lat and lng parameters for `home address` or `business address` to improve match accuracy.\n  #\n  # *Address lookups should be used as seldom as possible. This is the slowest form of a lookup since the address must be reverse geocoded prior to a query in our database.*\n  propertyByAddress(address: String!, lat: Float, lng: Float): Property\n\n  # Property lookup by APN.\n  propertyByAPN(APN: String!, FIPS: String!): Property\n\n  # Property lookup by Lightbox location_id.\n  propertyByLocationId(locationId: String!): Property\n\n  # City lookup by FSID.\n  city(fsid: Int64!): City\n\n  # City lookup by coordinate. This lookup will check the coordinates to see if that point intersects within a boundary of a parcel from the database.\n  cityByCoordinate(lat: Float!, lng: Float!): City\n\n  # Neighborhood lookup by FSID.\n  neighborhood(fsid: Int64!): Neighborhood\n\n  # Neighborhood lookup by coordinate. This lookup will check the coordinates to see if that point intersects within a boundary of a parcel from the database.\n  neighborhoodByCoordinate(lat: Float!, lng: Float!): Neighborhood\n\n  # Congressional District lookup by FSID.\n  cd(fsid: Int64!): CongressionalDistrict\n\n  # Congressional District lookup by coordinate. This lookup will check the coordinates to see if that point intersects within a boundary of a parcel from the database.\n  cdByCoordinate(lat: Float!, lng: Float!): CongressionalDistrict\n\n  # County lookup by FSID.\n  county(fsid: Int64!): County\n\n  # County lookup by coordinate. This lookup will check the coordinates to see if that point intersects within a boundary of a parcel from the database.\n  countyByCoordinate(lat: Float!, lng: Float!): County\n\n  # County Subdivision lookup by FSID.\n  cousub(fsid: Int64!): CountySubdivision\n\n  # County lookup by coordinate. This lookup will check the coordinates to see if that point intersects within a boundary of a parcel from the database.\n  cousubByCoordinate(lat: Float!, lng: Float!): CountySubdivision\n\n  # State lookup by FSID.\n  state(fsid: Int64!): State\n\n  # State lookup by coordinate. This lookup will check the coordinates to see if that point intersects within a boundary of a parcel from the database.\n  stateByCoordinate(lat: Float!, lng: Float!): State\n\n  # Tract lookup by FSID.\n  tract(fsid: Int64!): Tract\n\n  # Tract lookup by coordinate. This lookup will check the coordinates to see if that point intersects within a boundary of a parcel from the database.\n  tractByCoordinate(lat: Float!, lng: Float!): Tract\n\n  # Zip code lookup by FSID.\n  zcta(fsid: Int64!): Zcta\n\n  # Zip code lookup by coordinate. This lookup will check the coordinates to see if that point intersects within a boundary of a parcel from the database.\n  zctaByCoordinate(lat: Float!, lng: Float!): Zcta\n\n  # Query to obtain flood-related data.\n  flood: FloodQuery\n\n  # Query to obtain fire-related data.\n  fire: FireQuery\n  ping: String!\n}\n\n# Data resource currently supported\nenum Resource {\n  FLOOD\n}\n\n# The annual observed mean sea level (in centimeters using the NAVD88 datum) from 1980-2019 for the tide station.\ntype SeaLevelRiseHistoric {\n  # The year of reading (1980-2019).\n  year: Int64!\n\n  # Annual observed mean sea level in centimeters using the NAVD88 datum\n  value: Int64!\n}\n\n# The projections for 2020-2050 (in 10 year increments) with the low, mid and high mean sea level (in centimeters using the NAVD88 datum) based on 3 potential climate model realizations of the RCP 4.5 emissions scenario.\ntype SeaLevelRiseProjection implements OverTime {\n  # The year (2020, 2030, 2040, or 2050) of the projection.\n  year: Int64!\n\n  # The year relative to 2020.\n  relativeYear: Int64!\n\n  # The annual mean sea level projection in centimeters (in the NAVD88 datum) based on the low scenario of the RCP 4.5 emissions curve.\n  low: Float!\n\n  # The annual mean sea level projection in centimeters (in the NAVD88 datum) based on the mid scenario of the RCP 4.5 emissions curve.\n  mid: Float!\n\n  # The annual mean sea level projection in centimeters (in the NAVD88 datum) based on the high scenario of the RCP 4.5 emissions curve.\n  high: Float!\n}\n\nenum Service {\n  LOCATION\n  GEOMETRY\n  BUILDING\n  FEMA\n  FLOOD\n  FIRE\n  EXTERNALAVM\n}\n\n# US state or federal district\ntype State implements Location {\n  # First Street ID (FSID) is a unique identifier assigned to each location.\n  #\n  # Example: *12*\n  fsid: Int64!\n\n  # The name of the state.\n  #\n  # Example: *Florida*\n  name: String\n\n  # State abbreviation.\n  #\n  # Example: *FL*\n  shortName: String\n\n  # The Federal Information Processing Standards code for the state.\n  #\n  # Example: *12*\n  FIPS: Int64!\n\n  # A collection of nodes that represents geographical information for the state.\n  geometry: LocationGeometry\n\n  # The state's cities, as a connection.\n  cityConnection(\n    # Number of records(edges) to return. A number between 0 and 100.\n    first: Int\n\n    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.\n    after: String\n  ): PageConnection\n\n  # The state's neighborhoods, as a connection.\n  neighborhoodConnection(\n    # Number of records(edges) to return. A number between 0 and 100.\n    first: Int\n\n    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.\n    after: String\n  ): PageConnection\n\n  # The state's counties, as a connection.\n  countyConnection(\n    # Number of records(edges) to return. A number between 0 and 100.\n    first: Int\n\n    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.\n    after: String\n  ): PageConnection\n\n  # The state's congressional districts.\n  cd: [CongressionalDistrict]\n\n  # The state's county subdivisions, as a connection.\n  cousubConnection(\n    # Number of records(edges) to return. A number between 0 and 100.\n    first: Int\n\n    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.\n    after: String\n  ): PageConnection\n\n  # The state's ZCTAs, as a connection.\n  zctaConnection(\n    # Number of records(edges) to return. A number between 0 and 100.\n    first: Int\n\n    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.\n    after: String\n  ): PageConnection\n\n  # The state's proeprties, as a connection.\n  propertyConnection(\n    # Number of records(edges) to return. A number between 0 and 100.\n    first: Int\n\n    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.\n    after: String\n\n    # Filter the properties of this state.\n    filter: PropertyFilters\n  ): PageConnection\n\n  # Flood data for the state.\n  flood: LocalityFlood\n\n  # Fire details for the state.\n  fire: LocalityFire\n\n  # fsfLink is First Street's link to the state on FirstStreet's website.\n  #\n  # Example: *https://floodfactor.com/state/12_fsid?utm_medium=overlay*\n  fsfLink: String\n}\n\n# A TideStation provides metadata as well as the annual observed mean sea level rise (1980-2020), and sea level rise projection by 10 year increments (2020-2050).\ntype TideStation {\n  # A unique First Street identifier assigned to each tide station.\n  id: Int64!\n\n  # The National Oceanic and Atmospheric Association (NOAA) ID associated with the tide station\n  NOAAId: Int64!\n\n  # The National Oceanic and Atmospheric Association (NOAA) name associated with the tide station.\n  name: String\n\n  # Provides the lat/lng location of the tide station.\n  center: Center\n\n  # The annual observed mean sea level (in centimeters using the NAVD88 datum) from 1980-2019 for the tide station.\n  seaLevelRiseHistoric: [SeaLevelRiseHistoric]\n\n  # The projections for 2020-2050 (in 10 year increments) with the low, mid and high mean sea level (in centimeters using the NAVD88 datum) based on 3 potential climate model realizations of the RCP 4.5 emissions scenario.\n  seaLevelRiseProjection: [SeaLevelRiseProjection]\n}\n\n# Census Tract as provided by the by the US Census Bureau (not available on FirstStreet's website)\ntype Tract implements Location {\n  # First Street ID (FSID) is a unique identifier assigned to each location.\n  #\n  # Example: *39119912800*\n  fsid: Int64!\n\n  # The Federal Information Processing Standards code which uniquely identified counties and county equivalents, and certain freely associated states.\n  #\n  # Example: *39119912800*\n  FIPS: Int64\n\n  # The tract's congressional district.\n  cd: CongressionalDistrict\n\n  # The tract's city.\n  city: City\n\n  # The tract's county subdivision.\n  cousub: CountySubdivision\n\n  # The tract's county.\n  county: County\n\n  # The tract's state.\n  state: State\n\n  # A collection of nodes that represents geographical information for the tract.\n  geometry: LocationGeometry\n\n  # Flood data for the tract.\n  flood: LocalityFlood\n\n  # Fire details for the tract.\n  fire: LocalityFire\n\n  # fsfLink is always null for tracts, as they are not displayed on FirstStreet's website.\n  fsfLink: String\n\n  # List of properties within the tract, as a connection.\n  propertyConnection(\n    # Number of records(edges) to return. A number between 0 and 100.\n    first: Int\n\n    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.\n    after: String\n\n    # Filter the properties of this tract.\n    filter: PropertyFilters\n  ): PageConnection\n}\n\n# ZIP code tabulation area as provided by the US Census Bureau.\ntype Zcta implements Location {\n  # First Street ID (FSID) is a unique identifier assigned to each location.\n  #\n  # Example: *82633*\n  fsid: Int64!\n\n  # The zcta name.\n  #\n  # Example: *82633*\n  name: String\n\n  # The city or cities the zcta is associated with.\n  city: [City]\n\n  # The county or counties the zcta is associated with.\n  county: [County]\n\n  # The county subdivision or subdivisions the zcta is associated with.\n  cousub: [CountySubdivision]\n\n  # The state the zcta is associated with.\n  state: State\n\n  # A collection of nodes that represents geographical information for the zcta.\n  geometry: LocationGeometry\n\n  # Flood data for the zcta.\n  flood: LocalityFlood\n\n  # Fire details for the zcta.\n  fire: LocalityFire\n\n  # fsfLink is First Street's link to the zcta on FirstStreet's website.\n  #\n  # Example: *https://floodfactor.com/zcta/82633_fsid?utm_medium=overlay*\n  fsfLink: String\n\n  # List of properties in the zcta, as a connection.\n  propertyConnection(\n    # Number of records(edges) to return. A number between 0 and 100.\n    first: Int\n\n    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.\n    after: String\n\n    # Filter the properties of this zip code.\n    filter: PropertyFilters\n  ): PageConnection\n}\n"
+directive @fsApplyExclusion on FIELD_DEFINITION
+
+directive @fsHasPolicy(service: Service!) on FIELD_DEFINITION | ARGUMENT_DEFINITION
+
+directive @fsRecordAPIUsage(service: APIUsageService!) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+
+directive @fsValidation(constraint: String!) on INPUT_FIELD_DEFINITION | ARGUMENT_DEFINITION
+
+directive @goField(forceResolver: Boolean, name: String) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+
+enum APIUsageService {
+  LOCATION
+  FEMA
+  FLOODADAPTATION
+  FLOODENVIRONMENTAL
+  FLOODHISTORIC
+  FLOODCOMMUNITYRISK
+  FLOODECONOMIC
+  FLOODPROBABILITY
+  FLOODINSURANCE
+  FIREHISTORIC
+  FIREECONOMIC
+  FIREPROBABILITY
+  FIREINSURANCE
+  FIRECOMMUNITYRISK
+  AVM
+}
+
+# The AVM Provider provides metadata for an AVM provider.
+type AVMProvider {
+  # The canonical provider ID that provides the AVM
+  id: Int64!
+
+  # Provides the name of the AVM provider.
+  name: String
+
+  # A URL representation of the providers company logo.
+  logo: String
+}
+
+# The bounding box GeoJSON (Polygon)
+type Bbox {
+  # GeoJSON geometry type Polygon.
+  type: String
+
+  # Coordinates of the Polygon.
+  #
+  # Example: *[[[-76.963460575,39.400443189],[-76.963460575,39.400823574],[-76.962570569,39.400823574],[-76.962570569,39.400443189],[-76.963460575,39.400443189]]]*
+  coordinates: [[[Float!]]]
+}
+
+# Building characteristic for a Property
+type Building {
+  # Whether or not the property has a basement.
+  #
+  # Example: true
+  hasBasement: Boolean
+
+  # Number of units in Property
+  #
+  # Example: 1
+  units: Int64
+
+  # Number of stories for the Property
+  #
+  # Example: 2
+  stories: Int64
+
+  # Construction characteristics
+  construction: BuildingConstruction
+
+  # Roof characteristics
+  roof: BuildingRoof
+}
+
+type BuildingConstruction implements BuildingMaterial {
+  # Material used for exterior walls of the structure
+  material: String
+  combustibility: CombustibilityRating
+}
+
+interface BuildingMaterial {
+  # The material for the specified building node
+  material: String
+  combustibility: CombustibilityRating
+}
+
+type BuildingRoof implements BuildingMaterial {
+  # Material used for the roof
+  material: String
+  combustibility: CombustibilityRating
+}
+
+# The center GeoJSON (Point)
+type Center {
+  # GeoJSON geometry type Point.
+  type: String
+
+  # Coordinates of the Point
+  #
+  # Example: *[-76.96286,39.40059]*
+  coordinates: [Float!]
+}
+
+# Place (County Subdivision in New England) as provided by the US Census Bureau.
+type City implements Location {
+  # First Street ID (FSID) is a unique identifier assigned to each location.
+  #
+  # Example: *5301920*
+  fsid: Int64!
+
+  # Name of the city.
+  #
+  # Example: *Redmond*
+  name: String
+
+  # The legal/statistical area description (LSAD) as provided by the census which describes the particular typology for each geographic entity; that is, whether the entity is a borough, city, town, or township, among others.
+  #
+  # Example: *57*
+  LSAD: Int64
+
+  # ZCTAs that are within geographical limits of the city.
+  zcta: [Zcta]
+
+  # Counties that are within geographical limits of the city.
+  county: [County]
+
+  # County subdivisions that are within geographical limits of the city.
+  cousub: [CountySubdivision]
+
+  # State that City resides in.
+  state: State
+
+  # A collection of nodes that represents geographical information for the city.
+  geometry: LocationGeometry
+
+  # List of the neighborhood(s) the city is associated with, as a connection. This encompasses macro neighborhoods, neighborhood, sub-neighborhoods and residential districts (e.g. subdivisions and apartment complexes).
+  neighborhoodConnection(
+    # Number of records(edges) to return. A number between 0 and 100.
+    first: Int
+
+    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.
+    after: String
+  ): PageConnection
+
+  # Flood data for the city.
+  flood: LocalityFlood
+
+  # Fire details for the city.
+  fire: LocalityFire
+
+  # fsfLink is First Street's link to the neighborhood on FirstStreet's website.
+  #
+  # Example: *https://floodfactor.com/city/5301920_fsid?utm_medium=overlay*
+  fsfLink: String
+
+  # List of properties in the city, as a connection.
+  propertyConnection(
+    # Number of records(edges) to return. A number between 0 and 100.
+    first: Int
+
+    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.
+    after: String
+
+    # Filter the properties of this city.
+    filter: PropertyFilters
+  ): PageConnection
+}
+
+# The combustibility rating of a building material
+enum CombustibilityRating {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+# Congressional District for the 116th Congress (not available in Flood Factor)
+type CongressionalDistrict implements Location {
+  # First Street ID (FSID) is a unique identifier assigned to each location.
+  #
+  # Example: *3904*
+  fsid: Int64!
+
+  # The name associated with the congressional district.
+  #
+  # Example: *Ohio Congressional District 4*
+  name: String
+
+  # Denotes the session of congress from which the boundary was drawn.
+  #
+  # Example: *116*
+  congress: Int64
+
+  # The county or counties the congressional district is associated with.
+  county: [County]
+
+  # The county subdivision(s) the congressional district is associated with, as a connection.
+  cousubConnection(
+    # Number of records(edges) to return. A number between 0 and 100.
+    first: Int
+
+    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.
+    after: String
+  ): PageConnection
+
+  # Congressional district's state.
+  state: State
+
+  # A collection of nodes that represents geographical information for the congressional district.
+  geometry: LocationGeometry
+
+  # Flood data for the congressional district.
+  flood: LocalityFlood
+  fire: LocalityFire
+
+  # fsfLink is always null for congressional districts, as they are not displayed on FirstStreet's website.
+  fsfLink: String
+
+  # List of properties within the congressional district, as a connection.
+  propertyConnection(
+    # Number of records(edges) to return. A number between 0 and 100.
+    first: Int
+
+    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.
+    after: String
+
+    # Filter the properties of this congressional district.
+    filter: PropertyFilters
+  ): PageConnection
+}
+
+# County or county-equivalents as provided by the US Census Bureau
+type County implements Location {
+  # First Street ID (FSID) is a unique identifier assigned to each location.
+  #
+  # Example: *1003*
+  fsid: Int64!
+
+  # The Federal Information Processing Standards code which uniquely identified counties and county equivalents, and certain freely associated states.
+  #
+  # Example: *1003*
+  FIPS: Int64
+
+  # Name of the county.
+  #
+  # Example: *Baldwin*
+  name: String
+
+  # A boolean field indicating if the county is in a coastal area.
+  isCoastal: Boolean
+
+  # The city or cities the county is associated with, as a connection.
+  cityConnection(
+    # Number of records(edges) to return. A number between 0 and 100.
+    first: Int
+
+    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.
+    after: String
+  ): PageConnection
+
+  # The county's ZIP code tabulation area(s) (ZCTA) provided by the Census Bureau.
+  zcta: [Zcta]
+
+  # The congressional district(s) the county is associated with.
+  cd: [CongressionalDistrict]
+
+  # The county's state.
+  state: State
+
+  # A collection of nodes that represents geographical information for the county.
+  geometry: LocationGeometry
+
+  # Flood details for the county.
+  flood: LocalityFlood
+
+  # Fire details for the county.
+  fire: LocalityFire
+
+  # fsfLink is First Street's link to the neighborhood on FirstStreet's website.
+  #
+  # Example: *https://floodfactor.com/county/1003_fsid?utm_medium=overlay*
+  fsfLink: String
+
+  # The neighborhood(s) the city is associated with, as a connection. This encompasses macro neighborhoods, neighborhood, sub-neighborhoods and residential districts (e.g. subdivisions and apartment complexes).
+  neighborhoodConnection(
+    # Number of records(edges) to return. A number between 0 and 100.
+    first: Int
+
+    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.
+    after: String
+  ): PageConnection
+
+  # List of properties in the county, as a connection.
+  propertyConnection(
+    # Number of records(edges) to return. A number between 0 and 100.
+    first: Int
+
+    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.
+    after: String
+
+    # Filter the properties of this county.
+    filter: PropertyFilters
+  ): PageConnection
+}
+
+# County subdivision
+type CountySubdivision implements Location {
+  # First Street ID (FSID) is a unique identifier assigned to each location.
+  #
+  # Example: *5303391392*
+  fsid: Int64!
+
+  # Name of the county subdivision.
+  #
+  # Example: *Issaquah Plateau*
+  name: String
+
+  # The county the county subdivision belongs to.
+  county: County
+
+  # The county subdivision's state
+  state: State
+
+  # The legal/statistical area description (LSAD) as provided by the census which describes the particular typology for each geographic entity.
+  #
+  # Example: *22*
+  LSAD: Int64
+
+  # Flood details for the county subdivision.
+  flood: LocalityFlood
+
+  # Fire details for the subdivision.
+  fire: LocalityFire
+
+  # A collection of nodes that represents geographical information for the county subdivision.
+  geometry: LocationGeometry
+
+  # fsfLink is First Street's link to the neighborhood on FirstStreet's website.
+  #
+  # Example: *https://floodfactor.com/cousub/5303391392_fsid?utm_medium=overlay*
+  fsfLink: String
+}
+
+# Remap Graphql Types to Go Types
+scalar Date
+
+interface Excluding {
+  exclusion: Exclusion
+}
+
+# Exclusion details.
+type Exclusion {
+  description: String
+}
+
+enum FindOperator {
+  EQ
+  NE
+  GT
+  GE
+  LT
+  LE
+}
+
+union FindResultItem = Property | City | State | County | CongressionalDistrict | Zcta | Tract | Neighborhood | CountySubdivision
+
+type FindResultItemConnection {
+  edges: [FindResultItemEdge]
+  pageInfo: PageInfo!
+}
+
+type FindResultItemEdge {
+  node: FindResultItem
+  cursor: String!
+}
+
+type FireHistoricConnection {
+  # Returns a list type that wraps edge type.
+  edges: [FireHistoricEdge!]!
+
+  # Pagination information in relation to current page.
+  pageInfo: PageInfo!
+
+  # Total number of records for the connection.
+  #
+  # Example: *15382*
+  totalCount: Int64
+}
+
+# Represents one record for the current page.
+type FireHistoricEdge {
+  # Cursor is a string that can be used in subsequent request as value of a connection "after" argument, to request page starting after this item.
+  #
+  # Example: *Y3Vyc29yOjEyNTI0MA==*
+  cursor: String
+
+  # Contains one page record data.
+  node: FireHistoricPageResult!
+}
+
+# The information associated with the event(s) for event(s) where the area of the model simulation of the historic event overlaps any area of the location.
+interface FireHistoricEvent {
+  # A unique identifier to each modeled historic event from First Street
+  eventId: Int64!
+
+  # The name of the modeled historic event if it exists.
+  name: String!
+
+  # Categorization of event type (wildfire, prescribed fire, wildland fire use, unknown, out of area responses, or complex).
+  type: String!
+
+  # The year when the event occured.
+  year: Int64!
+
+  # The month when the event occured.
+  month: Int64!
+
+  # Area of the historic event's polygon in square kilometers.
+  area: Int64!
+
+  # The total count of parcels affected by the historic event.
+  eventAffectedProperties: Int64!
+
+  # A collection of nodes that represents geographical information for the historic event.
+  geometry: LocationGeometry
+}
+
+# Filters to narrow the list of historic events.
+input FireHistoricEventFilter {
+  # Restrict event types that will be returned
+  type: [FireHistoricEventType]
+
+  # Maximum property distance from the event. Only applicable to Property events. Ignored for Locality events.
+  distance: Int64
+}
+
+# Details for a single historic fire event.
+type FireHistoricEventRecord implements FireHistoricEvent {
+  # A unique First Street identifier assigned to each modeled historic event.
+  eventId: Int64!
+
+  # The name of the modeled historic event if it exists.
+  name: String!
+
+  # Categorization of event type (wildfire, prescribed fire, wildland fire use, unknown, out of area responses, or complex).
+  type: String!
+
+  # The year when the event occured.
+  year: Int64!
+
+  # The month when the event occured.
+  month: Int64!
+
+  # Area of the historic event's polygon in square kilometers.
+  area: Int64!
+
+  # The total count of parcels that had the building footprint within the mapped area of the historic event's geometry.
+  eventAffectedProperties: Int64!
+
+  # The total count of parcels that were closer than 32187 meters from the building footprint to the historic event's geometry.
+  eventNearbyProperties: Int64!
+
+  # A collection of nodes that represents geographical information for the historic event.
+  geometry: LocationGeometry
+}
+
+enum FireHistoricEventType {
+  WILDFIRE
+  PRESCRIBED_FIRE
+  WILDLAND_FIRE_USE
+  UNKNOWN
+  OUT_OF_AREA_RESPONSES
+  COMPLEX
+}
+
+union FireHistoricPageResult = PropertyFireHistoric | LocalityFireHistoric
+
+# Query to obtain fire-related data.
+type FireQuery {
+  # Map lookup.  Returns map metadata such as legends.
+  mapLegend: MapLegend!
+
+  # Historic event batch lookup. Can lookup up to 35 historic events.
+  historicEvents(eventIds: [Int64!]!): [FireHistoricEventRecord]
+}
+
+interface FireStatistics {
+  # The sign of future burn probability minus current burn probability (-1 is decreasing, 0 is unchanging, 1 is increasing)
+  riskDirection: Int64
+}
+
+# Provides information from community-wide grey and green adaptation projects across the United States categorized into 40 different Adaptation Types.
+#   Returns data as a connection.
+#
+#   **Features**
+#
+#   - Identify all large-scale adaptation projects that serve an area
+#   - Understand how many properties served by a particular adaptation structure or project
+#   - Recognize to what extent, an area is protected or what level of event a project can withstand
+#   - Access information for large-scale adaptation projects across the country
+type FloodAdaptation {
+  # A unique First Street identifier assigned to each adaptation project
+  #
+  # Example: *23456*
+  adaptationId: Int64!
+
+  # The name of the adaptation project
+  #
+  # Example: *Kearsley Reservoir Dam*
+  name: String
+
+  # The type(s) categorization of the adaptation project from 40 categories inclusive of grey and green adaptation projects.
+  #
+  # Example: *['dam', 'levee', 'seawall']*
+  type: [String!]
+
+  # The type(s) of flooding the adaptation project protects against (pluvial, fluvial or tidal).
+  #
+  # Example: *['pluvial', 'tidal']*
+  scenario: [String!]
+
+  # Applicable for structures that convey certain amounts of water during pluvial and fluvial events.
+  # Adaptation structures with conveyance are incorporated into the model without completely removing flooding from within the area served.
+  hasConveyance: Boolean
+
+  # The flooding event that the adaptation can withstand. For example, a 1 in 100 flood.
+  returnPeriod: Int64
+
+  # Count of locations that the adaptation project is serving, broken down by location type.
+  serving: FloodAdaptationServing!
+
+  # A collection of nodes that represents geographical information for the adaptation.
+  geometry: LocationGeometry
+}
+
+# Count of locations that the adaptation project is serving as [AdaptationServing], broken down by location type.
+type FloodAdaptationServing {
+  # The count of properties that the adaptation project is serving.
+  property: Int64!
+
+  # The count of neighborhoods that the adaptation project is serving.
+  neighborhood: Int64!
+
+  # The count of zctas that the adaptation project is serving.
+  zcta: Int64!
+
+  # The count of tracts that the adaptation project is serving.
+  tract: Int64!
+
+  # The count of cities that the adaptation project is serving.
+  city: Int64!
+
+  # The count of counties that the adaptation project is serving.
+  county: Int64!
+
+  # The count of congressional districts that the adaptation project is serving.
+  cd: Int64!
+
+  # The count of states that the adaptation project is serving.
+  state: Int64!
+}
+
+# The information associated with the event(s) for event(s) where the area of the model simulation of the historic event overlaps any area of the location.
+# Available depth bins begin at 5-10cm of flooding (displayed as "5") and are provided in 5 cm increments up to 120-125cm of flooding (displayed as "120"). Everything with greater than 125cm of flooding is bulked together at 125.
+interface FloodHistoricEvent {
+  # A unique identifier to each modeled historic event from First Street
+  eventId: Int64!
+
+  # The name of the modeled historic event if it exists (note: several were strong pluvial events).
+  name: String!
+
+  # Categorization of event type (hurricane, fluvial, nor'easter, or tropical storm).
+  type: String!
+
+  # The year when the event occured.
+  year: Int64!
+
+  # The month when the event occured.
+  month: Int64!
+
+  # The estimated recurrence interval of the event, or the inverse of the annual likelihood. For example a 1 in 500 annual likelihood event.
+  returnPeriod: Int64
+
+  # The total count of parcels that had any flooding (>0) to the building footprint that are within the mapped area of the historic event's geometry.
+  affectedProperties: Int64!
+
+  # A collection of nodes that represents geographical information for the historic event.
+  geometry: LocationGeometry
+}
+
+# Details for a single historic flooding event.
+type FloodHistoricEventRecord implements FloodHistoricEvent {
+  # A unique First Street identifier assigned to each modeled historic event.
+  eventId: Int64!
+
+  # The name of the modeled historic event if it exists (note: several were strong pluvial events).
+  name: String!
+
+  # Categorization of event type (hurricane, fluvial, nor'easter, or tropical storm).
+  type: String!
+
+  # The year when the event occured.
+  year: Int64!
+
+  # The month when the event occured.
+  month: Int64!
+
+  # The estimated recurrence interval of the event, or the inverse of the annual likelihood. For example a 1 in 500 annual likelihood event.
+  returnPeriod: Int64
+
+  # The total count of parcels that are within the mapped area of the historic event's geometry.
+  totalProperties: Int64!
+
+  # The total count of parcels that had any flooding (>0) to the building footprint that are within the mapped area of the historic event's geometry.
+  affectedProperties: Int64!
+
+  # A collection of nodes that represents geographical information for the historic event.
+  geometry: LocationGeometry
+}
+
+enum FloodInsuranceRequirement {
+  # Flood insurance is required by federally regulated or insured mortgage lenders.
+  REQUIRED
+
+  # Flood insurance is recommended but is likely not federally required.
+  RECOMMENDED
+
+  # Flood insurance requirement is unknown.
+  NULL
+}
+
+# Query to obtain flood-related data.
+type FloodQuery {
+  # Historic event batch lookup. Can lookup up to 35 historic events.
+  historicEvents(eventIds: [Int64!]!): [FloodHistoricEventRecord]
+
+  # Tide station details batch lookup.
+  tideStations(tideStationIds: [Int64!]!): [TideStation]
+
+  # Adaptation project batch lookup. Can lookup up to 35 adaptations.
+  adaptations(adaptationIds: [Int64!]!): [FloodAdaptation]
+
+  # Map lookup.  Returns map metadata such as legends.
+  mapLegend: MapLegend!
+}
+
+# Flood indicators.
+interface FloodStatistic {
+  # The location's risk direction represented in a numeric value based on the change in risk for the location from 2020 to 2050 for the climate model realization of the RCP 4.5 mid emissions scenario.
+  #
+  # -1 = decreasing
+  # 0 = stationary
+  # 1 = increasing
+  riskDirection: Int64
+
+  # Denotes what environmental risks impact the location represented in a numeric value.
+  #
+  # 1 = precipitation
+  # 2 = precipitation and sea level rise
+  # 3 = precipitation, sea level rise and hurricane storm surge
+  #
+  # Coastal areas on the East Coast and Hawaii will return 3, other coastal areas will return 2 and all other locations will return 1.
+  environmentalRisk: Int64
+}
+
+enum InsuranceClassification {
+  HO3
+  HO4
+  HO6
+}
+
+type InsuranceHippoRate {
+  # The URL to purchase the insurance
+  link: String!
+
+  # The policy's classification.
+  # There will always only 1 of each type of policy classification.
+  # (For example, HO3 will only appear on the list once, but can appear alongside HO4)
+  #
+  # HO3: Single family
+  # HO4: Renters
+  # HO6: Condos/Townhomes
+  # N/A: Unavailable
+  classification: InsuranceClassification!
+
+  # The minimum price for the policy
+  minPrice: Int!
+
+  # The maximum price for the policy
+  maxPrice: Int!
+
+  # Number of providers available for the policy (Can be 0)
+  providers: Int!
+
+  # The amount the coverage is intended for in the following order
+  contentsCoverage: Int
+  homeCoverage: Int
+  dwellingCoverage: Int
+}
+
+# Insurance provider details.
+type InsuranceProvider {
+  # Insurance provider name.
+  name: String
+
+  # Insurance provider logo.
+  logo: String
+}
+
+scalar Int64
+
+# Fire details for locality.
+type LocalityFire implements FireStatistics & Excluding {
+  # Overall direction of risk, computed by taking a weighted average of risk directions at parcels and infrastructure facilities here
+  # (-1 is decreasing, 0 is unchanging, 1 is increasing)
+  riskDirection: Int64
+
+  # Risk Factor Fire Factor report link
+  link: String!
+
+  # Fire probabilty details for locality.
+  probability: LocalityFireProbability
+
+  # The locality's fire historical events, as a connection. Sorted in reverse chronological order.
+  historicConnection(
+    # Number of records(edges) to return. A number between 0 and 100.
+    first: Int
+
+    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.
+    after: String
+
+    # Filter fire historic events
+    filter: FireHistoricEventFilter
+  ): FireHistoricConnection
+
+  # Data about fire risk for locality infrastructure and community facilities.
+  communityRisk: LocalityFireFacilityRisk
+
+  # If locality is excluded, the reason for exclusion.
+  exclusion: Exclusion
+}
+
+type LocalityFireFacilityRisk {
+  # Total number of facilities serving the locality. For road centerlines, the count is in meters.
+  facilitiesCount: Int64!
+
+  # A categorical 0-5 score for each county in each category.
+  score: Int64
+
+  # Overall direction of risk for the facility.
+  #
+  # (-1 is decreasing, 0 is unchanging, 1 is increasing)
+  riskDirection: Int64!
+
+  # Facility category.
+  facilitiesCategory: [LocalityFireFacilityRiskCategorySummary]
+}
+
+# Community fire risk facility category statistics.
+type LocalityFireFacilityRiskCategoryStat {
+  # Year used for the model.
+  year: Int64!
+
+  # Year relative to this year.
+  relativeYear: Int64!
+
+  # Count of facilities (with this category in this county in this year) that have the burn probability exceeding threshold.
+  facilitiesFireRisk: Int64
+}
+
+# Facility category
+type LocalityFireFacilityRiskCategorySummary {
+  # Id of the category.
+  #
+  # Example: *10*
+  facilityCategoryId: Int64!
+
+  # Count of features (with this category in this county in this year) that have some fire risk.
+  facilitiesCount: Int64!
+
+  # Overall direction of risk for the facility category.
+  # (-1 is decreasing, 0 is unchanging, 1 is increasing)
+  riskDirection: Int64
+
+  # A categorical 0-5 score for each category.
+  score: Int64
+
+  # Fire risk category statistics.
+  risks: [LocalityFireFacilityRiskCategoryStat]
+}
+
+# The information associated with the event(s) for event(s) where the area of the model simulation of the historic event overlaps any area of the location.
+# This includes event ID (unique First Street ID assigned to all modeled historic events), type, name and fire impact to the location.
+type LocalityFireHistoric implements FireHistoricEvent {
+  # An id assigned to this locality - historic event relationship.
+  id: Int64!
+
+  # A unique First Street identifier assigned to each modeled historic event.
+  eventId: Int64!
+
+  # The name of the modeled historic event if it exists.
+  name: String!
+
+  # Categorization of event type (wildfire, prescribed fire, wildland fire use, unknown, out of area responses, or complex).
+  type: String!
+
+  # The year when the event occured.
+  year: Int64!
+
+  # The month when the event occured.
+  month: Int64!
+
+  # Area of the historic event's polygon in square kilometers.
+  area: Int64!
+
+  # The count of parcels that had the building footprint within the mapped area of the historic event's geometry intersecting locality.
+  affectedProperties: Int64!
+
+  # The total count of parcels that had the building footprint within the mapped area of the historic event's geometry.
+  eventNearbyProperties: Int64!
+
+  # The total count of parcels that had the building footprint within the mapped area of the historic event's geometry.
+  eventAffectedProperties: Int64!
+
+  # A collection of nodes that represents geographical information for the historic event.
+  geometry: LocationGeometry
+}
+
+# Total count of properties with fire risk broken down by year
+type LocalityFireProbability {
+  count: [LocalityFireProbabilityCount]
+}
+
+type LocalityFireProbabilityCount {
+  count: Int64!
+  year: Int64!
+  relativeYear: Int64!
+}
+
+# Flood details for locality.
+type LocalityFlood implements FloodStatistic & Excluding {
+  # The location's risk direction represented in a numeric value based on the change in risk for the location from 2020 to 2050 for the climate model realization of the RCP 4.5 mid emissions scenario.
+  #
+  # -1 = decreasing
+  # 0 = stationary
+  # 1 = increasing
+  riskDirection: Int64
+
+  # Risk Factor link to Flood Report for the locality
+  link: String!
+
+  # Denotes what environmental risks impact the location represented in a numeric value.
+  #
+  # 1 = precipitation
+  # 2 = precipitation and sea level rise
+  # 3 = precipitation, sea level rise and hurricane storm surge
+  #
+  # Coastal areas on the East Coast and Hawaii will return 3, other coastal areas will return 2 and all other locations will return 1.
+  environmentalRisk: Int64
+
+  # Flood probabilty details for locality.
+  probability: LocalityFloodProbability
+
+  # Provides the number of residential properties with any loss and the average dollar value loss broken down by Flood Factor score.
+  AAL: LocalityFloodAAL
+
+  # The list of modeled historic events that inundated the location.
+  # Inundation is defined as having flood depth >0 for property queries or >1 property with >0 flood depth for higher-level locations.
+  # Flood depth is calculated at the lowest elevation of the building footprint (largest if more than 1 exists, or property centroid where footprint does not exist).
+  historic: [LocalityFloodHistoric]
+
+  # Provides information from community-wide grey and green adaptation projects across the United States categorized into 40 different Adaptation Types.
+  # Returns data as a connection.
+  #
+  # **Features**
+  #
+  # - Identify all large-scale adaptation projects that serve an area
+  # - Understand how many properties served by a particular adaptation structure or project
+  # - Recognize to what extent, an area is protected or what level of event a project can withstand
+  # - Access information for large-scale adaptation projects across the country
+  adaptationConnection(
+    # Number of records(edges) to return. A number between 0 and 100.
+    first: Int
+
+    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.
+    after: String
+  ): PageConnection
+
+  # Data about flood risk for locality infrastructure and community facilities.
+  communityRisk: LocalityFloodFacilityRisk
+
+  # The Social Vulnerability Index
+  SoVI: LocalityFloodSovi
+
+  # Details about flood environmental details, such as precipitation, sea level and tide stations.
+  environmental: LocalityFloodEnvironmental
+
+  # If locality is excluded, the reason for exclusion.
+  exclusion: Exclusion
+}
+
+# Tthe number of residential properties with any loss and the average dollar value loss broken down by Flood Factor score.
+type LocalityFloodAAL {
+  # It provides an array with the count and dollar loss for properties with loss in that location along with associated year and Flood Factor score.
+  # The low, mid, and high count of residential properties with value loss due to flood risk.
+  annualLoss: [LocalityFloodAnnualLoss]
+
+  # It provides an array with the count and dollar loss for properties with loss in that location along with associated year.
+  # The low, mid, and high count of residential properties with value loss due to flood risk.
+  annualLossByYear(
+    # One or more relative year values to create annual loss for.
+    # Default: *0, 30*
+    relativeYear: [Int64!]
+  ): [LocalityFloodAnnualLossesByYear]
+}
+
+# Details for locality flood losses.
+#
+# The low, mid, high are based on 3 potential climate model realizations of the RCP 4.5 emissions scenario.
+#
+# Losses are determined by using the USACE depth damage functions for Riverine and Surge flooding. Damage due to precipitation flooding is given by a conservative depth damage function developed by First Street Foundation.
+type LocalityFloodAnnualLoss implements OverTime {
+  # The year (2020, 2025, 2030, 2035, 2040, 2045, or 2050) the dollar loss was calculated for.
+  year: Int64!
+
+  # The year relative to 2020.
+  relativeYear: Int64!
+
+  # The total US dollar loss for all properties with the associated Flood Factor level of risk in the location based on the low scenario of the RCP 4.5 emissions curve.
+  totalLossLow: Int64!
+
+  # The total US dollar loss for all properties with the associated Flood Factor level of risk in the location based on the mid scenario of the RCP 4.5 emissions curve.
+  totalLossMid: Int64!
+
+  # The total US dollar loss for all properties with the associated Flood Factor level of risk in the location based on the high scenario of the RCP 4.5 emissions curve.
+  totalLossHigh: Int64!
+
+  # The count of properties with value loss due to flood risk in the location based on the low scenario of the RCP 4.5 emissions curve.
+  countLow: Int64!
+
+  # The count of properties with value loss due to flood risk in the location based on the mid scenario of the RCP 4.5 emissions curve.
+  countMid: Int64!
+
+  # The count of properties with value loss due to flood risk in the location based on the high scenario of the RCP 4.5 emissions curve.
+  countHigh: Int64!
+
+  # The property's Flood Factor, a numeric integer from 1-10 (where 1 = minimal and 10 = extreme) based on flooding risk to the building footprint.
+  floodFactor: Int64
+}
+
+# The number of residential properties with any loss and the average dollar value loss broken down by year.
+type LocalityFloodAnnualLossesByYear implements OverTime {
+  # The year (2020, 2025, 2030, 2035, 2040, 2045, or 2050) the dollar loss was calculated for.
+  year: Int64!
+
+  # The year relative to 2020.
+  relativeYear: Int64!
+
+  # The total US dollar loss for all properties with the associated Flood Factor level of risk in the location based on the low scenario of the RCP 4.5 emissions curve.
+  totalLossLow: Int64!
+
+  # The total US dollar loss for all properties with the associated Flood Factor level of risk in the location based on the mid scenario of the RCP 4.5 emissions curve.
+  totalLossMid: Int64!
+
+  # The total US dollar loss for all properties with the associated Flood Factor level of risk in the location based on the high scenario of the RCP 4.5 emissions curve.
+  totalLossHigh: Int64!
+
+  # The count of properties with value loss due to flood risk in the location based on the low scenario of the RCP 4.5 emissions curve.
+  countLow: Int64!
+
+  # The count of properties with value loss due to flood risk in the location based on the mid scenario of the RCP 4.5 emissions curve.
+  countMid: Int64!
+
+  # The count of properties with value loss due to flood risk in the location based on the high scenario of the RCP 4.5 emissions curve.
+  countHigh: Int64!
+}
+
+# Details about flood environmental details, such as precipitation, sea level and tide stations.
+type LocalityFloodEnvironmental {
+  # Delivers the future projections for 2020, 2035 and 2050, from the average change in extreme precipitation event intensity using historical data for the county.
+  precipitation: LocalityFloodEnvironmentalPrecipitation
+
+  # Delivers the tide station names and IDs for all tide stations associated with the state.
+  seaLevel: LocalityFloodEnvironmentalSeaLevel
+}
+
+# Delivers the future projections for 2020, 2035 and 2050, from the average change in extreme precipitation event intensity using historical data for the county.
+type LocalityFloodEnvironmentalPrecipitation {
+  # The projections for 2020, 2035, and 2050 with the low, mid and high countywide average change (using historical precipitation data from 1980-2010 (centered on 1995)) in extreme precipitation event intensity based on 3 potential climate model realizations of the RCP 4.5 emissions scenario.
+  projected: [LocalityFloodEnvironmentalPrecipitationProjected]
+}
+
+# The projections for 2020, 2035, and 2050 with the low, mid and high countywide average change (using historical precipitation data from 1980-2010 (centered on 1995)) in extreme precipitation event intensity based on 3 potential climate model realizations of the RCP 4.5 emissions scenario.
+type LocalityFloodEnvironmentalPrecipitationProjected implements OverTime {
+  # The year (2020, 2030, 2040, or 2050) of the projection.
+  year: Int64!
+
+  # The year relative to 2020.
+  relativeYear: Int64!
+
+  # The projected level of modeled flooding for the location for the associated year based on the low scenario of the RCP 4.5 emissions curve.
+  low: Float
+
+  # The projected level of modeled flooding for the location for the associated year based on the mid scenario of the RCP 4.5 emissions curve.
+  mid: Float
+
+  # The projected level of modeled flooding for the location for the associated year based on the high scenario of the RCP 4.5 emissions curve.
+  high: Float
+}
+
+# Delivers the tide station names and IDs for all tide stations associated with the state.
+type LocalityFloodEnvironmentalSeaLevel {
+  # A TideStation provides metadata as well as the annual observed mean sea level rise (1980-2020), and sea level rise projection by 10 year increments (2020-2050).
+  tideStation: [TideStation]
+}
+
+# Details about community facility categories.
+type LocalityFloodFacilityCategory {
+  # CategoryId as assigned by FirstStreet.
+  facilityCategoryId: Int64!
+
+  # Facility category name.
+  name: String
+
+  # Facility category description.
+  description: String
+}
+
+# Details about community facility/infrastructure.
+type LocalityFloodFacilityMetadata {
+  # Community facility category.
+  category: [LocalityFloodFacilityCategory]
+
+  # Community facility type.
+  type: [LocalityFloodFacilityType]
+}
+
+# Flood risk for locality infrastructure and community facilities.
+type LocalityFloodFacilityRisk {
+  # Total number of facilities serving the locality. For road centerlines, the count is in meters.
+  facilitiesCount: Int64!
+
+  # A categorical 0-5 score for each county in each category.
+  score: Int64
+
+  # The location's risk direction represented in a numeric value based on the change in risk for the location from 2020 to 2050 for the climate model realization of the RCP 4.5 mid emissions scenario.
+  #
+  # -1 = decreasing
+  # 0 = stationary
+  # 1 = increasing
+  riskDirection: Int64!
+
+  # Facility category.
+  facilitiesCategory: [LocalityFloodFacilityRiskCategorySummary]
+}
+
+# Community flood risk facility category statistics.
+type LocalityFloodFacilityRiskCategoryStat {
+  # Year used for the model.
+  year: Int64!
+
+  # Year relative to 2020.
+  relativeYear: Int64!
+
+  # Count of facilities (with this category in this county in this year) that have some flood risk. For road centerlines, the count is in meters.
+  facilitiesOperationalRisk: Int64
+
+  # Count of facilities (with this category in this county in this year) that have an expected depth that exceeds the threshold. For road centerlines, the count is in meters
+  facilitiesWaterRisk: Int64
+}
+
+# Facility category
+type LocalityFloodFacilityRiskCategorySummary {
+  # Id of the category.
+  #
+  # Example: *10*
+  facilityCategoryId: Int64!
+
+  # Count of features (with this category in this county in this year) that have some flood risk. For road centerlines, the count is in meters.
+  facilitiesCount: Int64!
+
+  # The location's risk direction represented in a numeric value based on the change in risk for the location from 2020 to 2050 for the climate model realization of the RCP 4.5 mid emissions scenario.
+  #
+  # -1 = decreasing
+  # 0 = stationary
+  # 1 = increasing
+  riskDirection: Int64
+
+  # A categorical 0-5 score for each category.
+  score: Int64
+
+  # Flood risk category statistics.
+  risks: [LocalityFloodFacilityRiskCategoryStat]
+}
+
+# Details about community facility types.
+type LocalityFloodFacilityType {
+  # TypeId as assigned by FirstStreet.
+  facilityTypeId: Int64!
+
+  # CategoryId as assigned by FirstStreet.
+  facilityCategoryId: Int64!
+
+  # Facility type name.
+  name: String
+}
+
+# The information associated with the event(s) for event(s) where the area of the model simulation of the historic event overlaps any area of the location.
+# This includes event ID (unique First Street ID assigned to all modeled historic events), type, name and flood impact to the location.
+# Impact includes the total count of affected properties broken down by depth bin.
+# Available depth bins begin at 5-10cm of flooding (displayed as "5") and are provided in 5 cm increments up to 120-125cm of flooding (displayed as "120"). Everything with greater than 125cm of flooding is bulked together at 125.
+type LocalityFloodHistoric implements FloodHistoricEvent {
+  # A unique First Street identifier assigned to each modeled historic event.
+  eventId: Int64!
+
+  # The name of the modeled historic event if it exists (note: several were strong pluvial events).
+  name: String!
+
+  # Categorization of event type (hurricane, fluvial, nor'easter, or tropical storm).
+  type: String!
+
+  # The year when the event occured.
+  year: Int64!
+
+  # The month when the event occured.
+  month: Int64!
+
+  # The estimated recurrence interval of the event, or the inverse of the annual likelihood. For example a 1 in 500 annual likelihood event.
+  returnPeriod: Int64
+
+  # The total count of parcels that had any flooding (>0) to the building footprint that are within the mapped area of the historic event's geometry.
+  affectedProperties: Int64!
+
+  # A collection of nodes that represents geographical information for the historic event.
+  geometry: LocationGeometry
+
+  # Historic summary by depth.
+  data: [LocalityFloodHistoricData]
+}
+
+# Historic summary by depth.
+type LocalityFloodHistoricData {
+  # The depth of flooding (in centimeters ) from the historic event.
+  # Available depth bins begin at 5-10cm of flooding (displayed as "5") and are provided in 5 cm increments up to 120-125cm of flooding (displayed as "120").
+  # Everything with greater than 125cm of flooding is bulked together at 125.
+  # Flood depth is calculated at the lowest elevation of the building footprint (largest if more than 1 exists, or property centroid where footprint does not exist).
+  bin: Int64!
+
+  # The total count of affected properties for the specified depth bin for the location.
+  count: Int64!
+}
+
+# Details about insurance for specific locality
+type LocalityFloodInsurance {
+  # Count of properties requiring insurance
+  propertyInsuranceCount: Int64
+
+  # Insurance premium based on 125000$ coverage minimum.
+  premium125Min: Int64
+
+  # Insurance premium based on 125000$ coverage maximum.
+  premium125Max: Int64
+
+  # Insurance premium based on 250000$ coverage minimum.
+  premium250Min: Int64
+
+  # Insurance premium based on 250000$ coverage maximum.
+  premium250Max: Int64
+
+  # Insurance provider details.
+  provider: InsuranceProvider!
+
+  # Insurance provider disclaimer(s).
+  disclaimer: [String]
+
+  # URL to the insurance provider's website for insurance purchase.
+  purchaseLink: String!
+}
+
+# Delivers the total count of properties with flood risk within the location broken down by depth threshold, return period and year.
+type LocalityFloodProbability {
+  # Counts of affected properties.
+  count: [LocalityFloodProbabilityCount]
+
+  # Flood probability rate over 30 years.
+  risks: LocalityFloodRisks
+  countSummary(
+    # One or more relative year values to create summary for.
+    # Default: *0, 15, 30*
+    relativeYear: [Int64!]
+
+    # One or more return period values to create summary for.
+    # Default: *5, 20, 100, 250, 500*
+    returnPeriod: [Int64!]
+  ): [LocalityFloodProbabilityCountSummary]
+}
+
+# Locality Specific Probablity. Returns total count of properties with flood risk within the location broken down by depth threshold, return period and year.
+type LocalityFloodProbabilityCount implements OverTime {
+  # The year (2020 or 2050) the probability was calculated for.
+  year: Int64!
+
+  # The year relative to 2020.
+  relativeYear: Int64!
+
+  # The return period (500, 100, 20, 5, or 2 years) that the depth was calculated for.
+  returnPeriod: Int64!
+
+  # The depth of flooding (in centimeters) that the probability was calculated for.
+  # Available depth bins begin at 0-5cm of flooding (displayed as “0”) and are provided in 5 cm increments up to 120-125cm of flooding (displayed as “120").
+  # Everything with greater than 125cm of flooding is bulked together at 125.
+  # Flood depth is calculated at the lowest elevation of the building footprint (largest if more than 1 exists, or property centroid where footprint does not exist).
+  threshold: Int64!
+
+  # The total count of properties that exist in that return period and depth bin, based on the low scenario of the RCP 4.5 emissions curve.
+  low: Int64
+
+  # The total count of properties that exist in that return period and depth bin, based on the mid scenario of the RCP 4.5 emissions curve.
+  mid: Int64
+
+  # The total count of properties that exist in that return period and depth bin, based on the high scenario of the RCP 4.5 emissions curve.
+  high: Int64
+}
+
+# Delivers the total count of properties with flood risk within the location broken down by year and return period.
+type LocalityFloodProbabilityCountSummary implements OverTime {
+  # The year (2020, 2025, 2030, 2035, 2040, 2045, or 2050) the depth was calculated for.
+  year: Int64!
+
+  # The year relative to 2020.
+  relativeYear: Int64!
+
+  # The return period (500, 250, 100, 50, 20, 10, 5, or 2 years) that the sum was calculated for.
+  returnPeriod: Int64!
+
+  # The depth in centimeters for the specified return period based on the low scenario of the RCP 4.5 emissions curve.
+  low: Int64
+
+  # The depth in centimeters for the specified return period based on the mid scenario of the RCP 4.5 emissions curve.
+  mid: Int64
+
+  # The depth in centimeters for the specified return period based on the hihg scenario of the RCP 4.5 emissions curve.
+  high: Int64
+}
+
+# Summarizes flood probability counts for 30 years.
+type LocalityFloodRisks {
+  # Flood risk on national level
+  national: LocalityFloodRisksData
+
+  # Flood risk for the locality
+  regional: LocalityFloodRisksData
+}
+
+type LocalityFloodRisksData {
+  # Percentage of growth of the number of properties at risk of flooding over the next 30 year.
+  riskCountChangePercent: Float
+}
+
+# The Social Vulnerability Index details.
+type LocalityFloodSovi {
+  # TODO: need definition.
+  percentile: Float
+}
+
+# Provides information on the number of policies, number of claims, amount of coverage, and amount paid on claims for buildings and contents as well as the increased cost of compliance for the location.
+type LocalityNFIP {
+  # The total count of entries in the claims dataset for the location. The claims data is sourced from FEMA's release of anonymized claims data in March of 2019. For county and tract queries, the geography is matched to the FIPS code. For ZIP queries, the reported ZIP of the property is used.
+  claimCount: Int64
+
+  # The total count of National Flood Insurance Program (NFIP) insurance policies for the location from the Federal Emergency Management Agency (FEMA) dataset.
+  policyCount: Int64
+
+  # The total sum cost in US dollars paid on the claims related to buildings. The claims data is sourced from FEMA's release of anonymized claims data in March of 2019. For county and tract queries, the geography is matched to the FIPS code. For ZIP queries, the reported ZIP of the property is used.
+  buildingPaid: Int64
+
+  # The total sum cost in US dollars paid on the claims related to the contents of buildings. The claims data is sourced from FEMA's release of anonymized claims data in March of 2019. For county and tract queries, the geography is matched to the FIPS code. For ZIP queries, the reported ZIP of the property is used.
+  contentPaid: Int64
+
+  # The total sum in US dollars of insurance coverage on buildings through National Flood Insurance Program (NFIP) insurance policies for the location.
+  buildingCoverage: Int64
+
+  # The total sum in US dollars of insurance coverage on contents of buildings through National Flood Insurance Program (NFIP) insurance policies for the location.
+  contentCoverage: Int64
+
+  # The total sum in US dollars paid on the Increased Cost of Compliance (ICC) claims for the location. ICC coverage is one of several flood insurances resources for policyholders who need additional help rebuilding after a flood. It provides up to $30,000 to help cover the cost of mitigation measures that will reduce the flood risk.
+  ICCPaid: Int64
+}
+
+# A `location` is a parcel that is represented in the First Street API. Each location has a unique `fsid` that is canonically attached to its parcel, based on its type.
+#
+# It is important to note that FSIDs may collide when referencing different location types.  For example, a `property` location may have an `FSID of 1` while a `state` location may also have an `FSID of 1`.
+interface Location {
+  fsid: Int64!
+}
+
+# Geographical metadata for a Location, represented in GeoJSON
+#
+# Warning: *Retrieving geometry is a resource-intensive operation and should be kept to a minimum.
+type LocationGeometry {
+  bbox: Bbox
+  center: Center
+  polygon: Polygon
+}
+
+enum LocationType {
+  PROPERTY
+  CITY
+  COUNTY
+  STATE
+  ZCTA
+  TRACT
+  CD
+  NEIGHBORHOOD
+  COUSUB
+}
+
+# Different types of supported lookups
+enum LookupType {
+  ADDRESS
+  COORDINATE
+  FSID
+  LOCID
+  APN
+}
+
+# Map legend
+type MapLegend {
+  colors: [MapLegendColor]
+}
+
+# Map legend - color
+type MapLegendColor {
+  # What the given color represents.
+  represents: MapLegendColorRepresentation!
+
+  # HEX value of the color
+  color: String!
+}
+
+type MapLegendColorRepresentation {
+  min: Float
+  max: Float
+  unit: String!
+}
+
+# Neighborhood data.
+#
+# Encompasses macro neighborhoods, neighborhood, sub-neighborhoods and residential districts (e.g. subdivisions and apartment complexes)
+type Neighborhood implements Location {
+  # First Street ID (FSID) is a unique identifier assigned to each location.
+  #
+  # Example: 68501
+  fsid: Int64!
+
+  # The neighborhood's city.
+  city: [City]
+
+  # The neighborhood's name. This encompasses macro neighborhoods, neighborhood, sub-neighborhoods and residential districts (e.g. subdivisions and apartment complexes).
+  #
+  # Example: *Union Hill-Novelty Hill*
+  name: String
+
+  # The neighborhood's subtype code. Macro neighborhoods = M, neighborhood = N, sub-neighborhoods = S and residential districts = R
+  subtype: String
+
+  # The neighborhood's county.
+  county: [County]
+
+  # The neighborhood's county subdivision.
+  cousub: [CountySubdivision]
+
+  # The neighborhood's state.
+  state: State
+
+  # A collection of nodes that represents geographical information for the neighborhood.
+  geometry: LocationGeometry
+
+  # Flood details for the neighborhood.
+  flood: LocalityFlood
+
+  # Fire details for the neighborhood.
+  fire: LocalityFire
+
+  # fsfLink is First Street's link to the neighborhood on FirstStreet's website.
+  #
+  # Example: *https://floodfactor.com/neighborhood/68501_fsid?utm_medium=overlay*
+  fsfLink: String
+
+  # List of properties in the neighborhood, as a connection.
+  propertyConnection(
+    # Number of records(edges) to return. A number between 0 and 100.
+    first: Int
+
+    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.
+    after: String
+
+    # Filter the properties of this neighborhood.
+    filter: PropertyFilters
+  ): PageConnection
+}
+
+# Represents data over years
+interface OverTime {
+  # The year in which the represented data is categorized for
+  year: Int64!
+
+  # A relative representation of `year`
+  relativeYear: Int64!
+}
+
+# Pagination information built based on [Relay](https://relay.dev/graphql/connections.htm) standard.
+type PageConnection {
+  # Returns a list type that wraps edge type.
+  edges: [PageEdge!]!
+
+  # Pagination information in relation to current page.
+  pageInfo: PageInfo!
+
+  # Total number of records for the connection.
+  #
+  # Example: *15382*
+  totalCount: Int64
+}
+
+# Represents one record for the current page.
+type PageEdge {
+  # Cursor is a string that can be used in subsequent request as value of a connection "after" argument, to request page starting after this item.
+  #
+  # Example: *Y3Vyc29yOjEyNTI0MA==*
+  cursor: String
+
+  # Contains one page record data
+  node: PagePreview!
+}
+
+# PageInfo is returned for a connection. It contains pagination-related info, as well as connection edges (page entries).
+type PageInfo {
+  # hasPreviousPage informs if there is a previous page
+  hasPreviousPage: Boolean!
+
+  # hasNextPage informs if there is a next page
+  hasNextPage: Boolean!
+
+  # startCursor refers to the cursor at start of the first page.
+  #
+  # Example: *Y3Vyc29yOjEwMDU=*
+  startCursor: String
+
+  # endCursor refers to the the last item of the last page.
+  #
+  # Example: *Y3Vyc29yOjEwMTI=*
+  endCursor: String
+}
+
+# PagePreview contains the minimal amount of data to allow detailed lookups on as-needed basis.
+type PagePreview {
+  # FSID of the item.
+  id: Int64!
+
+  # Name of the item.
+  name: String
+
+  # Additional information about the item as available.
+  descriptor: String
+}
+
+# The polygon GeoJSON (MultiPoint)
+type Polygon {
+  # GeoJSON geometry type MultiPoint.
+  type: String
+
+  # Coordinates of the MultiPoint
+  #
+  # Example: *[[[[-76.963417312,39.400443189],[-76.963460575,39.400683755],[-76.962656664,39.400823574],[-76.962570569,39.400561332],[-76.963417312,39.400443189]]]]*
+  coordinates: [[[[Float!]]]]
+}
+
+# Property details.
+#
+# Based on the legal boundary of a property as recognized by a state or local government.
+type Property implements Location {
+  # First Street ID (FSID) is a unique identifier assigned to each location.
+  #
+  # Example: 392804911
+  fsid: Int64!
+
+  # The property's address fields.
+  address: PropertyAddress
+
+  # The property's alternative addresses.
+  alternativeAddresses: [PropertyAddress]
+
+  # The property's city.
+  city: City
+
+  # The property's state.
+  state: State
+
+  # The property's county.
+  county: County
+
+  # The property's congressional district including the FSID and name.
+  cd: CongressionalDistrict
+
+  # The property's ZIP code tabulation area (ZCTA) provided by the Census Bureau including the zcta FSID and name.
+  zcta: Zcta
+
+  # The property's census tract provided by the Census Bureau, including the tract FSID and name.
+  tract: Tract
+
+  # The neighborhood(s) the property is associated with as an array, including each associated neighborhood's name and FSID.
+  # This encompasses macro neighborhoods, neighborhood, sub-neighborhoods and residential districts (e.g. subdivisions and apartment complexes).
+  neighborhood: [Neighborhood]
+
+  # The property's county subdivision, including the county subdivision FSID and name.
+  cousub: CountySubdivision
+
+  # The Federal Emergency Management Agency (FEMA) flood zone designation name. These zones are used by FEMA to designate the Special Flood Hazard Areas (SFHA) and for insurance rating purposes.
+  #
+  # Example: Zone A
+  femaZone: String
+
+  # A collection of nodes that represents geographical information for the property.
+  geometry: LocationGeometry
+
+  # Indicates whether First Street has information about the largest building footprint on the property from which the property's flood risk stats are calculated.
+  #
+  # Example: 5
+  footprint: Boolean
+
+  # The height in centimeters associated with the floor elevation for the building.
+  #
+  # Example: 23
+  floorElevation: Int64
+
+  # Indicates if the property is used for residential purposes.
+  #
+  # Example: true
+  isResidential: Boolean
+
+  # Information about the building the property is located in, as applicable.
+  building: Building
+
+  # The Automated Valuation Model (AVM) provides the modeled real estate market value for the property as well as the providerId for the provider of the AVM model.
+  AVM: PropertyAVM
+
+  # fsfLink is First Street's link to the property on FirstStreet's website.
+  #
+  # Example: *https://floodfactor.com/property/240652458_fsid?utm_medium=overlay&utm_source=realtor*
+  fsfLink: String @deprecated(reason: "fsfLink is deprecated, use the child `link` field within the climate peril.")
+
+  # Flood details for the property.
+  flood: PropertyFlood
+
+  # Fire details for the property.
+  fire: PropertyFire
+}
+
+# PropertyAVM is modeled real estate market value for the property as well as the providerId for the provider of the AVM model. Default provider is First Street Foundation (providerId: 2).
+type PropertyAVM {
+  # First Street AVM lower bound.
+  low: Int64
+
+  # First Street automated valuation model.
+  mid: Int64
+
+  # First Street AVM upper bound.
+  high: Int64
+}
+
+type PropertyAddress {
+  # The property's complete street address name.
+  #
+  # Example: *123 Main St Chicago 60106 IL*
+  formattedAddress: String
+}
+
+# Property filters related to flood factor
+input PropertyFilterFloodFactor {
+  floodFactorGE: Int64
+  floodFactorLE: Int64
+}
+
+# Property filters related to flood risk
+input PropertyFilterFloodRisk {
+  atRisk: Boolean
+}
+
+# Filters to narrow the list of properties.
+# Please define one sub-node only.  Filters don't work if, for example, floodFactor and floodRisk are defined.
+input PropertyFilters {
+  floodFactor: PropertyFilterFloodFactor
+  floodRisk: PropertyFilterFloodRisk
+  floodAdaptation: PropertyFiltersFloodAdaptation
+  includeExcludedInTotalCount: Boolean
+}
+
+# Property filters related to flood adaptation
+input PropertyFiltersFloodAdaptation {
+  hasAdaptation: Boolean
+}
+
+type PropertyFire implements FireStatistics & Excluding {
+  # The property's Fire Factor
+  fireFactor: Int64
+
+  # Risk Factor link to Fire Report for the property
+  link: String!
+
+  # US Forest Service Relative Risk Rank
+  usfsRelativeRisk: Float
+
+  # The level of combustibility associated with open space around the main building on this property. Adding open, defensible space around a building reduces fire risk.
+  defensibleSpace: CombustibilityRating
+
+  # The sign of future burn probability minus current burn probability (-1 is decreasing, 0 is unchanging, 1 is increasing)
+  riskDirection: Int64
+
+  # The property's fire historical events, as a connection. Sorted in reverse chronological order and descending by distance.
+  historicConnection(
+    # Number of records(edges) to return. A number between 0 and 100.
+    first: Int
+
+    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.
+    after: String
+
+    # Filter fire historic events
+    filter: FireHistoricEventFilter
+  ): FireHistoricConnection
+
+  # Probability data for the property
+  probability: PropertyFireProbability
+
+  # Insurance quote from Hippo Insurance
+  insuranceHippo(
+    # Class to return. By default quotes for all insurance classes will be returned.
+    classification: InsuranceClassification
+  ): PropertyInsuranceHippo
+
+  # If property is excluded, the reason for exclusion.
+  exclusion: Exclusion
+}
+
+# The information associated with the event(s) for event(s) where the area of the model simulation of the historic event overlaps any area of the location.
+# This includes event ID (unique First Street ID assigned to all modeled historic events), type, name and fire impact to the location.
+type PropertyFireHistoric implements FireHistoricEvent {
+  # An id assigned to this property - historic event relationship.
+  id: Int64!
+
+  # A unique First Street identifier assigned to each modeled historic event.
+  eventId: Int64!
+
+  # The name of the modeled historic event if it exists.
+  name: String!
+
+  # Categorization of event type (wildfire, prescribed fire, wildland fire use, unknown, out of area responses, or complex).
+  type: String!
+
+  # The year when the event occured.
+  year: Int64!
+
+  # The month when the event occured.
+  month: Int64!
+
+  # Area of the historic event's polygon in square kilometers.
+  area: Int64!
+
+  # The total count of parcels that had the building footprint within the mapped area of the historic event's geometry.
+  eventAffectedProperties: Int64!
+
+  # The total count of parcels that were closer than 32187 meters from the building footprint to the historic event's geometry.
+  eventNearbyProperties: Int64!
+
+  # The distance from the parcel centroid to the burn perimeter in meters.
+  distance: Int64
+
+  # A collection of nodes that represents geographical information for the historic event.
+  geometry: LocationGeometry
+}
+
+# Fire probability details for property.
+type PropertyFireProbability {
+  burn: [PropertyFireProbabilityBurn]
+  cumulative: [PropertyFireProbabilityCumulative]
+  damage: PropertyFireProbabilityDamage
+}
+
+# Fire probability details for property
+type PropertyFireProbabilityBurn {
+  year: Int64!
+
+  # Year relative to 2020.
+  relativeYear: Int64!
+
+  # The percent chance of burn for the given year
+  percent: Float
+
+  # Max height of flame length
+  flameMax: Float!
+
+  # Mean height of flame length
+  flameMean: Float!
+
+  # Distribution of expected flame heights, represented in feet
+  # 0 - 2 feet, 2-4 feet, 4-8 feet, 8 - 12 feet, 12-20 feet, 20 feet+
+  flameBin: [Float!]
+
+  # A boolean flag that determines if the property is in an area that would experience embers from a nearby wildfire
+  emberZone: Boolean!
+}
+
+# The wildfire risk likelihood (% probability) to the building footprint by cumulative year.
+type PropertyFireProbabilityCumulative {
+  # Year asscociated with the point.
+  year: Int64!
+
+  # Year increments in relation to this year.
+  relativeYear: Int64!
+
+  # The max height of the y axis when the data point is being represented on a graph (from 0-100, where 100 is the max value).
+  yMax: Int
+
+  # The data point.
+  point: Float
+}
+
+# Fire damage probability.
+type PropertyFireProbabilityDamage {
+  conditional: [PropertyFireProbabilityDamageConditional]
+}
+
+# The likelihood a structure ignites if it is within a fire. This field is beta and is subject to change.
+type PropertyFireProbabilityDamageConditional {
+  year: Int64!
+  relativeYear: Int64!
+  flameLossConditional: Float
+  flameTimeConditional: Float
+  flameLoss: Float
+  flameTime: Float
+  emberLoss: Float
+  emberTime: Float
+}
+
+# Flood details for property.
+type PropertyFlood implements FloodStatistic & Excluding {
+  # The property's Flood Factor, a numeric integer from 1-10 (where 1 = minimal and 10 = extreme) based on flooding risk to the building footprint.
+  # Flood risk is defined as a combination of cumulative risk over 30 years and flood depth.
+  # Flood depth is calculated at the lowest elevation of the building footprint (largest if more than 1 exists, or property centroid where footprint does not exist).
+  floodFactor: Int64
+
+  # Risk Factor link to Flood Report for the property
+  link: String!
+
+  # The location's risk direction represented in a numeric value based on the change in risk for the location from 2020 to 2050 for the climate model realization of the RCP 4.5 mid emissions scenario.
+  #
+  # -1 = decreasing
+  # 0 = stationary
+  # 1 = increasing
+  riskDirection: Int64
+
+  # Denotes what environmental risks impact the location represented in a numeric value.
+  #
+  # 1 = precipitation
+  # 2 = precipitation and sea level rise
+  # 3 = precipitation, sea level rise and hurricane storm surge
+  #
+  # Coastal areas on the East Coast and Hawaii will return 3, other coastal areas will return 2 and all other locations will return 1.
+  environmentalRisk: Int64
+
+  # The predominant form of flooding for the property: inland fluvial, inland pluvial, coastal, or none.
+  #
+  # For inland areas, flooding depths are provided as the maximum of pluvial and fluvial models. In coastal areas, a coupled model merges the three flooding sources into a single coastal data set.
+  #
+  # Example: inland pluvial
+  floodType: String
+
+  # Flood probabilty details for property.
+  probability: PropertyFloodProbability
+
+  # The list of modeled historic events that inundated the location.
+  # Inundation is defined as having flood depth >0 for property queries or >1 property with >0 flood depth for higher-level locations.
+  # Flood depth is calculated at the lowest elevation of the building footprint (largest if more than 1 exists, or property centroid where footprint does not exist).
+  historic: [PropertyFloodHistoric]
+
+  # The Average Annual Loss (AAL) API provides the US dollar value loss due to modeled flood risk for the location in 2020 and 2050 for residential properties.
+  # Property level queries can also append their own AVM, depth or building detail parameters to the query to receive the loss for those specific parameters.
+  #
+  # When an input parameter is not provided, we will use best-available value for the property for the calculations.
+  AAL(
+    # The Automated Valuation Model (AVM) or the modeled real estate market value in US dollars for the property. Minimum: 1000.
+    #
+    # Example: *23564*
+    AVM: Int64
+
+    # The depth in cm of the flood event that the damage should be calculated for. Multiple values accepted, delineated with a comma.
+    # Maximum number of depths: 35, each depth is a whole number (non-negative integer) under 1000.
+    #
+    # Example: *30, 45*
+    # Default: *5,15,30*
+    depths: [Int64!]
+
+    # Whether or not the building contains a basement.
+    hasBasement: Boolean
+
+    # The height in centimeters associated with the floor elevation for the building. Additional information can be acquired by quering the Location-FloodElevation product.
+    # Has to be a whole number (non-negative integer) under 1000.
+    #
+    # Example: *22*
+    floorElevation: Int64
+
+    # The total number of units the building contains.
+    #
+    # Example: *2*
+    units: Int64
+
+    # The total number of stories the building contains.
+    #
+    # Example: *3*
+    stories: Int64
+  ): PropertyFloodAAL
+
+  # Provides information from community-wide grey and green adaptation projects across the United States categorized into 40 different Adaptation Types.
+  # Returns data as a connection.
+  #
+  # **Features**
+  #
+  # - Identify all large-scale adaptation projects that serve an area
+  # - Understand how many properties served by a particular adaptation structure or project
+  # - Recognize to what extent, an area is protected or what level of event a project can withstand
+  # - Access information for large-scale adaptation projects across the country
+  adaptationConnection(
+    # Number of records(edges) to return. A number between 0 and 100.
+    first: Int
+
+    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.
+    after: String
+  ): PageConnection
+
+  # Details about flood environmental details, such as precipitation, sea level and tide stations.
+  environmental: LocalityFloodEnvironmental
+
+  # Provides insurance quotes from insurance providers. TODO: need more precise definition.
+  insurance: [PropertyFloodInsurance] @deprecated(reason: "Insurance field is deprecated. Use insuranceHippo.")
+
+  # Insurance quote from Hippo Insurance
+  insuranceHippo(
+    # Class to return. By default quotes for all insurance classes will be returned.
+    classification: InsuranceClassification
+  ): PropertyInsuranceHippo
+
+  # Requirements for flood insurance
+  insuranceRequirement: FloodInsuranceRequirement!
+
+  # If property is excluded, the reason for exclusion.
+  exclusion: Exclusion
+}
+
+# Details for property flood losses.
+#
+# The low, mid, high are based on 3 potential climate model realizations of the RCP 4.5 emissions scenario.
+#
+# Losses are determined by using the USACE depth damage functions for Riverine and Surge flooding. Damage due to precipitation flooding is given by a conservative depth damage function developed by First Street Foundation.
+type PropertyFloodAAL {
+  # Provides the loss in US dollars due to flood risk for the property by depth.
+  # The dollar loss is returned with the associated depth. 3cm, 15cm, or 31cm are returned automatically if no specific depth is appended to the query.
+  # Losses are determined by using the USACE depth damage functions for Riverine and Surge flooding and a conservative depth damage function of Precipitation flooding developed by First Street Foundation.
+  depthLoss: [PropertyFloodDepthLoss!]
+
+  # For residential properties, it provides the annual loss in US dollars due to flood risk for the property by in 5 year increments from 2020 to 2050.
+  # The low, mid, high loss is returned within the associated year.
+  # Property level queries can also append their own AVM, depth or building detail parameters to the query to receive the loss for those specific parameters.
+  annualLoss: [PropertyFloodAnnualLoss!]
+}
+
+# Property flood AAL details.
+type PropertyFloodAnnualLoss implements OverTime {
+  # The year (2020, 2025, 2030, 2035, 2040, 2045, or 2050) the dollar loss was calculated for.
+  year: Int64!
+
+  # The year relative to 2020.
+  relativeYear: Int64!
+
+  # The loss in US dollars due to modeled flooding for the location for the associated year based on the low scenario of the RCP 4.5 emissions curve.
+  low: Int64
+
+  # The loss in US dollars due to modeled flooding for the location for the associated year based on the mid scenario of the RCP 4.5 emissions curve.
+  mid: Int64
+
+  # The loss in US dollars due to modeled flooding for the location for the associated year based on the high scenario of the RCP 4.5 emissions curve.
+  high: Int64
+}
+
+type PropertyFloodDepthLoss {
+  # The depth in centimeters that the dollar loss was calculated for.
+  depth: Int64!
+
+  # The loss in US dollars due to modeled flooding for the location for the associated depth.
+  # Losses are determined by using the USACE depth damage functions for riverine and surge flooding.
+  # Damage due to precipitation flooding is given by a conservative depth damage function developed by First Street Foundation.
+  loss: Int64
+}
+
+# The information associated with the event(s) for event(s) where the area of the model simulation of the historic event overlaps any area of the location.
+# This includes event ID (unique First Street ID assigned to all modeled historic events), type, name and flood impact to the location.
+# Impact includes the depth of flooding (in centimeters) to the building footprint for property searches.
+type PropertyFloodHistoric implements FloodHistoricEvent {
+  # A unique First Street identifier assigned to each modeled historic event.
+  eventId: Int64!
+
+  # The name of the modeled historic event if it exists (note: several were strong pluvial events).
+  name: String!
+
+  # Categorization of event type (hurricane, fluvial, nor'easter, or tropical storm).
+  type: String!
+
+  # The year when the event occured.
+  year: Int64!
+
+  # The month when the event occured.
+  month: Int64!
+
+  # The estimated recurrence interval of the event, or the inverse of the annual likelihood. For example a 1 in 500 annual likelihood event.
+  returnPeriod: Int64
+
+  # The total count of parcels that had any flooding (>0) to the building footprint that are within the mapped area of the historic event's geometry.
+  affectedProperties: Int64!
+
+  # A collection of nodes that represents geographical information for the historic event.
+  geometry: LocationGeometry
+
+  # The depth of flooding (in centimeters) to the building footprint for property searches.
+  # Flood depth is calculated at the lowest elevation of the building footprint (largest if more than 1 exists, or property centroid where footprint does not exist).
+  depth: Int64
+}
+
+# TODO: need more details here
+# Insurance provider information for property
+type PropertyFloodInsurance {
+  # Insurance price quote, in cents.
+  price: Int64
+
+  # The total sum in US dollars of insurance coverage on buildings.
+  homeCoverage: Int64
+
+  # The total sum in US dollars of insurance coverage on contents of buildings.
+  contentsCoverage: Int64
+
+  # Insurance provider details.
+  provider: InsuranceProvider!
+
+  # Date when the quote expires.
+  expires: Date
+
+  # Insurance provider disclaimer(s).
+  disclaimer: [String]
+
+  # URL to the insurance provider's website for insurance purchase.
+  purchaseLink: String!
+}
+
+# Flood probability details for property.
+type PropertyFloodProbability {
+  # Delivers the flood depth (in centimeters) for flooding to the building footprint broken down by return period and year of annual risk.
+  #
+  # The low, mid, high likelihood is returned within the associated threshold and year. Available depth thresholds include >0cm, >15cm, and >30cm, and are broken down by the following years within the model - 2020, 2025, 2030, 2035, 2040, 2045, and 2050.
+  depth(filter: PropertyFloodProbabilityFilter): [PropertyFloodProbabilityDepth]
+
+  # Delivers the risk likelihood (% probability) for flooding to the building footprint broken down by depth threshold and year of annual risk.
+  chance(
+    filter: PropertyFloodProbabilityFilter
+
+    # Optional depth values for calculating chance. One of: 5, 15, 30.
+    depths: [Int64!]
+  ): [PropertyFloodProbabilityChance]
+
+  # Delivers the risk likelihood (% probability) for flooding to the building footprint broken down by depth threshold and cumulative year.
+  cumulative(
+    filter: PropertyFloodProbabilityFilter
+
+    # Optional depth values for calculating cumulative flooding. One of: 5, 15, 30.
+    depths: [Int64!]
+  ): [PropertyFloodProbabilityCumulative]
+}
+
+# The risk likelihood (% probability) for flooding to the building footprint broken down by depth threshold and year of annual risk.
+type PropertyFloodProbabilityChance implements OverTime {
+  # The year (2020, 2025, 2030, 2035, 2040, 2045, or 2050) the probability was calculated for.
+  year: Int64!
+
+  # The year relative to 2020.
+  relativeYear: Int64!
+
+  # The depth threshold in centimeters (5cm, 15cm, or 30cm) that the probability was calculated for.
+  threshold: Int64!
+
+  # The likelihood (% probability) of flooding given as a value from 0-1 (rounded to two decimal places) at the specified depth based on the low scenario of the RCP 4.5 emissions curve.
+  low: Float
+
+  # The likelihood (% probability) of flooding given as a value from 0-1 (rounded to two decimal places) at the specified depth based on the mid scenario of the RCP 4.5 emissions curve.
+  mid: Float
+
+  # The likelihood (% probability) of flooding given as a value from 0-1 (rounded to two decimal places) at the specified depth based on the high scenario of the RCP 4.5 emissions curve.
+  high: Float
+}
+
+# The risk likelihood (% probability) for flooding to the building footprint broken down by depth threshold and cumulative year.
+type PropertyFloodProbabilityCumulative implements OverTime {
+  # The year (2020, 2025, 2030, 2035, 2040, 2045, or 2050) the probability was calculated for.
+  year: Int64!
+
+  # The year relative to 2020.
+  relativeYear: Int64!
+
+  # The depth threshold in centimeters (5cm, 15cm, or 30cm) that the probability was calculated for.
+  threshold: Int64!
+
+  # The likelihood (% probability) of flooding given as a value from 0-1 (rounded to two decimal places) at the specified depth based on the low scenario of the RCP 4.5 emissions curve.
+  low: Float
+
+  # The likelihood (% probability) of flooding given as a value from 0-1 (rounded to two decimal places) at the specified depth based on the mid scenario of the RCP 4.5 emissions curve.
+  mid: Float
+
+  # The likelihood (% probability) of flooding given as a value from 0-1 (rounded to two decimal places) at the specified depth based on the high scenario of the RCP 4.5 emissions curve.
+  high: Float
+
+  # The max height of the y axis when the low point is being represented on a graph (from 0-100, where 100 is the max value).
+  yMaxLow: Int!
+
+  # The max height of the y axis when the mid point is being represented on a graph (from 0-100, where 100 is the max value).
+  yMaxMid: Int!
+
+  # The max height of the y axis when the high point is being represented on a graph (from 0-100, where 100 is the max value).
+  yMaxHigh: Int!
+}
+
+# The flood depth (in centimeters) for flooding to the building footprint broken down by return period and year of annual risk.
+type PropertyFloodProbabilityDepth implements OverTime {
+  # The year (2020, 2025, 2030, 2035, 2040, 2045, or 2050) the depth was calculated for.
+  year: Int64!
+
+  # The year relative to 2020.
+  relativeYear: Int64!
+
+  # The return period (500, 250, 100, 50, 20, 10, 5, or 2 years) that the depth was calculated for.
+  returnPeriod: Int64!
+
+  # The depth in centimeters for the specified return period based on the low scenario of the RCP 4.5 emissions curve.
+  low: Int64
+
+  # The depth in centimeters for the specified return period based on the mid scenario of the RCP 4.5 emissions curve.
+  mid: Int64
+
+  # The depth in centimeters for the specified return period based on the high scenario of the RCP 4.5 emissions curve.
+  high: Int64
+}
+
+# Filter probability flood data by provided value(s).
+# Will choose Threshold or ReturnPeriod filter as applicable.
+input PropertyFloodProbabilityFilter {
+  year: [Int64]
+  relativeYear: [Int64]
+  threshold: [Int64]
+  returnPeriod: [Int64]
+}
+
+type PropertyInsuranceHippo {
+  provider: InsuranceProvider!
+  rates: [InsuranceHippoRate]
+  disclaimer: String
+}
+
+# The National Flood Insurance Program (NFIP) premiums are the cost of flood insurance for coverage of the building and the contents in the building based on the current NFIP insurance rate tables. There are two hypothetical insurance premiums for coverage of the structure and contents at $250k/$125k and $125k/$50k.
+type PropertyNFIP {
+  # Estimated premium for a policy in US dollars.
+  estimate: Int64!
+
+  # The dollar amount of building coverage for estimate in US dollars.
+  building: Int64!
+
+  # The dollar amount of contents coverage for estimate in US dollars.
+  contents: Int64!
+}
+
+# Top-level queries
+type Query {
+  # Property lookup by FSID.
+  property(fsid: Int64!): Property
+
+  # Property lookup by coordinate. This lookup will check the coordinates to see if that point intersects within a boundary of a parcel from the database.
+  propertyByCoordinate(lat: Float!, lng: Float!): Property
+
+  # Property lookup by address. An address can be a `city name`, `home address`, or `business address`. `City` and `State` need to be included within the `address` query.
+  #
+  # Optionally include the lat and lng parameters for `home address` or `business address` to improve match accuracy.
+  #
+  # *Address lookups should be used as seldom as possible. This is the slowest form of a lookup since the address must be reverse geocoded prior to a query in our database.*
+  propertyByAddress(address: String!, lat: Float, lng: Float): Property
+
+  # Property lookup by APN.
+  propertyByAPN(APN: String!, FIPS: String!): Property
+
+  # Property lookup by Lightbox location_id.
+  propertyByLocationId(locationId: String!): Property
+
+  # City lookup by FSID.
+  city(fsid: Int64!): City
+
+  # City lookup by coordinate. This lookup will check the coordinates to see if that point intersects within a boundary of a parcel from the database.
+  cityByCoordinate(lat: Float!, lng: Float!): City
+
+  # Neighborhood lookup by FSID.
+  neighborhood(fsid: Int64!): Neighborhood
+
+  # Neighborhood lookup by coordinate. This lookup will check the coordinates to see if that point intersects within a boundary of a parcel from the database.
+  neighborhoodByCoordinate(lat: Float!, lng: Float!): Neighborhood
+
+  # Congressional District lookup by FSID.
+  cd(fsid: Int64!): CongressionalDistrict
+
+  # Congressional District lookup by coordinate. This lookup will check the coordinates to see if that point intersects within a boundary of a parcel from the database.
+  cdByCoordinate(lat: Float!, lng: Float!): CongressionalDistrict
+
+  # County lookup by FSID.
+  county(fsid: Int64!): County
+
+  # County lookup by coordinate. This lookup will check the coordinates to see if that point intersects within a boundary of a parcel from the database.
+  countyByCoordinate(lat: Float!, lng: Float!): County
+
+  # County Subdivision lookup by FSID.
+  cousub(fsid: Int64!): CountySubdivision
+
+  # County lookup by coordinate. This lookup will check the coordinates to see if that point intersects within a boundary of a parcel from the database.
+  cousubByCoordinate(lat: Float!, lng: Float!): CountySubdivision
+
+  # State lookup by FSID.
+  state(fsid: Int64!): State
+
+  # State lookup by coordinate. This lookup will check the coordinates to see if that point intersects within a boundary of a parcel from the database.
+  stateByCoordinate(lat: Float!, lng: Float!): State
+
+  # Tract lookup by FSID.
+  tract(fsid: Int64!): Tract
+
+  # Tract lookup by coordinate. This lookup will check the coordinates to see if that point intersects within a boundary of a parcel from the database.
+  tractByCoordinate(lat: Float!, lng: Float!): Tract
+
+  # Zip code lookup by FSID.
+  zcta(fsid: Int64!): Zcta
+
+  # Zip code lookup by coordinate. This lookup will check the coordinates to see if that point intersects within a boundary of a parcel from the database.
+  zctaByCoordinate(lat: Float!, lng: Float!): Zcta
+
+  # Query to obtain flood-related data.
+  flood: FloodQuery
+
+  # Query to obtain fire-related data.
+  fire: FireQuery
+  ping: String!
+}
+
+# Data resource currently supported
+enum Resource {
+  FLOOD
+}
+
+# The annual observed mean sea level (in centimeters using the NAVD88 datum) from 1980-2019 for the tide station.
+type SeaLevelRiseHistoric {
+  # The year of reading (1980-2019).
+  year: Int64!
+
+  # Annual observed mean sea level in centimeters using the NAVD88 datum
+  value: Int64!
+}
+
+# The projections for 2020-2050 (in 10 year increments) with the low, mid and high mean sea level (in centimeters using the NAVD88 datum) based on 3 potential climate model realizations of the RCP 4.5 emissions scenario.
+type SeaLevelRiseProjection implements OverTime {
+  # The year (2020, 2030, 2040, or 2050) of the projection.
+  year: Int64!
+
+  # The year relative to 2020.
+  relativeYear: Int64!
+
+  # The annual mean sea level projection in centimeters (in the NAVD88 datum) based on the low scenario of the RCP 4.5 emissions curve.
+  low: Float!
+
+  # The annual mean sea level projection in centimeters (in the NAVD88 datum) based on the mid scenario of the RCP 4.5 emissions curve.
+  mid: Float!
+
+  # The annual mean sea level projection in centimeters (in the NAVD88 datum) based on the high scenario of the RCP 4.5 emissions curve.
+  high: Float!
+}
+
+enum Service {
+  LOCATION
+  GEOMETRY
+  BUILDING
+  FEMA
+  FLOOD
+  FIRE
+  EXTERNALAVM
+}
+
+# US state or federal district
+type State implements Location {
+  # First Street ID (FSID) is a unique identifier assigned to each location.
+  #
+  # Example: *12*
+  fsid: Int64!
+
+  # The name of the state.
+  #
+  # Example: *Florida*
+  name: String
+
+  # State abbreviation.
+  #
+  # Example: *FL*
+  shortName: String
+
+  # The Federal Information Processing Standards code for the state.
+  #
+  # Example: *12*
+  FIPS: Int64!
+
+  # A collection of nodes that represents geographical information for the state.
+  geometry: LocationGeometry
+
+  # The state's cities, as a connection.
+  cityConnection(
+    # Number of records(edges) to return. A number between 0 and 100.
+    first: Int
+
+    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.
+    after: String
+  ): PageConnection
+
+  # The state's neighborhoods, as a connection.
+  neighborhoodConnection(
+    # Number of records(edges) to return. A number between 0 and 100.
+    first: Int
+
+    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.
+    after: String
+  ): PageConnection
+
+  # The state's counties, as a connection.
+  countyConnection(
+    # Number of records(edges) to return. A number between 0 and 100.
+    first: Int
+
+    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.
+    after: String
+  ): PageConnection
+
+  # The state's congressional districts.
+  cd: [CongressionalDistrict]
+
+  # The state's county subdivisions, as a connection.
+  cousubConnection(
+    # Number of records(edges) to return. A number between 0 and 100.
+    first: Int
+
+    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.
+    after: String
+  ): PageConnection
+
+  # The state's ZCTAs, as a connection.
+  zctaConnection(
+    # Number of records(edges) to return. A number between 0 and 100.
+    first: Int
+
+    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.
+    after: String
+  ): PageConnection
+
+  # The state's proeprties, as a connection.
+  propertyConnection(
+    # Number of records(edges) to return. A number between 0 and 100.
+    first: Int
+
+    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.
+    after: String
+
+    # Filter the properties of this state.
+    filter: PropertyFilters
+  ): PageConnection
+
+  # Flood data for the state.
+  flood: LocalityFlood
+
+  # Fire details for the state.
+  fire: LocalityFire
+
+  # fsfLink is First Street's link to the state on FirstStreet's website.
+  #
+  # Example: *https://floodfactor.com/state/12_fsid?utm_medium=overlay*
+  fsfLink: String
+}
+
+# A TideStation provides metadata as well as the annual observed mean sea level rise (1980-2020), and sea level rise projection by 10 year increments (2020-2050).
+type TideStation {
+  # A unique First Street identifier assigned to each tide station.
+  id: Int64!
+
+  # The National Oceanic and Atmospheric Association (NOAA) ID associated with the tide station
+  NOAAId: Int64!
+
+  # The National Oceanic and Atmospheric Association (NOAA) name associated with the tide station.
+  name: String
+
+  # Provides the lat/lng location of the tide station.
+  center: Center
+
+  # The annual observed mean sea level (in centimeters using the NAVD88 datum) from 1980-2019 for the tide station.
+  seaLevelRiseHistoric: [SeaLevelRiseHistoric]
+
+  # The projections for 2020-2050 (in 10 year increments) with the low, mid and high mean sea level (in centimeters using the NAVD88 datum) based on 3 potential climate model realizations of the RCP 4.5 emissions scenario.
+  seaLevelRiseProjection: [SeaLevelRiseProjection]
+}
+
+# Census Tract as provided by the by the US Census Bureau (not available on FirstStreet's website)
+type Tract implements Location {
+  # First Street ID (FSID) is a unique identifier assigned to each location.
+  #
+  # Example: *39119912800*
+  fsid: Int64!
+
+  # The Federal Information Processing Standards code which uniquely identified counties and county equivalents, and certain freely associated states.
+  #
+  # Example: *39119912800*
+  FIPS: Int64
+
+  # The tract's congressional district.
+  cd: CongressionalDistrict
+
+  # The tract's city.
+  city: City
+
+  # The tract's county subdivision.
+  cousub: CountySubdivision
+
+  # The tract's county.
+  county: County
+
+  # The tract's state.
+  state: State
+
+  # A collection of nodes that represents geographical information for the tract.
+  geometry: LocationGeometry
+
+  # Flood data for the tract.
+  flood: LocalityFlood
+
+  # Fire details for the tract.
+  fire: LocalityFire
+
+  # fsfLink is always null for tracts, as they are not displayed on FirstStreet's website.
+  fsfLink: String
+
+  # List of properties within the tract, as a connection.
+  propertyConnection(
+    # Number of records(edges) to return. A number between 0 and 100.
+    first: Int
+
+    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.
+    after: String
+
+    # Filter the properties of this tract.
+    filter: PropertyFilters
+  ): PageConnection
+}
+
+# ZIP code tabulation area as provided by the US Census Bureau.
+type Zcta implements Location {
+  # First Street ID (FSID) is a unique identifier assigned to each location.
+  #
+  # Example: *82633*
+  fsid: Int64!
+
+  # The zcta name.
+  #
+  # Example: *82633*
+  name: String
+
+  # The city or cities the zcta is associated with.
+  city: [City]
+
+  # The county or counties the zcta is associated with.
+  county: [County]
+
+  # The county subdivision or subdivisions the zcta is associated with.
+  cousub: [CountySubdivision]
+
+  # The state the zcta is associated with.
+  state: State
+
+  # A collection of nodes that represents geographical information for the zcta.
+  geometry: LocationGeometry
+
+  # Flood data for the zcta.
+  flood: LocalityFlood
+
+  # Fire details for the zcta.
+  fire: LocalityFire
+
+  # fsfLink is First Street's link to the zcta on FirstStreet's website.
+  #
+  # Example: *https://floodfactor.com/zcta/82633_fsid?utm_medium=overlay*
+  fsfLink: String
+
+  # List of properties in the zcta, as a connection.
+  propertyConnection(
+    # Number of records(edges) to return. A number between 0 and 100.
+    first: Int
+
+    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.
+    after: String
+
+    # Filter the properties of this zip code.
+    filter: PropertyFilters
+  ): PageConnection
+}
+
