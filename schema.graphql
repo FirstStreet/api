@@ -1,29 +1,27 @@
 directive @fsApplyExclusion on FIELD_DEFINITION
 
-directive @fsHasPolicy(service: Service!) on FIELD_DEFINITION | ARGUMENT_DEFINITION
+directive @fsHasPolicy(
+  service: Service!
+) on FIELD_DEFINITION | ARGUMENT_DEFINITION
 
-directive @fsRecordAPIUsage(service: APIUsageService!) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+directive @fsRecordAPIUsage(
+  service: APIUsageService!
+) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
 
-directive @fsValidation(constraint: String!) on INPUT_FIELD_DEFINITION | ARGUMENT_DEFINITION
+directive @fsValidation(
+  constraint: String!
+) on INPUT_FIELD_DEFINITION | ARGUMENT_DEFINITION
 
-directive @goField(forceResolver: Boolean, name: String) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+directive @goField(
+  forceResolver: Boolean
+  name: String
+) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
 
 enum APIUsageService {
   LOCATION
-  FEMA
-  FLOODADAPTATION
-  FLOODENVIRONMENTAL
-  FLOODHISTORIC
-  FLOODCOMMUNITYRISK
-  FLOODECONOMIC
-  FLOODPROBABILITY
-  FLOODINSURANCE
-  FIREHISTORIC
-  FIREECONOMIC
-  FIREPROBABILITY
-  FIREINSURANCE
-  FIRECOMMUNITYRISK
-  AVM
+  FLOOD
+  FIRE
+  HEAT
 }
 
 # The AVM Provider provides metadata for an AVM provider.
@@ -117,7 +115,7 @@ type City implements Location {
   # The legal/statistical area description (LSAD) as provided by the census which describes the particular typology for each geographic entity; that is, whether the entity is a borough, city, town, or township, among others.
   #
   # Example: *57*
-  LSAD: Int64
+  LSAD: String
 
   # ZCTAs that are within geographical limits of the city.
   zcta: [Zcta]
@@ -149,10 +147,16 @@ type City implements Location {
   # Fire details for the city.
   fire: LocalityFire
 
+  # Heat details for the city.
+  heat: LocalityHeat
+
   # fsfLink is First Street's link to the neighborhood on FirstStreet's website.
   #
   # Example: *https://floodfactor.com/city/5301920_fsid?utm_medium=overlay*
   fsfLink: String
+    @deprecated(
+      reason: "fsfLink is deprecated, use the child `link` field within the climate peril."
+    )
 
   # List of properties in the city, as a connection.
   propertyConnection(
@@ -172,6 +176,14 @@ enum CombustibilityRating {
   LOW
   MEDIUM
   HIGH
+}
+
+enum CommunityRiskScoreScale {
+  MINOR
+  MODERATE
+  MAJOR
+  SEVERE
+  EXTREME
 }
 
 # Congressional District for the 116th Congress (not available in Flood Factor)
@@ -211,10 +223,18 @@ type CongressionalDistrict implements Location {
 
   # Flood data for the congressional district.
   flood: LocalityFlood
+
+  # Fire details for the congressional district.
   fire: LocalityFire
+
+  # Heat details for the congressional district.
+  heat: LocalityHeat
 
   # fsfLink is always null for congressional districts, as they are not displayed on FirstStreet's website.
   fsfLink: String
+    @deprecated(
+      reason: "fsfLink is deprecated, use the child `link` field within the climate peril."
+    )
 
   # List of properties within the congressional district, as a connection.
   propertyConnection(
@@ -276,10 +296,16 @@ type County implements Location {
   # Fire details for the county.
   fire: LocalityFire
 
+  # Heat details for the county.
+  heat: LocalityHeat
+
   # fsfLink is First Street's link to the neighborhood on FirstStreet's website.
   #
   # Example: *https://floodfactor.com/county/1003_fsid?utm_medium=overlay*
   fsfLink: String
+    @deprecated(
+      reason: "fsfLink is deprecated, use the child `link` field within the climate peril."
+    )
 
   # The neighborhood(s) the city is associated with, as a connection. This encompasses macro neighborhoods, neighborhood, sub-neighborhoods and residential districts (e.g. subdivisions and apartment complexes).
   neighborhoodConnection(
@@ -324,13 +350,16 @@ type CountySubdivision implements Location {
   # The legal/statistical area description (LSAD) as provided by the census which describes the particular typology for each geographic entity.
   #
   # Example: *22*
-  LSAD: Int64
+  LSAD: String
 
   # Flood details for the county subdivision.
   flood: LocalityFlood
 
   # Fire details for the subdivision.
   fire: LocalityFire
+
+  # Heat details for the subdivision.
+  heat: LocalityHeat
 
   # A collection of nodes that represents geographical information for the county subdivision.
   geometry: LocationGeometry
@@ -339,6 +368,9 @@ type CountySubdivision implements Location {
   #
   # Example: *https://floodfactor.com/cousub/5303391392_fsid?utm_medium=overlay*
   fsfLink: String
+    @deprecated(
+      reason: "fsfLink is deprecated, use the child `link` field within the climate peril."
+    )
 }
 
 # Remap Graphql Types to Go Types
@@ -353,6 +385,16 @@ type Exclusion {
   description: String
 }
 
+# The corresponding text description that describes the `factor` score that is associated with the property.
+enum FactorScale {
+  MINIMAL
+  MINOR
+  MODERATE
+  MAJOR
+  SEVERE
+  EXTREME
+}
+
 enum FindOperator {
   EQ
   NE
@@ -362,7 +404,16 @@ enum FindOperator {
   LE
 }
 
-union FindResultItem = Property | City | State | County | CongressionalDistrict | Zcta | Tract | Neighborhood | CountySubdivision
+union FindResultItem =
+    Property
+  | City
+  | State
+  | County
+  | CongressionalDistrict
+  | Zcta
+  | Tract
+  | Neighborhood
+  | CountySubdivision
 
 type FindResultItemConnection {
   edges: [FindResultItemEdge]
@@ -482,6 +533,9 @@ type FireQuery {
 
   # Historic event batch lookup. Can lookup up to 35 historic events.
   historicEvents(eventIds: [Int64!]!): [FireHistoricEventRecord]
+
+  # Current Fire Model version
+  version: VersionRelease!
 }
 
 interface FireStatistics {
@@ -642,6 +696,9 @@ type FloodQuery {
 
   # Map lookup.  Returns map metadata such as legends.
   mapLegend: MapLegend!
+
+  # Current Flood Model version
+  version: VersionRelease!
 }
 
 # Flood indicators.
@@ -661,6 +718,15 @@ interface FloodStatistic {
   #
   # Coastal areas on the East Coast and Hawaii will return 3, other coastal areas will return 2 and all other locations will return 1.
   environmentalRisk: Int64
+}
+
+# Query to obtain heat-related data.
+type HeatQuery {
+  # Map lookup.  Returns map metadata such as legends.
+  mapLegend: MapLegend!
+
+  # Current HEAT Model version
+  version: VersionRelease!
 }
 
 enum InsuranceClassification {
@@ -709,6 +775,11 @@ type InsuranceProvider {
 
 scalar Int64
 
+type LocalityAtRisk {
+  level: CommunityRiskScoreScale
+  propertyCount: Int64
+}
+
 # Fire details for locality.
 type LocalityFire implements FireStatistics & Excluding {
   # Overall direction of risk, computed by taking a weighted average of risk directions at parcels and infrastructure facilities here
@@ -746,6 +817,9 @@ type LocalityFireFacilityRisk {
 
   # A categorical 0-5 score for each county in each category.
   score: Int64
+
+  # Score scale description
+  scoreScale: CommunityRiskScoreScale
 
   # Overall direction of risk for the facility.
   #
@@ -1043,6 +1117,9 @@ type LocalityFloodFacilityRisk {
   # A categorical 0-5 score for each county in each category.
   score: Int64
 
+  # Score scale description
+  scoreScale: CommunityRiskScoreScale
+
   # The location's risk direction represented in a numeric value based on the change in risk for the location from 2020 to 2050 for the climate model realization of the RCP 4.5 mid emissions scenario.
   #
   # -1 = decreasing
@@ -1263,6 +1340,153 @@ type LocalityFloodSovi {
   percentile: Float
 }
 
+type LocalityHeat implements Excluding {
+  # The 98th percentile or "hot day" temperature in a locality
+  hotTemperature: Int64
+
+  # The locality's Community Risk Level
+  riskLevel: Int64
+
+  # Risk Factor Heat Factor report link
+  link: String!
+
+  # The percentage change in the amount of elecricity used for the purpose of maintaining a comfortable indoor temperature in 30 years.
+  coolingEnergyPercentChange: Float
+
+  # The number of hot days (98th percentile) in the future.
+  hotDaysFuture: Int64
+
+  # The change in the number of hot days (98th percentile) in the future.
+  hotDaysChange: Int64
+
+  # The percent change in the number of hot days (98th percentile) in the future.
+  hotDaysPercentChange: Float
+
+  # The number of dangerous days (above 100F) in the future.
+  dangerousDaysFuture: Int64
+
+  # The change in the number of dangerous days (above 100F) in the future.
+  dangerousDaysChange: Int64
+
+  # The percent change in the number of dangerous days (above 100F) in the future.
+  dangerousDaysPercentChange: Float
+
+  # Average High Temperature in the hottest month in Farenheight.
+  temperatureAverageHigh(
+    filter: LocalityHeatTemperatureHighFilter
+  ): [LocalityHeatTemperatureHigh]
+
+  # Distribution of days by temperature.
+  days: LocalityHeatDays
+
+  # Heave wave details
+  heatWaves: LocalityHeatWaves
+
+  # The count of properties at risk
+  atRisk(filter: LocalityHeatAtRiskFilter): [LocalityHeatAtRisk]
+
+  # If locality is excluded, the reason for exclusion.
+  exclusion: Exclusion
+}
+
+type LocalityHeatAtRisk {
+  level: FactorScale!
+  propertyCount: Int64
+}
+
+input LocalityHeatAtRiskFilter {
+  level: [FactorScale]
+}
+
+type LocalityHeatDay {
+  # Year asscociated with the point.
+  year: Int64!
+
+  # Relative year to this year. Can be negative
+  relativeYear: Int64!
+
+  # Lower bound of temperature bin. The unit is either Fahrenheit or percentile depending on the parent object.
+  binLower: Int64
+
+  # Upper bound of temperature bin. The unit is either Fahrenheit or percentile depending on the parent object.
+  binUpper: Int64
+
+  # Days within bin
+  days: Int64
+
+  # The Y height in a chart.
+  yMax: Float
+}
+
+input LocalityHeatDayFilter {
+  # Filter distributions by relative years.  e.g. relativeYears=[0,30]
+  relativeYear: [Int64!]
+}
+
+type LocalityHeatDays {
+  # Distribution of days in a year by temperature in Fahrenheit.
+  distribution(filter: LocalityHeatDayFilter): [LocalityHeatDay]
+
+  # Days of temperature at or above the local definition of a hot day in percentile.
+  hotDays: [LocalityHeatDay]
+
+  # Days of temperature at or above the cooling temperature in Fahrenheit.
+  coolingDays: [LocalityHeatDay]
+
+  # Days of temperature at or above the health caution temperature in Fahrenheit.
+  healthCautionDays: [LocalityHeatDay]
+
+  # Days of temperature at or above the dangerous temperature in Fahrenheit.
+  dangerousDays: [LocalityHeatDay]
+}
+
+type LocalityHeatTemperatureHigh {
+  # Year asscociated with the point.
+  year: Int64!
+
+  # Relative year to this year. Can be negative
+  relativeYear: Int64!
+
+  # Maximum Monthly Temperature
+  # Average daily max temperature (Fahrenheit) in the hottest month (usually July)
+  mmt: Float
+}
+
+# Filter to narrow the values by relative year.
+input LocalityHeatTemperatureHighFilter {
+  relativeYear: [Int64!]
+}
+
+type LocalityHeatWave {
+  # Year asscociated with the point.
+  year: Int64!
+
+  # Relative year to this year. Can be negative.
+  relativeYear: Int64!
+
+  # Temperature threshold of the heat wave. The unit is either in Fahrenheit or percentile depending on the parent object.
+  threshold: Int64!
+
+  # The probability of 3 days in a row to exceed threshold temperature.
+  probability: Float
+
+  # For given probability, how long heat wave will last.
+  length: Int64
+}
+
+# Filter to narrow the values by year, relative year, or threshold.
+input LocalityHeatWaveFilter {
+  relativeYear: [Int64!]
+}
+
+type LocalityHeatWaves {
+  # Distribution of heat waves in a year by temperature in Fahrenheit.
+  distribution(filter: LocalityHeatWaveFilter): [LocalityHeatWave]
+
+  # Heat waves of temperature above the local definition of a hot temperature in percentile.
+  hotHeatWave: [LocalityHeatWave]
+}
+
 # Provides information on the number of policies, number of claims, amount of coverage, and amount paid on claims for buildings and contents as well as the increased cost of compliance for the location.
 type LocalityNFIP {
   # The total count of entries in the claims dataset for the location. The claims data is sourced from FEMA's release of anonymized claims data in March of 2019. For county and tract queries, the geography is matched to the FIPS code. For ZIP queries, the reported ZIP of the property is used.
@@ -1382,10 +1606,16 @@ type Neighborhood implements Location {
   # Fire details for the neighborhood.
   fire: LocalityFire
 
+  # Heat details for the neighborhood.
+  heat: LocalityHeat
+
   # fsfLink is First Street's link to the neighborhood on FirstStreet's website.
   #
   # Example: *https://floodfactor.com/neighborhood/68501_fsid?utm_medium=overlay*
   fsfLink: String
+    @deprecated(
+      reason: "fsfLink is deprecated, use the child `link` field within the climate peril."
+    )
 
   # List of properties in the neighborhood, as a connection.
   propertyConnection(
@@ -1547,14 +1777,20 @@ type Property implements Location {
 
   # fsfLink is First Street's link to the property on FirstStreet's website.
   #
-  # Example: *https://floodfactor.com/property/240652458_fsid?utm_medium=overlay&utm_source=realtor*
-  fsfLink: String @deprecated(reason: "fsfLink is deprecated, use the child `link` field within the climate peril.")
+  # Example: *https://floodfactor.com/property/240652458_fsid?utm_medium=overlay*
+  fsfLink: String
+    @deprecated(
+      reason: "fsfLink is deprecated, use the child `link` field within the climate peril."
+    )
 
   # Flood details for the property.
   flood: PropertyFlood
 
   # Fire details for the property.
   fire: PropertyFire
+
+  # Heat details for the property.
+  heat: PropertyHeat
 }
 
 # PropertyAVM is modeled real estate market value for the property as well as the providerId for the provider of the AVM model. Default provider is First Street Foundation (providerId: 2).
@@ -1576,6 +1812,26 @@ type PropertyAddress {
   formattedAddress: String
 }
 
+type PropertyCooling {
+  # Year asscociated with the point.
+  year: Int64!
+
+  # Relative year to this year. Can be negative
+  relativeYear: Int64!
+
+  # Dollar values in US Dollars, can be 0.
+  cost: Int64
+
+  # The amount of electricity used for the purpose of maintaining a comfortable indoor temperature, in kwH
+  energy: Float
+}
+
+# Filter a property's cooling costs.
+input PropertyCoolingFilter {
+  # Filter property cooling costs by relative years.  e.g. relativeYears=[0,30]
+  relativeYear: [Int64!]
+}
+
 # Property filters related to flood factor
 input PropertyFilterFloodFactor {
   floodFactorGE: Int64
@@ -1587,13 +1843,17 @@ input PropertyFilterFloodRisk {
   atRisk: Boolean
 }
 
-# Filters to narrow the list of properties.
-# Please define one sub-node only.  Filters don't work if, for example, floodFactor and floodRisk are defined.
+# Filters the list of properties.
+# Filters are mutually exclusive, please define one sub-node only.
 input PropertyFilters {
+  # Filter properties by Floodfactor value
   floodFactor: PropertyFilterFloodFactor
+
+  # Filter properties by presence of flood risk
   floodRisk: PropertyFilterFloodRisk
+
+  # Filter properties by whether they are protected by an adaptation
   floodAdaptation: PropertyFiltersFloodAdaptation
-  includeExcludedInTotalCount: Boolean
 }
 
 # Property filters related to flood adaptation
@@ -1605,10 +1865,13 @@ type PropertyFire implements FireStatistics & Excluding {
   # The property's Fire Factor
   fireFactor: Int64
 
+  # Text representation of the Fire Factor.
+  factorScale: FactorScale
+
   # Risk Factor link to Fire Report for the property
   link: String!
 
-  # US Forest Service Relative Risk Rank
+  # Average wildfire risk that would be greater than X% of counties in the United States, according to the US Forest Service. Ranking is based on the property's county.
   usfsRelativeRisk: Float
 
   # The level of combustibility associated with open space around the main building on this property. Adding open, defensible space around a building reduces fire risk.
@@ -1749,6 +2012,9 @@ type PropertyFlood implements FloodStatistic & Excluding {
   # Flood depth is calculated at the lowest elevation of the building footprint (largest if more than 1 exists, or property centroid where footprint does not exist).
   floodFactor: Int64
 
+  # Text representation of the Flood Factor.
+  factorScale: FactorScale
+
   # Risk Factor link to Flood Report for the property
   link: String!
 
@@ -1841,7 +2107,8 @@ type PropertyFlood implements FloodStatistic & Excluding {
   environmental: LocalityFloodEnvironmental
 
   # Provides insurance quotes from insurance providers. TODO: need more precise definition.
-  insurance: [PropertyFloodInsurance] @deprecated(reason: "Insurance field is deprecated. Use insuranceHippo.")
+  insurance: [PropertyFloodInsurance]
+    @deprecated(reason: "Insurance field is deprecated. Use insuranceHippo.")
 
   # Insurance quote from Hippo Insurance
   insuranceHippo(
@@ -2064,6 +2331,131 @@ input PropertyFloodProbabilityFilter {
   returnPeriod: [Int64]
 }
 
+# Heat details for property.
+type PropertyHeat implements Excluding {
+  # The property's Fire Factor
+  heatFactor: Int64
+
+  # Text representation of the Heat Factor.
+  factorScale: FactorScale
+
+  # 98th Percentile temperature for the property (Fahrenheit)
+  hotTemperature: Int64
+
+  # Local difference in temperature for this property compared to surroundings.
+  anomalyTemperature: Float
+
+  # Costs and energy used for cooling this property.
+  cooling(filter: PropertyCoolingFilter): [PropertyCooling]
+
+  # Average High Temperature in the hottest month in Fahrenheit.
+  temperatureAverageHigh(
+    filter: PropertyHeatTemperatureHighFilter
+  ): [PropertyHeatTemperatureHigh]
+
+  # Distribution of days by temperature.
+  days: PropertyHeatDays
+
+  # Distribution of heat waves by temperature.
+  heatWaves: PropertyHeatWaves
+
+  # If property is excluded, the reason for exclusion.
+  exclusion: Exclusion
+}
+
+type PropertyHeatDay {
+  # Year asscociated with the point.
+  year: Int64!
+
+  # Relative year to this year. Can be negative
+  relativeYear: Int64!
+
+  # Lower bound of temperature bin. The unit is either Fahrenheit or percentile depending on the parent object.
+  binLower: Int64
+
+  # Upper bound of temperature bin. The unit is either Fahrenheit or percentile depending on the parent object.
+  binUpper: Int64
+
+  # Days within bin
+  days: Int64
+
+  # The Y height in a chart.
+  yMax: Float
+}
+
+# Filter a property's temperature-day distributions.
+input PropertyHeatDayFilter {
+  # Filter distributions by relative years.  e.g. relativeYears=[0,30]
+  relativeYear: [Int64!]
+}
+
+type PropertyHeatDays {
+  # Distribution of days in a year by temperature in Fahrenheit.
+  distribution(filter: PropertyHeatDayFilter): [PropertyHeatDay]
+
+  # Days of temperature at or above the local definition of a hot day in percentile.
+  hotDays: [PropertyHeatDay]
+
+  # Days of temperature at or above the cooling temperature in Fahrenheit.
+  coolingDays: [PropertyHeatDay]
+
+  # Days of temperature at or above the health caution temperature in Fahrenheit.
+  healthCautionDays: [PropertyHeatDay]
+
+  # Days of temperature at or above the dangerous temperature in Fahrenheit.
+  dangerousDays: [PropertyHeatDay]
+
+  # The additional number of days at or above the hot day temperature relative to the surrounding area.
+  anomalyDays: [PropertyHeatDay]
+}
+
+type PropertyHeatTemperatureHigh {
+  # Year asscociated with the point.
+  year: Int64!
+
+  # Relative year to this year. Can be negative
+  relativeYear: Int64!
+
+  # Maximum Monthly Temperature
+  # Average daily max temperature (Fahrenheit) in the hottest month (usually July)
+  mmt: Float
+}
+
+# Filter to narrow the values by relative year.
+input PropertyHeatTemperatureHighFilter {
+  relativeYear: [Int64!]
+}
+
+type PropertyHeatWave {
+  # Year asscociated with the point.
+  year: Int64!
+
+  # Relative year to this year. Can be negative.
+  relativeYear: Int64!
+
+  # Temperature threshold of the heat wave. The unit is either Fahrenheit or percentile depending on the parent object.
+  threshold: Int64!
+
+  # The probability of 3 days in a row to exceed threshold temperature.
+  probability: Float
+
+  # For given probability, how long heat wave will last.
+  length: Int64
+}
+
+# Filter to narrow the values by year, relative year, or threshold.
+input PropertyHeatWaveFilter {
+  relativeYear: [Int64!]
+}
+
+type PropertyHeatWaves {
+  # Distribution of heat waves in a year by temperature in Fahrenheit.
+  distribution(filter: PropertyHeatWaveFilter): [PropertyHeatWave]
+
+  # Heat waves of temperature above the local definition of a hot temperature in percentile.
+  hotHeatWave: [PropertyHeatWave]
+}
+
 type PropertyInsuranceHippo {
   provider: InsuranceProvider!
   rates: [InsuranceHippoRate]
@@ -2156,7 +2548,24 @@ type Query {
 
   # Query to obtain fire-related data.
   fire: FireQuery
+
+  # Query to obtain heat-related data.
+  heat: HeatQuery
   ping: String!
+
+  # Current API version
+  version: VersionRelease!
+}
+
+type RankInState {
+  counties(by: RankInStateLocalityStat!, size: Int64): [County]
+}
+
+enum RankInStateLocalityStat {
+  HOTDAYS_DESC
+  HOTDAYS_ASC
+  DANGEROUSDAYS_DESC
+  DANGEROUSDAYS_ASC
 }
 
 # Data resource currently supported
@@ -2198,6 +2607,7 @@ enum Service {
   FEMA
   FLOOD
   FIRE
+  HEAT
   EXTERNALAVM
 }
 
@@ -2274,7 +2684,7 @@ type State implements Location {
     after: String
   ): PageConnection
 
-  # The state's proeprties, as a connection.
+  # The state's properties, as a connection.
   propertyConnection(
     # Number of records(edges) to return. A number between 0 and 100.
     first: Int
@@ -2292,10 +2702,19 @@ type State implements Location {
   # Fire details for the state.
   fire: LocalityFire
 
+  # Heat details for the state.
+  heat: LocalityHeat
+
+  # Rank child localities in state by certain attributes.
+  rankLocalities: RankInState
+
   # fsfLink is First Street's link to the state on FirstStreet's website.
   #
   # Example: *https://floodfactor.com/state/12_fsid?utm_medium=overlay*
   fsfLink: String
+    @deprecated(
+      reason: "fsfLink is deprecated, use the child `link` field within the climate peril."
+    )
 }
 
 # A TideStation provides metadata as well as the annual observed mean sea level rise (1980-2020), and sea level rise projection by 10 year increments (2020-2050).
@@ -2318,6 +2737,8 @@ type TideStation {
   # The projections for 2020-2050 (in 10 year increments) with the low, mid and high mean sea level (in centimeters using the NAVD88 datum) based on 3 potential climate model realizations of the RCP 4.5 emissions scenario.
   seaLevelRiseProjection: [SeaLevelRiseProjection]
 }
+
+scalar Time
 
 # Census Tract as provided by the by the US Census Bureau (not available on FirstStreet's website)
 type Tract implements Location {
@@ -2355,8 +2776,14 @@ type Tract implements Location {
   # Fire details for the tract.
   fire: LocalityFire
 
+  # Heat details for the tract.
+  heat: LocalityHeat
+
   # fsfLink is always null for tracts, as they are not displayed on FirstStreet's website.
   fsfLink: String
+    @deprecated(
+      reason: "fsfLink is deprecated, use the child `link` field within the climate peril."
+    )
 
   # List of properties within the tract, as a connection.
   propertyConnection(
@@ -2369,6 +2796,14 @@ type Tract implements Location {
     # Filter the properties of this tract.
     filter: PropertyFilters
   ): PageConnection
+}
+
+type VersionRelease {
+  # The current release version
+  release: String
+
+  # The date of the release
+  date: Time
 }
 
 # ZIP code tabulation area as provided by the US Census Bureau.
@@ -2404,10 +2839,16 @@ type Zcta implements Location {
   # Fire details for the zcta.
   fire: LocalityFire
 
+  # Heat details for the zcta.
+  heat: LocalityHeat
+
   # fsfLink is First Street's link to the zcta on FirstStreet's website.
   #
   # Example: *https://floodfactor.com/zcta/82633_fsid?utm_medium=overlay*
   fsfLink: String
+    @deprecated(
+      reason: "fsfLink is deprecated, use the child `link` field within the climate peril."
+    )
 
   # List of properties in the zcta, as a connection.
   propertyConnection(
@@ -2421,4 +2862,3 @@ type Zcta implements Location {
     filter: PropertyFilters
   ): PageConnection
 }
-
