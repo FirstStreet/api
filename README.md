@@ -5,8 +5,7 @@ API.
 
 ## Official Documentation
 
-[Please see this link](https://docs.firststreet.org/api) for our documentation
-on getting started with the API.
+[Please see this link](https://docs.firststreet.org/api) for documentation on getting started with the First Street API.
 
 ## Current Version
 
