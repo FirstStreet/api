@@ -9,7 +9,7 @@ API.
 
 ## Current Version
 
-The current version of the First Street Foundation GraphQL API is 2.1, last
+The current version of the First Street Foundation GraphQL API is v3, last
 updated on Sunday, October 23, 2022. See our [Peril Dataset Versions](https://docs.firststreet.org/api/peril-dataset-versions) in our documentation for more version information on specific climate data.
 
 ### Contact
