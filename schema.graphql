@@ -1,21 +1,12 @@
 directive @fsApplyExclusion on FIELD_DEFINITION
 
-directive @fsHasPolicy(
-  service: Service!
-) on FIELD_DEFINITION | ARGUMENT_DEFINITION
+directive @fsHasPolicy(service: Service!) on FIELD_DEFINITION | ARGUMENT_DEFINITION
 
-directive @fsRecordAPIUsage(
-  service: APIUsageService!
-) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+directive @fsRecordAPIUsage(service: APIUsageService!) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
 
-directive @fsValidation(
-  constraint: String!
-) on INPUT_FIELD_DEFINITION | ARGUMENT_DEFINITION
+directive @fsValidation(constraint: String!) on INPUT_FIELD_DEFINITION | ARGUMENT_DEFINITION
 
-directive @goField(
-  forceResolver: Boolean
-  name: String
-) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+directive @goField(forceResolver: Boolean, name: String) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
 
 enum APIUsageService {
   LOCATION
@@ -69,6 +60,15 @@ type Building {
 
   # Roof characteristics
   roof: BuildingRoof
+
+  # Year built
+  yearBuilt: Int64
+
+  # Floor size in square feet
+  sqft: Int64
+
+  # Replacement cost per square foot
+  replacementCostPerSqft: Int64
 }
 
 type BuildingConstruction implements BuildingMaterial {
@@ -153,10 +153,7 @@ type City implements Location {
   # fsfLink is First Street's link to the neighborhood on FirstStreet's website.
   #
   # Example: *https://floodfactor.com/city/5301920_fsid?utm_medium=overlay*
-  fsfLink: String
-    @deprecated(
-      reason: "fsfLink is deprecated, use the child `link` field within the climate peril."
-    )
+  fsfLink: String @deprecated(reason: "fsfLink is deprecated, use the child `link` field within the climate peril.")
 
   # List of properties in the city, as a connection.
   propertyConnection(
@@ -231,10 +228,7 @@ type CongressionalDistrict implements Location {
   heat: LocalityHeat
 
   # fsfLink is always null for congressional districts, as they are not displayed on FirstStreet's website.
-  fsfLink: String
-    @deprecated(
-      reason: "fsfLink is deprecated, use the child `link` field within the climate peril."
-    )
+  fsfLink: String @deprecated(reason: "fsfLink is deprecated, use the child `link` field within the climate peril.")
 
   # List of properties within the congressional district, as a connection.
   propertyConnection(
@@ -302,10 +296,7 @@ type County implements Location {
   # fsfLink is First Street's link to the neighborhood on FirstStreet's website.
   #
   # Example: *https://floodfactor.com/county/1003_fsid?utm_medium=overlay*
-  fsfLink: String
-    @deprecated(
-      reason: "fsfLink is deprecated, use the child `link` field within the climate peril."
-    )
+  fsfLink: String @deprecated(reason: "fsfLink is deprecated, use the child `link` field within the climate peril.")
 
   # The neighborhood(s) the city is associated with, as a connection. This encompasses macro neighborhoods, neighborhood, sub-neighborhoods and residential districts (e.g. subdivisions and apartment complexes).
   neighborhoodConnection(
@@ -367,14 +358,19 @@ type CountySubdivision implements Location {
   # fsfLink is First Street's link to the neighborhood on FirstStreet's website.
   #
   # Example: *https://floodfactor.com/cousub/5303391392_fsid?utm_medium=overlay*
-  fsfLink: String
-    @deprecated(
-      reason: "fsfLink is deprecated, use the child `link` field within the climate peril."
-    )
+  fsfLink: String @deprecated(reason: "fsfLink is deprecated, use the child `link` field within the climate peril.")
 }
 
 # Remap Graphql Types to Go Types
 scalar Date
+
+enum EmberRiskRating {
+  MINOR
+  MODERATE
+  MAJOR
+  SEVERE
+  EXTREME
+}
 
 interface Excluding {
   exclusion: Exclusion
@@ -404,16 +400,7 @@ enum FindOperator {
   LE
 }
 
-union FindResultItem =
-    Property
-  | City
-  | State
-  | County
-  | CongressionalDistrict
-  | Zcta
-  | Tract
-  | Neighborhood
-  | CountySubdivision
+union FindResultItem = Property | City | State | County | CongressionalDistrict | Zcta | Tract | Neighborhood | CountySubdivision
 
 type FindResultItemConnection {
   edges: [FindResultItemEdge]
@@ -936,7 +923,7 @@ type LocalityFlood implements FloodStatistic & Excluding {
   probability: LocalityFloodProbability
 
   # Provides the number of residential properties with any loss and the average dollar value loss broken down by Flood Factor score.
-  AAL: LocalityFloodAAL
+  AAL: LocalityFloodAAL @deprecated(reason: "'AAL' is deprecated, use 'consequences' instead")
 
   # The list of modeled historic events that inundated the location.
   # Inundation is defined as having flood depth >0 for property queries or >1 property with >0 flood depth for higher-level locations.
@@ -1372,9 +1359,7 @@ type LocalityHeat implements Excluding {
   dangerousDaysPercentChange: Float
 
   # Average High Temperature in the hottest month in Farenheight.
-  temperatureAverageHigh(
-    filter: LocalityHeatTemperatureHighFilter
-  ): [LocalityHeatTemperatureHigh]
+  temperatureAverageHigh(filter: LocalityHeatTemperatureHighFilter): [LocalityHeatTemperatureHigh]
 
   # Distribution of days by temperature.
   days: LocalityHeatDays
@@ -1384,6 +1369,9 @@ type LocalityHeat implements Excluding {
 
   # The count of properties at risk
   atRisk(filter: LocalityHeatAtRiskFilter): [LocalityHeatAtRisk]
+
+  # Emission values averages, available only for state level
+  emissions: LocalityHeatEmission
 
   # If locality is excluded, the reason for exclusion.
   exclusion: Exclusion
@@ -1438,6 +1426,11 @@ type LocalityHeatDays {
 
   # Days of temperature at or above the dangerous temperature in Fahrenheit.
   dangerousDays: [LocalityHeatDay]
+}
+
+type LocalityHeatEmission {
+  # Kilograms of CO2 emitted per MWh consumed
+  co2PerMWh: Int64
 }
 
 type LocalityHeatTemperatureHigh {
@@ -1527,6 +1520,33 @@ type LocationGeometry {
   polygon: Polygon
 }
 
+input LocationSearchItem {
+  fsid: Int64!
+  type: LocationType!
+}
+
+type LocationSearchPreview implements Location {
+  fsid: Int64!
+
+  # PROPERTY = formattedAddress
+  # CITY = City, State
+  # COUNTY = County, State
+  # STATE = State
+  # ZCTA = ZCTA, State
+  # TRACT = Tract, State
+  # CD = "Congressional District #, State"
+  # NEIGHBORHOOD = Neighborhood, State
+  # COUSUB = Cousub, State
+  name: String
+  type: LocationType!
+  floodFactor: Int64
+  fireFactor: Int64
+  heatFactor: Int64
+  floodFactorLink: String!
+  heatFactorLink: String!
+  fireFactorLink: String!
+}
+
 enum LocationType {
   PROPERTY
   CITY
@@ -1566,6 +1586,37 @@ type MapLegendColorRepresentation {
   min: Float
   max: Float
   unit: String!
+}
+
+type MetadataItem {
+  databaseId: String!
+  name: String
+}
+
+type MetadataLookup {
+  # Landuse type mappings to categories
+  landUseCategory: [MetadataItem!]
+
+  # Landuse type mappings to type
+  landUseType: [MetadataItem!]
+
+  # Building constuctions
+  buildingConstruction: [MetadataItem!]
+
+  # Building roofs
+  buildingRoof: [MetadataItem!]
+
+  # Infrastructure types
+  infrastructureType: [MetadataItem!]
+
+  # Infrastructure categories
+  infrastructureCategory: [MetadataItem!]
+
+  # Infrastructure type mappings to categories
+  infrastructureTypeCategory: [MetadataItem!]
+
+  # Fire proofing
+  fireProofing: [MetadataItem!]
 }
 
 # Neighborhood data.
@@ -1612,10 +1663,7 @@ type Neighborhood implements Location {
   # fsfLink is First Street's link to the neighborhood on FirstStreet's website.
   #
   # Example: *https://floodfactor.com/neighborhood/68501_fsid?utm_medium=overlay*
-  fsfLink: String
-    @deprecated(
-      reason: "fsfLink is deprecated, use the child `link` field within the climate peril."
-    )
+  fsfLink: String @deprecated(reason: "fsfLink is deprecated, use the child `link` field within the climate peril.")
 
   # List of properties in the neighborhood, as a connection.
   propertyConnection(
@@ -1754,6 +1802,9 @@ type Property implements Location {
   # A collection of nodes that represents geographical information for the property.
   geometry: LocationGeometry
 
+  # Size of the parcel in acres.
+  parcelAcres: Float
+
   # Indicates whether First Street has information about the largest building footprint on the property from which the property's flood risk stats are calculated.
   #
   # Example: 5
@@ -1769,6 +1820,9 @@ type Property implements Location {
   # Example: true
   isResidential: Boolean
 
+  # The landuse code id of this property.
+  landuseCodeId: Int64
+
   # Information about the building the property is located in, as applicable.
   building: Building
 
@@ -1778,10 +1832,7 @@ type Property implements Location {
   # fsfLink is First Street's link to the property on FirstStreet's website.
   #
   # Example: *https://floodfactor.com/property/240652458_fsid?utm_medium=overlay*
-  fsfLink: String
-    @deprecated(
-      reason: "fsfLink is deprecated, use the child `link` field within the climate peril."
-    )
+  fsfLink: String @deprecated(reason: "fsfLink is deprecated, use the child `link` field within the climate peril.")
 
   # Flood details for the property.
   flood: PropertyFlood
@@ -1824,6 +1875,12 @@ type PropertyCooling {
 
   # The amount of electricity used for the purpose of maintaining a comfortable indoor temperature, in kwH
   energy: Float
+
+  # Electric costs per Kwh.
+  costPerKwh: Float
+
+  # The temperature from which coolingDays and coolingDegreeDays are calculated.
+  coolingTemp: Float
 }
 
 # Filter a property's cooling costs.
@@ -1895,6 +1952,9 @@ type PropertyFire implements FireStatistics & Excluding {
   # Probability data for the property
   probability: PropertyFireProbability
 
+  # Details for property fire losses.
+  consequences(input: PropertyFireConsequencesInput): PropertyFireConsequences!
+
   # Insurance quote from Hippo Insurance
   insuranceHippo(
     # Class to return. By default quotes for all insurance classes will be returned.
@@ -1903,6 +1963,112 @@ type PropertyFire implements FireStatistics & Excluding {
 
   # If property is excluded, the reason for exclusion.
   exclusion: Exclusion
+}
+
+type PropertyFireConsequences {
+  damage: PropertyFireConsequencesDamage
+  burn: PropertyFireConsequencesBurn!
+  rebuild: PropertyFireConsequencesRebuild!
+  cumulative: [PropertyFireConsequencesCumulative!]
+}
+
+# Estimates assuming that a fire reaches this building
+type PropertyFireConsequencesBurn {
+  # Days to repair (or rebuild) a building given flame lengths of
+  # 0 - 2 feet, 2-4 feet, 4-8 feet, 8 - 12 feet, 12-20 feet, 20 feet+
+  daysToRepairBin: [Float!]
+}
+
+# Cumulative likelihood of complete destruction if wildfire occurs over timeframe (%)
+type PropertyFireConsequencesCumulative {
+  # Year associated with the point.
+  year: Int64!
+
+  # Year, as relative to the current year
+  relativeYear: Int64!
+
+  # The max height of the y axis when the data point is being represented on a graph (from 0-100, where 100 is the max value).
+  yMax: Int
+
+  # The data point.
+  point: Float
+}
+
+type PropertyFireConsequencesDamage {
+  conditional: [PropertyFireConsequencesDamageConditional!]
+}
+
+# Annual likelihood of wildfire risks
+type PropertyFireConsequencesDamageConditional {
+  # Year associated with this data point.
+  year: Int64!
+
+  # Year, as relative to the current year
+  relativeYear: Int64!
+
+  # Percentage chance of destruction, assuming that a fire reaches this building (out of 1)
+  flameLossConditional: Float
+
+  # Time lost to repair or rebuild, assuming that a fire reaches this building (in days)
+  flameTimeConditional: Float
+
+  # Average annual loss due to wildfire flames (in dollars)
+  flameLoss: Float
+
+  # Probability of building destruction by wildfire flames
+  flamePercent: Float
+
+  # Average annual time loss to repairs/rebuilding due to flames (in days)
+  flameTime: Float
+
+  # Average annual loss due to wildfire embers (in dollars)
+  emberLoss: Float
+
+  # Probability of building destruction by wildfire embers (out of 1)
+  emberPercent: Float
+
+  # Average annual time loss to repairs/rebuilding due to embers (in days)
+  emberTime: Float
+
+  # Relative level of risk of wildfire embers falling on this property
+  emberRiskRating: EmberRiskRating
+}
+
+input PropertyFireConsequencesInput {
+  # The general land use code
+  # Example: 1 (residential)
+  landuseCodeId: Int
+
+  # The presence of defensible space around this property.
+  defensibleSpace: Boolean
+
+  # The type of roofing material.
+  roofCoverId: String
+
+  # The predominant construction material of the building
+  constructionId: String
+
+  # Number of stories for the Property
+  stories: Int
+
+  # Floor size in square feet
+  buildingSqft: Int
+
+  # Whether or not the property abides by the Fireproofing building code
+  # True => has fire-proofing
+  fireCode: Boolean
+
+  # Replacement cost of the building in dollars.
+  pricePerSqft: Int64
+}
+
+# Replacement cost to rebuild this property
+type PropertyFireConsequencesRebuild {
+  # Replacement cost to rebuild this property
+  cost: Int64
+
+  # Not Implemented. Replacement time to rebuild this property.
+  days: Int64
 }
 
 # The information associated with the event(s) for event(s) where the area of the model simulation of the historic event overlaps any area of the location.
@@ -1997,11 +2163,23 @@ type PropertyFireProbabilityDamage {
 type PropertyFireProbabilityDamageConditional {
   year: Int64!
   relativeYear: Int64!
+
+  # Chance of structural destruction assuming a wildfire reaches this property (out of 1)
   flameLossConditional: Float
+
+  # Downtime at this building, assuming that wildfire flames reach this property
   flameTimeConditional: Float
+
+  # Annualized chance this structure is destroyed by wildfire flames
   flameLoss: Float
+
+  # Annualized downtime due to wildfire flames
   flameTime: Float
+
+  # Annualized chance this structure is destroyed by wildfire embers (out of 1)
   emberLoss: Float
+
+  # Annualized downtime due to wildfire embers
   emberTime: Float
 }
 
@@ -2084,7 +2262,10 @@ type PropertyFlood implements FloodStatistic & Excluding {
     #
     # Example: *3*
     stories: Int64
-  ): PropertyFloodAAL
+  ): PropertyFloodAAL @deprecated(reason: "'AAL' is deprecated, use 'consequences' instead")
+
+  # Details for property flood losses.
+  consequences(input: PropertyFloodConsequencesInput): PropertyFloodConsequences
 
   # Provides information from community-wide grey and green adaptation projects across the United States categorized into 40 different Adaptation Types.
   # Returns data as a connection.
@@ -2107,8 +2288,7 @@ type PropertyFlood implements FloodStatistic & Excluding {
   environmental: LocalityFloodEnvironmental
 
   # Provides insurance quotes from insurance providers. TODO: need more precise definition.
-  insurance: [PropertyFloodInsurance]
-    @deprecated(reason: "Insurance field is deprecated. Use insuranceHippo.")
+  insurance: [PropertyFloodInsurance] @deprecated(reason: "Insurance field is deprecated. Use insuranceHippo.")
 
   # Insurance quote from Hippo Insurance
   insuranceHippo(
@@ -2156,6 +2336,101 @@ type PropertyFloodAnnualLoss implements OverTime {
 
   # The loss in US dollars due to modeled flooding for the location for the associated year based on the high scenario of the RCP 4.5 emissions curve.
   high: Int64
+}
+
+# Details for property flood losses.
+type PropertyFloodConsequences {
+  byDepth: [PropertyFloodConsequencesByDepth]
+  byProbability: [PropertyFloodConsequencesByProbability]
+  annualized: [PropertyFloodConsequencesAnnualized!]
+}
+
+# Expected losses over time
+type PropertyFloodConsequencesAnnualized implements OverTime {
+  # Year associated with this data point.
+  year: Int64!
+
+  # Year, as relative to the current year
+  relativeYear: Int64!
+
+  # Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+  percentile: Int
+
+  # Estimated damages in US dollars
+  damages: Int64
+
+  # Estimated loss of property use in days
+  days: Int64
+}
+
+# Expected losses for specified depth.
+type PropertyFloodConsequencesByDepth {
+  # Depth values for calculating consequences. By default one of: 5, 15, 30. Can be adjusted through PropertyFloodConsequencesInput parameter.
+  depth: Int64!
+
+  # Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+  percentile: Int!
+
+  # Provides the loss in US dollars due to flood risk for the property by depth.
+  damages: Int64
+
+  # Provides the loss in days due to flood risk for the property by depth.
+  days: Int64
+}
+
+# Annual depths and damages by return period
+type PropertyFloodConsequencesByProbability {
+  # Year associated with this data point.
+  year: Int64!
+
+  # Year, as relative to the current year
+  relativeYear: Int64!
+
+  # Return period of flooding
+  returnPeriod: Int64!
+
+  # Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+  percentile: Int!
+
+  # Estimated depth of flooding
+  depth: Int64
+
+  # Estimated damages in US dollars
+  damages: Int64
+
+  # Estimated loss of property use in days
+  days: Int64
+}
+
+input PropertyFloodConsequencesInput {
+  # The general land use code
+  # Example: 1 (residential)
+  landuseCodeId: Int
+
+  # The predominant construction material of the building
+  constructionId: String
+
+  # Number of stories for the Property
+  stories: Int
+
+  # Floor size in square feet
+  buildingSqft: Int
+
+  # Whether or not the property has a basement.
+  basement: Boolean
+
+  # Number of units in Property
+  units: Int
+
+  # The height in centimeters associated with the floor elevation for the building.
+  foundationHeight: Int
+
+  # The depth in cm of the flood event that the damage should be calculated for. Multiple values accepted, delineated with a comma.
+  # Maximum number of depths: 35, each depth is a whole number (non-negative integer) under 1000.
+  #
+  # Example: *30, 45*
+  # Default: *5,15,30*
+  depths: [Int64!]
 }
 
 type PropertyFloodDepthLoss {
@@ -2269,6 +2544,15 @@ type PropertyFloodProbabilityChance implements OverTime {
 
   # The likelihood (% probability) of flooding given as a value from 0-1 (rounded to two decimal places) at the specified depth based on the high scenario of the RCP 4.5 emissions curve.
   high: Float
+
+  # The max height of the y axis when the low point is being represented on a graph (from 0-100, where 100 is the max value).
+  yMaxLow: Int!
+
+  # The max height of the y axis when the mid point is being represented on a graph (from 0-100, where 100 is the max value).
+  yMaxMid: Int!
+
+  # The max height of the y axis when the high point is being represented on a graph (from 0-100, where 100 is the max value).
+  yMaxHigh: Int!
 }
 
 # The risk likelihood (% probability) for flooding to the building footprint broken down by depth threshold and cumulative year.
@@ -2339,6 +2623,9 @@ type PropertyHeat implements Excluding {
   # Text representation of the Heat Factor.
   factorScale: FactorScale
 
+  # Risk Factor link to Heat Report for the property
+  link: String!
+
   # 98th Percentile temperature for the property (Fahrenheit)
   hotTemperature: Int64
 
@@ -2349,18 +2636,64 @@ type PropertyHeat implements Excluding {
   cooling(filter: PropertyCoolingFilter): [PropertyCooling]
 
   # Average High Temperature in the hottest month in Fahrenheit.
-  temperatureAverageHigh(
-    filter: PropertyHeatTemperatureHighFilter
-  ): [PropertyHeatTemperatureHigh]
+  temperatureAverageHigh(filter: PropertyHeatTemperatureHighFilter): [PropertyHeatTemperatureHigh]
 
   # Distribution of days by temperature.
   days: PropertyHeatDays
 
   # Distribution of heat waves by temperature.
   heatWaves: PropertyHeatWaves
+  consequences(input: PropertyHeatConsequencesInput): PropertyHeatConsequences
 
   # If property is excluded, the reason for exclusion.
   exclusion: Exclusion
+}
+
+type PropertyHeatConsequences {
+  # Costs and energy used for cooling this property.
+  costs: [PropertyHeatConsequencesCosts]
+
+  # Distribution of days by temperature.
+  days: PropertyHeatConsequencesDays
+}
+
+type PropertyHeatConsequencesCosts {
+  year: Int64!
+  relativeYear: Int64!
+
+  # Average cooling degree days
+  averageCoolingDegreeDays: Int64
+
+  # The average cooling degree days Y height in a chart.
+  averageCoolingDegreeDaysYMax: Float
+
+  # Annual costs associated with cooling
+  annualCoolingCosts: Int64
+
+  # The annual cooling costs Y height in a chart.
+  annualCoolingCostsYMax: Float
+
+  # Estimated A/C Energy consumption
+  estimatedEnergyConsumption: Int64
+
+  # The estimated A/C Energy consumption Y height in a chart.
+  estimatedEnergyConsumptionYMax: Float
+
+  # Estimated A/C Emissions (in lbs CO2)
+  estimatedEmissions: Int64
+}
+
+type PropertyHeatConsequencesDays {
+  # Days of temperature at or above the cooling temperature, customized by desired indoor temperature in Fahrenheit.
+  coolingDays: [PropertyHeatDay]
+}
+
+input PropertyHeatConsequencesInput {
+  buildingSqft: Int
+  yearBuilt: Int
+  landuseCodeId: Int
+  coolingTemp: Int
+  costPerKwh: Float
 }
 
 type PropertyHeatDay {
@@ -2555,6 +2888,12 @@ type Query {
 
   # Current API version
   version: VersionRelease!
+
+  # Query to provide address/metadata information by given an FSID
+  locationSearch(filter: [LocationSearchItem!]): [LocationSearchPreview!]!
+
+  # Returns an array of the database values
+  metadataLookup: MetadataLookup!
 }
 
 type RankInState {
@@ -2609,6 +2948,9 @@ enum Service {
   FIRE
   HEAT
   EXTERNALAVM
+  FLOODCONSEQUENCES
+  FIRECONSEQUENCES
+  HEATCONSEQUENCES
 }
 
 # US state or federal district
@@ -2711,10 +3053,7 @@ type State implements Location {
   # fsfLink is First Street's link to the state on FirstStreet's website.
   #
   # Example: *https://floodfactor.com/state/12_fsid?utm_medium=overlay*
-  fsfLink: String
-    @deprecated(
-      reason: "fsfLink is deprecated, use the child `link` field within the climate peril."
-    )
+  fsfLink: String @deprecated(reason: "fsfLink is deprecated, use the child `link` field within the climate peril.")
 }
 
 # A TideStation provides metadata as well as the annual observed mean sea level rise (1980-2020), and sea level rise projection by 10 year increments (2020-2050).
@@ -2780,10 +3119,7 @@ type Tract implements Location {
   heat: LocalityHeat
 
   # fsfLink is always null for tracts, as they are not displayed on FirstStreet's website.
-  fsfLink: String
-    @deprecated(
-      reason: "fsfLink is deprecated, use the child `link` field within the climate peril."
-    )
+  fsfLink: String @deprecated(reason: "fsfLink is deprecated, use the child `link` field within the climate peril.")
 
   # List of properties within the tract, as a connection.
   propertyConnection(
@@ -2845,10 +3181,7 @@ type Zcta implements Location {
   # fsfLink is First Street's link to the zcta on FirstStreet's website.
   #
   # Example: *https://floodfactor.com/zcta/82633_fsid?utm_medium=overlay*
-  fsfLink: String
-    @deprecated(
-      reason: "fsfLink is deprecated, use the child `link` field within the climate peril."
-    )
+  fsfLink: String @deprecated(reason: "fsfLink is deprecated, use the child `link` field within the climate peril.")
 
   # List of properties in the zcta, as a connection.
   propertyConnection(
