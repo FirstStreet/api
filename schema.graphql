@@ -13,6 +13,7 @@ enum APIUsageService {
   FLOOD
   FIRE
   HEAT
+  WIND
 }
 
 # The AVM Provider provides metadata for an AVM provider.
@@ -69,6 +70,12 @@ type Building {
 
   # Replacement cost per square foot
   replacementCostPerSqft: Int64
+
+  # The direction of the largest face of the building. Format as direction (N, NE, E, SE, S, SW, W, NW)
+  buildingOrientation: CompassDirection
+
+  # The design standard to which the building is built, displayed as text (low, middle, high)
+  windDesignStandard: BuildingWindDesignStandard
 }
 
 type BuildingConstruction implements BuildingMaterial {
@@ -87,6 +94,13 @@ type BuildingRoof implements BuildingMaterial {
   # Material used for the roof
   material: String
   combustibility: CombustibilityRating
+}
+
+# Different areas have different building standards for wind.
+enum BuildingWindDesignStandard {
+  LOW
+  MIDDLE
+  HIGH
 }
 
 # The center GeoJSON (Point)
@@ -150,6 +164,9 @@ type City implements Location {
   # Heat details for the city.
   heat: LocalityHeat
 
+  # Wind details for the city.
+  wind: LocalityWind
+
   # fsfLink is First Street's link to the neighborhood on FirstStreet's website.
   #
   # Example: *https://floodfactor.com/city/5301920_fsid?utm_medium=overlay*
@@ -181,6 +198,17 @@ enum CommunityRiskScoreScale {
   MAJOR
   SEVERE
   EXTREME
+}
+
+enum CompassDirection {
+  N
+  NE
+  E
+  SE
+  S
+  SW
+  W
+  NW
 }
 
 # Congressional District for the 116th Congress (not available in Flood Factor)
@@ -226,6 +254,9 @@ type CongressionalDistrict implements Location {
 
   # Heat details for the congressional district.
   heat: LocalityHeat
+
+  # Wind details for the congressional district.
+  wind: LocalityWind
 
   # fsfLink is always null for congressional districts, as they are not displayed on FirstStreet's website.
   fsfLink: String @deprecated(reason: "fsfLink is deprecated, use the child `link` field within the climate peril.")
@@ -293,6 +324,9 @@ type County implements Location {
   # Heat details for the county.
   heat: LocalityHeat
 
+  # Wind details for the county.
+  wind: LocalityWind
+
   # fsfLink is First Street's link to the neighborhood on FirstStreet's website.
   #
   # Example: *https://floodfactor.com/county/1003_fsid?utm_medium=overlay*
@@ -351,6 +385,9 @@ type CountySubdivision implements Location {
 
   # Heat details for the subdivision.
   heat: LocalityHeat
+
+  # Wind details for the subdivision.
+  wind: LocalityWind
 
   # A collection of nodes that represents geographical information for the county subdivision.
   geometry: LocationGeometry
@@ -717,8 +754,13 @@ type HeatQuery {
 }
 
 enum InsuranceClassification {
+  # Homeowners Policy Special Form 3 (Single-Family)
   HO3
+
+  # Homeowners Policy Contents Broad Form 4 (Rental)
   HO4
+
+  # Homeowners Policy Unit Owners Form 6 (Condos/Townhomes)
   HO6
 }
 
@@ -760,12 +802,36 @@ type InsuranceProvider {
   logo: String
 }
 
-scalar Int64
+type InsuranceRate {
+  # The URL to purchase the insurance
+  link: String!
 
-type LocalityAtRisk {
-  level: CommunityRiskScoreScale
-  propertyCount: Int64
+  # The policy's classification.
+  # There will always only 1 of each type of policy classification.
+  # (For example, HO3 will only appear on the list once, but can appear alongside HO4)
+  #
+  # HO3: Single family
+  # HO4: Renters
+  # HO6: Condos/Townhomes
+  # N/A: Unavailable
+  classification: InsuranceClassification!
+
+  # The minimum price for the policy
+  minPrice: Int!
+
+  # The maximum price for the policy
+  maxPrice: Int!
+
+  # Number of providers available for the policy (Can be 0)
+  providers: Int!
+
+  # The amount the coverage is intended for in the following order
+  contentsCoverage: Int
+  homeCoverage: Int
+  dwellingCoverage: Int
 }
+
+scalar Int64
 
 # Fire details for locality.
 type LocalityFire implements FireStatistics & Excluding {
@@ -812,6 +878,9 @@ type LocalityFireFacilityRisk {
   #
   # (-1 is decreasing, 0 is unchanging, 1 is increasing)
   riskDirection: Int64!
+
+  # Relative fire risk within the state.
+  riskPercentile: Float
 
   # Facility category.
   facilitiesCategory: [LocalityFireFacilityRiskCategorySummary]
@@ -1113,6 +1182,9 @@ type LocalityFloodFacilityRisk {
   # 0 = stationary
   # 1 = increasing
   riskDirection: Int64!
+
+  # Relative flood risk within the state.
+  riskPercentile: Float
 
   # Facility category.
   facilitiesCategory: [LocalityFloodFacilityRiskCategorySummary]
@@ -1504,6 +1576,207 @@ type LocalityNFIP {
   ICCPaid: Int64
 }
 
+type LocalityWind implements Excluding {
+  # The community risk level from wind, 0 to 5.
+  riskLevel: Int64
+
+  # The greatest wind risk type. One of 'cyclone', 'tornado' and 'thunderstorm'.
+  greatestWindRisk: WindType
+
+  # The count of properties at risk
+  atRisk(filter: LocalityWindAtRiskFilter): [LocalityWindAtRisk]
+  probability: LocalityWindProbability
+
+  # This locality has risk of thunderstorms
+  hasThunderstormRisk: Boolean
+
+  # This locality has risk of tornados
+  hasTornadoRisk: Boolean
+
+  # This locality has risk of cyclones
+  hasCycloneRisk: Boolean
+
+  # Risk Factor Wind Factor report link
+  link: String!
+
+  # The locality's wind historical events, as a connection. Sorted in reverse chronological order.
+  historicConnection(
+    # Number of records(edges) to return. A number between 0 and 100.
+    first: Int
+
+    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.
+    after: String
+
+    # Sort returned events based on requested value
+    sort: WindHistoricSort
+
+    # Filter returned historic events
+    filter: WindHistoricFilter
+  ): LocalityWindHistoricConnection
+
+  # If locality is excluded, the reason for exclusion.
+  exclusion: Exclusion
+}
+
+type LocalityWindAtRisk {
+  level: FactorScale!
+  propertyCount: Int64
+}
+
+input LocalityWindAtRiskFilter {
+  level: [FactorScale]
+}
+
+# The locality's wind historical events, as a connection. Sorted in reverse chronological order.
+type LocalityWindHistoricConnection {
+  # Returns a list type that wraps edge type.
+  edges: [LocalityWindHistoricEdge!]!
+
+  # Pagination information in relation to current page.
+  pageInfo: PageInfo!
+
+  # Total number of records for the connection.
+  #
+  # Example: *15382*
+  totalCount: Int64
+}
+
+# Represents one record for the current page.
+type LocalityWindHistoricEdge {
+  # Cursor is a string that can be used in subsequent request as value of a connection "after" argument, to request page starting after this item.
+  #
+  # Example: *Y3Vyc29yOjEyNTI0MA==*
+  cursor: String
+
+  # Contains one page record data.
+  node: LocalityWindHistoricEvent!
+}
+
+union LocalityWindHistoricEvent = LocalityWindHistoricEventCyclone | LocalityWindHistoricEventTornado | LocalityWindHistoricEventThunderstorm
+
+# Post-2004 cyclone information
+type LocalityWindHistoricEventCyclone implements WindHistoricEvent {
+  # Cyclone id
+  eventId: Int64!
+
+  # Event Type
+  eventType: WindType!
+
+  # Max sustained 1 min wind speeds in MpH
+  windSpeed: Int64
+
+  # Wind speed observed at the locality in MpH
+  localWindSpeed: Int64
+
+  # Cyclone name
+  name: String
+
+  # Landfall start  of the cyclone
+  date: Date
+
+  # Year of the event
+  year: Int64
+
+  # Wind category at landfall.
+  categoryAtLandfall: WindCategory
+
+  # Maximum category that the cyclone has reached.
+  categoryMax: WindCategory
+
+  # Category near county.
+  categoryLocality: WindCategory
+
+  # Number of properties affected by this cyclone.
+  affectedProperties: Int64
+
+  # True if this is an event with more data (post-2004). False if not
+  hasDetails: Boolean
+
+  # A collection of nodes that represents geographical information for the historic event.
+  geometry: LocationGeometry
+}
+
+# Thunderstorm
+type LocalityWindHistoricEventThunderstorm implements WindHistoricEvent {
+  # Thunderstorm id
+  eventId: Int64!
+
+  # Event Type
+  eventType: WindType!
+
+  # Date of the event
+  date: Date
+
+  # Year of the event
+  year: Int64
+
+  # Estimated damages in US dollars.
+  damages: Int64
+
+  # Number of injuries caused by thunderstorm.
+  injuries: Int64
+
+  # Number of fatalities caused by thunderstorm.
+  fatalities: Int64
+
+  # Thunderstorm max wind speed
+  maxWind: Int64
+}
+
+# Tornado
+type LocalityWindHistoricEventTornado implements WindHistoricEvent {
+  # Tornado id
+  eventId: Int64!
+
+  # Event Type
+  eventType: WindType!
+
+  # Date of the event
+  date: Date
+
+  # Year of the event
+  year: Int64
+
+  # Estimated damages in US dollars.
+  damages: Int64
+
+  # Number of injuries caused by tornado.
+  injuries: Int64
+
+  # Number of fatalities caused by tornado.
+  fatalities: Int64
+
+  # Tornado wind category
+  category: TornadoCategory
+
+  # A collection of nodes that represents geographical information for the historic event.
+  geometry: LocationGeometry
+}
+
+type LocalityWindProbability {
+  speed: [LocalityWindProbabilitySpeed!]
+}
+
+type LocalityWindProbabilitySpeed {
+  # Socio-economic pathway of the prediction model.
+  ssp: SSP!
+
+  # Year associated with this data point.
+  year: Int64!
+
+  # Year, as relative to the current year.
+  relativeYear: Int64!
+
+  # Return period of the wind event. One of: 2, 5, 20, 100, 300, 500, 700, 1700, 3000.
+  returnPeriod: Int64!
+
+  # The maximum 1-minute sustained speed for a given return period
+  maxSpeed: Int64
+
+  # The maximum 3-second gust speed for a given return period
+  maxGust: Int64
+}
+
 # A `location` is a parcel that is represented in the First Street API. Each location has a unique `fsid` that is canonically attached to its parcel, based on its type.
 #
 # It is important to note that FSIDs may collide when referencing different location types.  For example, a `property` location may have an `FSID of 1` while a `state` location may also have an `FSID of 1`.
@@ -1540,11 +1813,15 @@ type LocationSearchPreview implements Location {
   name: String
   type: LocationType!
   floodFactor: Int64
-  fireFactor: Int64
-  heatFactor: Int64
   floodFactorLink: String!
-  heatFactorLink: String!
+  fireFactor: Int64
   fireFactorLink: String!
+  heatFactor: Int64
+  heatFactorLink: String!
+  windFactor: Int64
+  windFactorLink: String!
+  overviewLink: String!
+  isResidential: Boolean!
 }
 
 enum LocationType {
@@ -1617,6 +1894,14 @@ type MetadataLookup {
 
   # Fire proofing
   fireProofing: [MetadataItem!]
+
+  # Fujita scale is a scale for rating tornado intensity based primarily on the damage tornadoes inflict on human-built structures and vegetation.
+  fujitaScale: [TornadoCategory!]
+}
+
+enum MissileEnvironment {
+  LOW
+  HIGH
 }
 
 # Neighborhood data.
@@ -1659,6 +1944,9 @@ type Neighborhood implements Location {
 
   # Heat details for the neighborhood.
   heat: LocalityHeat
+
+  # Wind details for the neighborhood.
+  wind: LocalityWind
 
   # fsfLink is First Street's link to the neighborhood on FirstStreet's website.
   #
@@ -1842,6 +2130,9 @@ type Property implements Location {
 
   # Heat details for the property.
   heat: PropertyHeat
+
+  # Wind details for the property.
+  wind: PropertyWind
 }
 
 # PropertyAVM is modeled real estate market value for the property as well as the providerId for the provider of the AVM model. Default provider is First Street Foundation (providerId: 2).
@@ -1959,7 +2250,13 @@ type PropertyFire implements FireStatistics & Excluding {
   insuranceHippo(
     # Class to return. By default quotes for all insurance classes will be returned.
     classification: InsuranceClassification
-  ): PropertyInsuranceHippo
+  ): PropertyInsuranceHippo @deprecated(reason: "Insurance field is deprecated. Use InsuranceQuotes.")
+
+  # Insurance quotes from providers
+  insuranceQuotes(
+    # Class to return. By default quotes for all insurance classes will be returned.
+    classification: InsuranceClassification
+  ): [PropertyInsurance]
 
   # If property is excluded, the reason for exclusion.
   exclusion: Exclusion
@@ -2288,13 +2585,19 @@ type PropertyFlood implements FloodStatistic & Excluding {
   environmental: LocalityFloodEnvironmental
 
   # Provides insurance quotes from insurance providers. TODO: need more precise definition.
-  insurance: [PropertyFloodInsurance] @deprecated(reason: "Insurance field is deprecated. Use insuranceHippo.")
+  insurance: [PropertyFloodInsurance] @deprecated(reason: "Insurance field is deprecated. Use InsuranceQuotes.")
 
-  # Insurance quote from Hippo Insurance
+  # Insurance quote from Hippo Insurance. (This is being redirected to Neptune Flood.)
   insuranceHippo(
     # Class to return. By default quotes for all insurance classes will be returned.
     classification: InsuranceClassification
-  ): PropertyInsuranceHippo
+  ): PropertyInsuranceHippo @deprecated(reason: "InsuranceHippo field is deprecated. Use InsuranceQuotes.")
+
+  # Insurance quotes from providers
+  insuranceQuotes(
+    # Class to return. By default quotes for all insurance classes will be returned.
+    classification: InsuranceClassification
+  ): [PropertyInsurance]
 
   # Requirements for flood insurance
   insuranceRequirement: FloodInsuranceRequirement!
@@ -2617,7 +2920,7 @@ input PropertyFloodProbabilityFilter {
 
 # Heat details for property.
 type PropertyHeat implements Excluding {
-  # The property's Fire Factor
+  # The property's Heat Factor
   heatFactor: Int64
 
   # Text representation of the Heat Factor.
@@ -2789,6 +3092,12 @@ type PropertyHeatWaves {
   hotHeatWave: [PropertyHeatWave]
 }
 
+type PropertyInsurance {
+  provider: InsuranceProvider!
+  rates: [InsuranceRate]
+  disclaimer: String
+}
+
 type PropertyInsuranceHippo {
   provider: InsuranceProvider!
   rates: [InsuranceHippoRate]
@@ -2805,6 +3114,408 @@ type PropertyNFIP {
 
   # The dollar amount of contents coverage for estimate in US dollars.
   contents: Int64!
+}
+
+# Wind details for property.
+type PropertyWind implements WindStatistics & Excluding {
+  # The property's Wind Factor
+  windFactor: Int64
+
+  # Text representation of the Wind Factor.
+  factorScale: FactorScale
+
+  # Risk Factor link to Wind Report for the property
+  link: String!
+
+  # The sign of future wind probability minus current wind probability (-1 is decreasing, 0 is unchanging, 1 is increasing)
+  riskDirection: Int64
+
+  # This property has risk of thunderstorms
+  hasThunderstormRisk: Boolean
+
+  # This property has risk of tornados
+  hasTornadoRisk: Boolean
+
+  # This property has risk of cyclones
+  hasCycloneRisk: Boolean
+
+  # The greatest wind risk type. One of 'cyclone', 'tornado' and 'thunderstorm'.
+  greatestWindRisk: WindType
+
+  # The level of risk from flying objects in this building's surrounding area. (Low/High)
+  missileEnvironment: MissileEnvironment
+
+  # The prevailing wind direction for storms in the area
+  primaryWindDirection: CompassDirection
+
+  # Forecast probability
+  probability: PropertyWindProbability
+
+  # The property's wind historical events, as a connection. Sorted in reverse chronological order.
+  historicConnection(
+    # Number of records(edges) to return. A number between 0 and 100.
+    first: Int
+
+    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.
+    after: String
+
+    # Sort returned events based on requested value
+    sort: WindHistoricSort
+
+    # Filter returned historic events
+    filter: WindHistoricFilter
+  ): PropertyWindHistoricConnection
+
+  # Details for property wind losses.
+  consequences(input: PropertyWindConsequencesInput): PropertyWindConsequences
+
+  # If property is excluded, the reason for exclusion.
+  exclusion: Exclusion
+}
+
+type PropertyWindConsequences {
+  byProbability: [PropertyWindConsequencesByProbability!]
+  annualized: [PropertyWindConsequencesAnnualized!]
+  byWindGust: [PropertyWindConsequencesByWindGust!]
+  tornado: [PropertyWindConsequencesTornado!]
+}
+
+# The annualized cost of damages expected to the building.
+type PropertyWindConsequencesAnnualized {
+  # Socio-economic pathway of the prediction model.
+  ssp: SSP!
+
+  # Year associated with this data point.
+  year: Int64!
+
+  # Year, as relative to the current year.
+  relativeYear: Int64!
+
+  # Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+  percentile: Int!
+
+  # Estimated damages in US dollars.
+  damages: Int64
+
+  # Estimated loss of property use in days.
+  days: Int64
+}
+
+# The cost of damage expected to the building and the number of days that it would be expected to repair wind damage, based on predicted probability
+type PropertyWindConsequencesByProbability {
+  # Socio-economic pathway of the prediction model.
+  ssp: SSP!
+
+  # Year associated with this data point.
+  year: Int64!
+
+  # Year, as relative to the current year.
+  relativeYear: Int64!
+
+  # Return period of the wind event. One of: 2, 5, 20, 100, 300, 500, 700, 1700, 3000.
+  returnPeriod: Int64!
+
+  # Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+  percentile: Int!
+
+  # Provides the loss in US dollars due to wind risk for the property by return period.
+  damages: Int64
+
+  # Provides the loss in days due to wind risk for the property by return period.
+  days: Int64
+}
+
+# The cost of damage expected to the building and the number of days that it would be expected to repair wind damage, based on predicted wind gust speed
+type PropertyWindConsequencesByWindGust {
+  # Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+  percentile: Int!
+
+  # Wind gust speed in MpH
+  gustSpeed: Int!
+
+  # Provides the loss in US dollars due to wind risk for the property by specific wind gust speed
+  damages: Int64!
+
+  # Provides the loss in days due to wind risk for the property by wind gust
+  days: Int64!
+}
+
+input PropertyWindConsequencesInput {
+  # The general land use code
+  # Example: 1 (residential)
+  landuseCodeId: Int
+
+  # Number of stories for the property
+  stories: Int
+
+  # The type of roofing material.
+  roofCoverId: String
+
+  # The design standard to which the building is built, displayed as text (low, middle, high)
+  designStandard: BuildingWindDesignStandard
+
+  # The direction of the largest face of the building. Format as direction (N, NE, E, SE, S, SW, W, NW)
+  buildingOrientation: CompassDirection
+
+  # Year when the property has been built
+  yearBuilt: Int
+
+  # Number of units in Property
+  units: Int
+
+  # Floor size in square feet
+  buildingSqft: Int
+}
+
+# The cost of damages to the building in case it's hit by a tornado
+type PropertyWindConsequencesTornado {
+  # Tornado wind category
+  category: TornadoCategory!
+
+  # Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+  percentile: Int!
+
+  # Low estimate of damages to the building for the wind category
+  damagesLow: Int64!
+
+  # High estimate of damages to the building for the wind category
+  damagesHigh: Int64!
+
+  # Low estimate of loss of property use in days for the wind category
+  daysLow: Int64!
+
+  # High estimate of loss of property use in days for the wind category
+  daysHigh: Int64!
+}
+
+# The property's wind historical events, as a connection. Sorted in reverse chronological order.
+type PropertyWindHistoricConnection {
+  # Returns a list type that wraps edge type.
+  edges: [PropertyWindHistoricEdge!]!
+
+  # Pagination information in relation to current page.
+  pageInfo: PageInfo!
+
+  # Total number of records for the connection.
+  #
+  # Example: *15382*
+  totalCount: Int64
+}
+
+# Represents one record for the current page.
+type PropertyWindHistoricEdge {
+  # Cursor is a string that can be used in subsequent request as value of a connection "after" argument, to request page starting after this item.
+  #
+  # Example: *Y3Vyc29yOjEyNTI0MA==*
+  cursor: String
+
+  # Contains one page record data.
+  node: PropertyWindHistoricEvent!
+}
+
+union PropertyWindHistoricEvent = PropertyWindHistoricEventCyclone | PropertyWindHistoricEventTornado | PropertyWindHistoricEventThunderstorm
+
+# Post-2004 cyclone information
+type PropertyWindHistoricEventCyclone implements WindHistoricEvent {
+  # Cyclone id
+  eventId: Int64!
+
+  # Event Type
+  eventType: WindType!
+
+  # Max sustained 1 min wind speeds in MpH
+  windSpeed: Int64
+
+  # Wind speed observed at the property in MpH
+  localWindSpeed: Int64
+
+  # Cyclone name
+  name: String
+
+  # Landfall start  of the cyclone
+  date: Date
+
+  # Year of landfall start  of the cyclone
+  year: Int64
+
+  # Wind category at landfall.
+  categoryAtLandfall: WindCategory
+
+  # Maximum category that the cyclone has reached.
+  categoryMax: WindCategory
+
+  # Category near county.
+  categoryLocality: WindCategory
+
+  # Number of properties in the property's county affected by this cyclone.
+  affectedProperties: Int64
+
+  # True if this is an event with more data (post-2004). False if not
+  hasDetails: Boolean
+
+  # A collection of nodes that represents geographical information for the historic event.
+  geometry: LocationGeometry
+}
+
+# Thunderstorm
+type PropertyWindHistoricEventThunderstorm implements WindHistoricEvent {
+  # Thunderstorm id
+  eventId: Int64!
+
+  # Event Type
+  eventType: WindType!
+
+  # Date of the event
+  date: Date
+
+  # Year of the event
+  year: Int64
+
+  # Estimated damages in US dollars.
+  damages: Int64
+
+  # Number of injuries caused by thunderstorm.
+  injuries: Int64
+
+  # Number of fatalities caused by thunderstorm.
+  fatalities: Int64
+
+  # Thunderstorm max wind speed
+  maxWind: Int64
+}
+
+# Tornado
+type PropertyWindHistoricEventTornado implements WindHistoricEvent {
+  # Tornado id
+  eventId: Int64!
+
+  # Event Type
+  eventType: WindType!
+
+  # Date of the event
+  date: Date
+
+  # Year of the event
+  year: Int64
+
+  # Estimated damages in US dollars.
+  damages: Int64
+
+  # Number of injuries caused by tornado.
+  injuries: Int64
+
+  # Number of fatalities caused by tornado.
+  fatalities: Int64
+
+  # Tornado wind category
+  category: TornadoCategory
+
+  # A collection of nodes that represents geographical information for the historic event.
+  geometry: LocationGeometry
+}
+
+# Forecast probability
+type PropertyWindProbability {
+  # Probability for wind speeds
+  speed(filter: PropertyWindProbabilityFilter): [PropertyWindProbabilitySpeed!]
+
+  # Probability for wind directions
+  direction: [PropertyWindProbabilityDirection!]
+
+  # Probability for wind speeds by speed thresholds
+  chance(filter: PropertyWindProbabilityFilter): [PropertyWindProbabilityChance!]
+
+  # Cumulative probability for wind speeds over time
+  cumulative(input: PropertyWindProbabilityInput, filter: PropertyWindProbabilityFilter): [PropertyWindProbabilityCumulative!]
+}
+
+# Probability for wind speeds by speed thresholds
+type PropertyWindProbabilityChance implements OverTime {
+  # Socio-economic pathway of the prediction model.
+  ssp: SSP!
+
+  # Year associated with this data point.
+  year: Int64!
+
+  # Year, as relative to the current year.
+  relativeYear: Int64!
+  threshold: Int64!
+
+  # Chance of the wind speeds reaching the threshold. Speed chances range from 0.0003 to 0.50 (0.03% to 50%)
+  probability: Float!
+
+  # Wind category based on the speed of threshold gust.
+  category: WindCategory
+}
+
+# Cumulative probability for wind speeds over time
+type PropertyWindProbabilityCumulative implements OverTime {
+  # Socio-economic pathway of the prediction model.
+  ssp: SSP!
+
+  # Year associated with this data point.
+  year: Int64!
+
+  # Year, as relative to the current year.
+  relativeYear: Int64!
+  threshold: Int64!
+
+  # Chance of the wind speeds reaching the threshold. Speed chances range from 0.0003 to 0.50 (0.03% to 50%)
+  probability: Float
+
+  # The max height of the y axis when the point is being represented on a graph (from 0-100, where 100 is the max value).
+  yMax: Int
+
+  # Wind category based on the speed threshold.
+  category: WindCategory
+}
+
+# Probability for wind directions
+type PropertyWindProbabilityDirection {
+  # Socio-economic pathway of the prediction model.
+  ssp: SSP!
+  direction: CompassDirection!
+
+  # The percentage of winds coming from a given direction
+  percent: Float!
+}
+
+# Filter probability wind data by provided value(s).
+# Will choose Threshold or ReturnPeriod filter as applicable.
+# For a record to be included it needs to satisfy all provided filter conditions ("AND")
+input PropertyWindProbabilityFilter {
+  year: [Int64]
+  relativeYear: [Int64]
+  threshold: [Int64]
+  returnPeriod: [Int64]
+}
+
+input PropertyWindProbabilityInput {
+  thresholds: [Int64!]
+}
+
+# Probability for wind speeds
+type PropertyWindProbabilitySpeed implements OverTime {
+  # Socio-economic pathway of the prediction model.
+  ssp: SSP!
+
+  # Year associated with this data point.
+  year: Int64!
+
+  # Year, as relative to the current year.
+  relativeYear: Int64!
+
+  # Return period of the wind event. One of: 2, 5, 20, 100, 300, 500, 700, 1700, 3000.
+  returnPeriod: Int64!
+
+  # The maximum 1-minute sustained speed for a given return period
+  maxSpeed: Int64
+
+  # The maximum 3-second gust speed for a given return period
+  maxGust: Int64
+
+  # Wind category based on maxGust.
+  category: WindCategory
 }
 
 # Top-level queries
@@ -2826,7 +3537,7 @@ type Query {
   propertyByAPN(APN: String!, FIPS: String!): Property
 
   # Property lookup by Lightbox location_id.
-  propertyByLocationId(locationId: String!): Property
+  propertyByLocationId(locationId: String!): Property @deprecated(reason: "propertyByLocationId is deprecated. Other options include search by FSID, APN, address, and coordinates.")
 
   # City lookup by FSID.
   city(fsid: Int64!): City
@@ -2894,6 +3605,9 @@ type Query {
 
   # Returns an array of the database values
   metadataLookup: MetadataLookup!
+
+  # Health check point 
+  healthcheck: Boolean!
 }
 
 type RankInState {
@@ -2910,6 +3624,11 @@ enum RankInStateLocalityStat {
 # Data resource currently supported
 enum Resource {
   FLOOD
+}
+
+enum SSP {
+  SSP_2_45
+  SSP_3_70
 }
 
 # The annual observed mean sea level (in centimeters using the NAVD88 datum) from 1980-2019 for the tide station.
@@ -2947,10 +3666,12 @@ enum Service {
   FLOOD
   FIRE
   HEAT
+  WIND
   EXTERNALAVM
   FLOODCONSEQUENCES
   FIRECONSEQUENCES
   HEATCONSEQUENCES
+  WINDCONSEQUENCES
 }
 
 # US state or federal district
@@ -3047,6 +3768,9 @@ type State implements Location {
   # Heat details for the state.
   heat: LocalityHeat
 
+  # Wind details for the state.
+  wind: LocalityWind
+
   # Rank child localities in state by certain attributes.
   rankLocalities: RankInState
 
@@ -3078,6 +3802,30 @@ type TideStation {
 }
 
 scalar Time
+
+# Fujita scale tornado category details
+type TornadoCategory {
+  # Tornado category id. A value from 0 to 11
+  tornadoCategoryId: Int64!
+
+  # Fujita rating of the category. A value from 0 to 5
+  rating: Int64!
+
+  # Indicates if the category is on the enhanced Fujita scale.
+  isEnhanced: Boolean
+
+  # Readable category name. Example: F1, EF2, etc
+  name: String!
+
+  # Min wind speed
+  minWindSpeed: Int64!
+
+  # Max wind speed. Null means no upper limit
+  maxWindSpeed: Int64
+
+  # Readable description of the tornado strength. Example: weak, strong, violent.
+  description: String!
+}
 
 # Census Tract as provided by the by the US Census Bureau (not available on FirstStreet's website)
 type Tract implements Location {
@@ -3118,6 +3866,9 @@ type Tract implements Location {
   # Heat details for the tract.
   heat: LocalityHeat
 
+  # Wind details for the tract.
+  wind: LocalityWind
+
   # fsfLink is always null for tracts, as they are not displayed on FirstStreet's website.
   fsfLink: String @deprecated(reason: "fsfLink is deprecated, use the child `link` field within the climate peril.")
 
@@ -3140,6 +3891,62 @@ type VersionRelease {
 
   # The date of the release
   date: Time
+}
+
+type WindCategory {
+  # Wind category id. A value from 0 to 5, corresponding to TS to Cat 5.
+  windCategoryId: Int64!
+
+  # Readable category name for cyclone category.
+  name: String!
+
+  # Min wind speed.
+  minWindSpeed: Int64!
+
+  # Max wind speed. Null means no upper limit.
+  maxWindSpeed: Int64
+}
+
+interface WindHistoricEvent {
+  # Wind Historic Event id
+  eventId: Int64!
+  eventType: WindType!
+  date: Date
+  year: Int64
+}
+
+# Filters returned historic events. 
+input WindHistoricFilter {
+  # When false will return all known events: cyclones pre- and post-2004, tornados, and thunderstorms (aka severe wind events.)
+  # When true will return only events for which we have maps: post-2004 cyclones and tornados.
+  # Default is false.
+  mappedEventsOnly: Boolean!
+}
+
+enum WindHistoricSort {
+  DATE_DESC
+  DATE_ASC
+  SPEED_DESC
+  SPEED_ASC
+  PROPERTIES_AFFECTED_DESC
+  PROPERTIES_AFFECTED_ASC
+}
+
+# Query to obtain wind-related data.
+type WindQuery {
+  # Current wind model version
+  version: VersionRelease!
+}
+
+interface WindStatistics {
+  # The sign of future wind probability minus current wind probability (-1 is decreasing, 0 is unchanging, 1 is increasing)
+  riskDirection: Int64
+}
+
+enum WindType {
+  CYCLONE
+  TORNADO
+  THUNDERSTORM
 }
 
 # ZIP code tabulation area as provided by the US Census Bureau.
@@ -3177,6 +3984,9 @@ type Zcta implements Location {
 
   # Heat details for the zcta.
   heat: LocalityHeat
+
+  # Wind details for the zcta.
+  wind: LocalityWind
 
   # fsfLink is First Street's link to the zcta on FirstStreet's website.
   #
