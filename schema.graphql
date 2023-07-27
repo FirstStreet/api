@@ -1,12 +1,27 @@
+# The @defer directive may be specified on a fragment spread to imply de-prioritization, that causes the fragment to be omitted in the initial response, and delivered as a subsequent response afterward. A query with @defer directive will cause the request to potentially return multiple responses, where non-deferred data is delivered in the initial response and data deferred delivered in a subsequent response. @include and @skip take precedence over @defer.
+directive @defer(
+  if: Boolean = true
+  label: String
+) on FRAGMENT_SPREAD | INLINE_FRAGMENT
+
 directive @fsApplyExclusion on FIELD_DEFINITION
 
-directive @fsHasPolicy(service: Service!) on FIELD_DEFINITION | ARGUMENT_DEFINITION
+directive @fsHasPolicy(
+  service: Service!
+) on FIELD_DEFINITION | ARGUMENT_DEFINITION
 
-directive @fsRecordAPIUsage(service: APIUsageService!) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+directive @fsRecordAPIUsage(
+  service: APIUsageService!
+) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
 
-directive @fsValidation(constraint: String!) on INPUT_FIELD_DEFINITION | ARGUMENT_DEFINITION
+directive @fsValidation(
+  constraint: String!
+) on INPUT_FIELD_DEFINITION | ARGUMENT_DEFINITION
 
-directive @goField(forceResolver: Boolean, name: String) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+directive @goField(
+  forceResolver: Boolean
+  name: String
+) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
 
 enum APIUsageService {
   LOCATION
@@ -14,6 +29,7 @@ enum APIUsageService {
   FIRE
   HEAT
   WIND
+  AIR
 }
 
 # The AVM Provider provides metadata for an AVM provider.
@@ -26,6 +42,35 @@ type AVMProvider {
 
   # A URL representation of the providers company logo.
   logo: String
+}
+
+# Air Quality Index category
+type AirAQICategory {
+  # AQI category id
+  aqiCategoryId: Int!
+
+  # Description of air quality
+  description: String!
+
+  # Category color. The color makes it easy for people to quickly determine whether air quality is reaching unhealthy levels in their communities.
+  color: String!
+
+  # Minimum of the AQI range.
+  aqiMin: Int64!
+
+  # Maximum of the AQI range.
+  aqiMax: Int64!
+}
+
+# Query to obtain air-related data.
+type AirQuery {
+  # Air Quality Index category
+  aqiCategory: [AirAQICategory]
+}
+
+enum AirRiskType {
+  OZONE
+  SMOKE
 }
 
 # The bounding box GeoJSON (Polygon)
@@ -76,6 +121,9 @@ type Building {
 
   # The design standard to which the building is built, displayed as text (low, middle, high)
   windDesignStandard: BuildingWindDesignStandard
+
+  # The air filter type used in the building
+  airFilterId: Int
 }
 
 type BuildingConstruction implements BuildingMaterial {
@@ -170,7 +218,10 @@ type City implements Location {
   # fsfLink is First Street's link to the neighborhood on FirstStreet's website.
   #
   # Example: *https://floodfactor.com/city/5301920_fsid?utm_medium=overlay*
-  fsfLink: String @deprecated(reason: "fsfLink is deprecated, use the child `link` field within the climate peril.")
+  fsfLink: String
+    @deprecated(
+      reason: "fsfLink is deprecated, use the child `link` field within the climate peril."
+    )
 
   # List of properties in the city, as a connection.
   propertyConnection(
@@ -193,6 +244,7 @@ enum CombustibilityRating {
 }
 
 enum CommunityRiskScoreScale {
+  MINIMAL
   MINOR
   MODERATE
   MAJOR
@@ -259,7 +311,10 @@ type CongressionalDistrict implements Location {
   wind: LocalityWind
 
   # fsfLink is always null for congressional districts, as they are not displayed on FirstStreet's website.
-  fsfLink: String @deprecated(reason: "fsfLink is deprecated, use the child `link` field within the climate peril.")
+  fsfLink: String
+    @deprecated(
+      reason: "fsfLink is deprecated, use the child `link` field within the climate peril."
+    )
 
   # List of properties within the congressional district, as a connection.
   propertyConnection(
@@ -327,10 +382,16 @@ type County implements Location {
   # Wind details for the county.
   wind: LocalityWind
 
+  # Air details for the county.
+  air: LocalityAir
+
   # fsfLink is First Street's link to the neighborhood on FirstStreet's website.
   #
   # Example: *https://floodfactor.com/county/1003_fsid?utm_medium=overlay*
-  fsfLink: String @deprecated(reason: "fsfLink is deprecated, use the child `link` field within the climate peril.")
+  fsfLink: String
+    @deprecated(
+      reason: "fsfLink is deprecated, use the child `link` field within the climate peril."
+    )
 
   # The neighborhood(s) the city is associated with, as a connection. This encompasses macro neighborhoods, neighborhood, sub-neighborhoods and residential districts (e.g. subdivisions and apartment complexes).
   neighborhoodConnection(
@@ -395,7 +456,18 @@ type CountySubdivision implements Location {
   # fsfLink is First Street's link to the neighborhood on FirstStreet's website.
   #
   # Example: *https://floodfactor.com/cousub/5303391392_fsid?utm_medium=overlay*
-  fsfLink: String @deprecated(reason: "fsfLink is deprecated, use the child `link` field within the climate peril.")
+  fsfLink: String
+    @deprecated(
+      reason: "fsfLink is deprecated, use the child `link` field within the climate peril."
+    )
+}
+
+type CriteriaPollutant {
+  # ID of criteria pollutant
+  criteriaPollutantId: Int!
+
+  # Name of criteria pollutant
+  name: String!
 }
 
 # Remap Graphql Types to Go Types
@@ -437,7 +509,16 @@ enum FindOperator {
   LE
 }
 
-union FindResultItem = Property | City | State | County | CongressionalDistrict | Zcta | Tract | Neighborhood | CountySubdivision
+union FindResultItem =
+    Property
+  | City
+  | State
+  | County
+  | CongressionalDistrict
+  | Zcta
+  | Tract
+  | Neighborhood
+  | CountySubdivision
 
 type FindResultItemConnection {
   edges: [FindResultItemEdge]
@@ -753,6 +834,14 @@ type HeatQuery {
   version: VersionRelease!
 }
 
+type IndustrySector {
+  # ID of the TRI sector
+  industrySectorID: Int!
+
+  # Name of the TRI sector
+  name: String
+}
+
 enum InsuranceClassification {
   # Homeowners Policy Special Form 3 (Single-Family)
   HO3
@@ -832,6 +921,11 @@ type InsuranceRate {
 }
 
 scalar Int64
+
+type LocalityAir {
+  # Counties that do not meet the NAAQS standards are described as being in a state of "nonattainment".
+  nonAttainments: [NonAttainment]
+}
 
 # Fire details for locality.
 type LocalityFire implements FireStatistics & Excluding {
@@ -992,7 +1086,8 @@ type LocalityFlood implements FloodStatistic & Excluding {
   probability: LocalityFloodProbability
 
   # Provides the number of residential properties with any loss and the average dollar value loss broken down by Flood Factor score.
-  AAL: LocalityFloodAAL @deprecated(reason: "'AAL' is deprecated, use 'consequences' instead")
+  AAL: LocalityFloodAAL
+    @deprecated(reason: "'AAL' is deprecated, use 'consequences' instead")
 
   # The list of modeled historic events that inundated the location.
   # Inundation is defined as having flood depth >0 for property queries or >1 property with >0 flood depth for higher-level locations.
@@ -1431,7 +1526,9 @@ type LocalityHeat implements Excluding {
   dangerousDaysPercentChange: Float
 
   # Average High Temperature in the hottest month in Farenheight.
-  temperatureAverageHigh(filter: LocalityHeatTemperatureHighFilter): [LocalityHeatTemperatureHigh]
+  temperatureAverageHigh(
+    filter: LocalityHeatTemperatureHighFilter
+  ): [LocalityHeatTemperatureHigh]
 
   # Distribution of days by temperature.
   days: LocalityHeatDays
@@ -1444,6 +1541,7 @@ type LocalityHeat implements Excluding {
 
   # Emission values averages, available only for state level
   emissions: LocalityHeatEmission
+  communityRisk: LocalityHeatFacilityRisk
 
   # If locality is excluded, the reason for exclusion.
   exclusion: Exclusion
@@ -1474,8 +1572,11 @@ type LocalityHeatDay {
   # Days within bin
   days: Int64
 
-  # The Y height in a chart.
-  yMax: Float
+  # The Y height in a chart. Floating point number between 0 and 1.
+  yMax: Float @deprecated(reason: "Use yAxisHeight instead")
+
+  # The Y height in a chart. Integer between 0 and 100.
+  yAxisHeight: Int
 }
 
 input LocalityHeatDayFilter {
@@ -1503,6 +1604,14 @@ type LocalityHeatDays {
 type LocalityHeatEmission {
   # Kilograms of CO2 emitted per MWh consumed
   co2PerMWh: Int64
+}
+
+type LocalityHeatFacilityRisk {
+  # A categorical 0-5 score for each county in each category.
+  score: Int64
+
+  # Score scale description
+  scoreScale: CommunityRiskScoreScale
 }
 
 type LocalityHeatTemperatureHigh {
@@ -1613,6 +1722,7 @@ type LocalityWind implements Excluding {
     # Filter returned historic events
     filter: WindHistoricFilter
   ): LocalityWindHistoricConnection
+  communityRisk: LocalityWindFacilityRisk
 
   # If locality is excluded, the reason for exclusion.
   exclusion: Exclusion
@@ -1625,6 +1735,14 @@ type LocalityWindAtRisk {
 
 input LocalityWindAtRiskFilter {
   level: [FactorScale]
+}
+
+type LocalityWindFacilityRisk {
+  # A categorical 0-5 score for each county in each category.
+  score: Int64
+
+  # Score scale description
+  scoreScale: CommunityRiskScoreScale
 }
 
 # The locality's wind historical events, as a connection. Sorted in reverse chronological order.
@@ -1652,7 +1770,10 @@ type LocalityWindHistoricEdge {
   node: LocalityWindHistoricEvent!
 }
 
-union LocalityWindHistoricEvent = LocalityWindHistoricEventCyclone | LocalityWindHistoricEventTornado | LocalityWindHistoricEventThunderstorm
+union LocalityWindHistoricEvent =
+    LocalityWindHistoricEventCyclone
+  | LocalityWindHistoricEventTornado
+  | LocalityWindHistoricEventThunderstorm
 
 # Post-2004 cyclone information
 type LocalityWindHistoricEventCyclone implements WindHistoricEvent {
@@ -1897,6 +2018,9 @@ type MetadataLookup {
 
   # Fujita scale is a scale for rating tornado intensity based primarily on the damage tornadoes inflict on human-built structures and vegetation.
   fujitaScale: [TornadoCategory!]
+
+  # Air filter types
+  airFilter: [MetadataItem!]
 }
 
 enum MissileEnvironment {
@@ -1951,7 +2075,10 @@ type Neighborhood implements Location {
   # fsfLink is First Street's link to the neighborhood on FirstStreet's website.
   #
   # Example: *https://floodfactor.com/neighborhood/68501_fsid?utm_medium=overlay*
-  fsfLink: String @deprecated(reason: "fsfLink is deprecated, use the child `link` field within the climate peril.")
+  fsfLink: String
+    @deprecated(
+      reason: "fsfLink is deprecated, use the child `link` field within the climate peril."
+    )
 
   # List of properties in the neighborhood, as a connection.
   propertyConnection(
@@ -1964,6 +2091,51 @@ type Neighborhood implements Location {
     # Filter the properties of this neighborhood.
     filter: PropertyFilters
   ): PageConnection
+}
+
+type NeighborhoodConnection {
+  # Returns a list type that wraps edge type.
+  edges: [NeighborhoodEdge!]!
+
+  # Pagination information in relation to current page.
+  pageInfo: PageInfo!
+
+  # Total number of records for the connection.
+  #
+  # Example: *15382*
+  totalCount: Int64
+}
+
+# Represents one record for the current page.
+type NeighborhoodEdge {
+  # Cursor is a string that can be used in subsequent request as value of a connection "after" argument, to request page starting after this item.
+  #
+  # Example: *Y3Vyc29yOjEyNTI0MA==*
+  cursor: String
+
+  # Contains one page record data.
+  node: Neighborhood!
+}
+
+enum NeighborhoodSort {
+  NEIGHBORHOOD_TYPE
+}
+
+type NonAttainment {
+  # Year asscociated with the nonattainment
+  year: Int64!
+
+  # Relative year to this year.
+  relativeYear: Int64!
+
+  # Area classification, blank for pollutant standards without classifications.
+  classification: String
+
+  # True if only part of the county is in nonattainment
+  part: Boolean!
+
+  # Pollutant classification
+  criteriaPollutant: CriteriaPollutant!
 }
 
 # Represents data over years
@@ -2029,6 +2201,9 @@ type PagePreview {
 
   # Additional information about the item as available.
   descriptor: String
+
+  # The location's unique identifier in the URL
+  slug: String
 }
 
 # The polygon GeoJSON (MultiPoint)
@@ -2045,7 +2220,7 @@ type Polygon {
 # Property details.
 #
 # Based on the legal boundary of a property as recognized by a state or local government.
-type Property implements Location {
+type Property implements Location & Excluding {
   # First Street ID (FSID) is a unique identifier assigned to each location.
   #
   # Example: 392804911
@@ -2078,6 +2253,22 @@ type Property implements Location {
   # The neighborhood(s) the property is associated with as an array, including each associated neighborhood's name and FSID.
   # This encompasses macro neighborhoods, neighborhood, sub-neighborhoods and residential districts (e.g. subdivisions and apartment complexes).
   neighborhood: [Neighborhood]
+    @deprecated(
+      reason: "neighborhood is deprecated. Use neighborhoodConnection instead."
+    )
+
+  # The neighborhood(s) the property is associated with as a paginated list, including each associated neighborhood's name and FSID.
+  # This encompasses macro neighborhoods, neighborhood, sub-neighborhoods and residential districts (e.g. subdivisions and apartment complexes).
+  neighborhoodConnection(
+    # Number of records(edges) to return. A number between 0 and 100.
+    first: Int
+
+    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.
+    after: String
+
+    # Sort returned neighborhoods based on requested value
+    sort: NeighborhoodSort
+  ): NeighborhoodConnection
 
   # The property's county subdivision, including the county subdivision FSID and name.
   cousub: CountySubdivision
@@ -2116,11 +2307,17 @@ type Property implements Location {
 
   # The Automated Valuation Model (AVM) provides the modeled real estate market value for the property as well as the providerId for the provider of the AVM model.
   AVM: PropertyAVM
+    @deprecated(
+      reason: "'AVM' is no longer available. Returns empty always, and will be removed in future versions."
+    )
 
   # fsfLink is First Street's link to the property on FirstStreet's website.
   #
   # Example: *https://floodfactor.com/property/240652458_fsid?utm_medium=overlay*
-  fsfLink: String @deprecated(reason: "fsfLink is deprecated, use the child `link` field within the climate peril.")
+  fsfLink: String
+    @deprecated(
+      reason: "fsfLink is deprecated, use the child `link` field within the climate peril."
+    )
 
   # Flood details for the property.
   flood: PropertyFlood
@@ -2133,6 +2330,15 @@ type Property implements Location {
 
   # Wind details for the property.
   wind: PropertyWind
+
+  # AirQuality details for the property.
+  air: PropertyAir
+
+  # If property is excluded, the reason for exclusion.
+  exclusion: Exclusion
+
+  # Property's assessor's parcel number (APN).
+  APN: String
 }
 
 # PropertyAVM is modeled real estate market value for the property as well as the providerId for the provider of the AVM model. Default provider is First Street Foundation (providerId: 2).
@@ -2152,6 +2358,124 @@ type PropertyAddress {
   #
   # Example: *123 Main St Chicago 60106 IL*
   formattedAddress: String
+}
+
+# AirQuality details for property.
+type PropertyAir implements Excluding {
+  # The property's Air Factor
+  airFactor: Int64
+
+  # Text representation of the AirQuality Factor.
+  factorScale: FactorScale
+
+  # The sign of future air quality probability minus current air quality probability (-1 is decreasing, 0 is unchanging, 1 is increasing)
+  riskDirection: Int64
+
+  # Risk Factor link to AirQuality Report for the property
+  link: String!
+
+  # Distribution of days by Air Quality Index, ozone and pm25.
+  days: PropertyAirDays
+
+  # An array of the air quality risk types ordered by the number of at-risk days in descending order. Possible entries: "ozone", "smoke". If an entry is not in the array then the risk is not present for this property.
+  greatestAirRisks: [AirRiskType!]
+
+  # Is the property within 30 miles of a 75th percentile TRI facility.
+  triNearby: Boolean
+
+  # List of TRI facilities(in the 75th percentile of emitters) within 30 miles of the property
+  triFacilityConnection(
+    # Number of records(edges) to return. A number between 0 and 100.
+    first: Int
+
+    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.
+    after: String
+  ): TRIFacilityConnection
+
+  # Details for property air damages.
+  consequences(input: PropertyAirConsequencesInput): PropertyAirConsequences!
+
+  # If property is excluded, the reason for exclusion.
+  exclusion: Exclusion
+}
+
+type PropertyAirConsequences {
+  # Indoor air quality index estimate
+  aqi: [PropertyAirConsequencesAQI!]
+  indoorPoorAQdays: [PropertyAirQualityDay!]
+}
+
+# Indoor air quality index estimate based on outdoor air quality and house parameters
+type PropertyAirConsequencesAQI {
+  # Outdoor Air Quality Index category
+  aqiCategory: AirAQICategory
+
+  # Lower estimate for indoor Air Quality Index
+  aqiLower: Int
+
+  # Upper estimate for indoor Air Quality Index
+  aqiUpper: Int
+}
+
+input PropertyAirConsequencesInput {
+  # The general land use code
+  # Example: 1 (residential)
+  landuseCodeId: Int
+
+  # Year when the property has been built
+  yearBuilt: Int
+
+  # Floor size in square feet
+  buildingSqft: Int
+
+  # Number of units in Property
+  units: Int
+
+  # Number of stories for the property
+  stories: Int
+
+  # The type of air filter
+  filterId: Int
+
+  # Does the structure have an air purifier?
+  hasAirPurifier: Boolean
+
+  # Have sealing/insulation upgrades been made?
+  hasEnergyStarInsulation: Boolean
+}
+
+# Filter to narrow the values by year, relative year, or threshold.
+input PropertyAirDayFilter {
+  relativeYears: [Int64!]
+}
+
+type PropertyAirDays {
+  # Distribution of poor air quality days in a year.
+  outdoorPoorAQDaysCombined(
+    filter: PropertyAirDayFilter
+  ): [PropertyAirQualityDay]
+  outdoorPoorAQDaysSmoke(filter: PropertyAirDayFilter): [PropertyAirQualityDay]
+  outdoorPoorAQDaysOzone(filter: PropertyAirDayFilter): [PropertyAirQualityDay]
+}
+
+type PropertyAirQualityDay {
+  # Year asscociated with the point
+  year: Int64!
+
+  # Relative year to this year. Can be negative.
+  relativeYear: Int64!
+
+  # Air Quality Index
+  aqiCategory: AirAQICategory!
+
+  # Days within the current Air Quality Index
+  days: Int64!
+
+  # Days within the current and worse Air Quality Index
+  cumulativeDays: Int64!
+
+  # The max height of the y axis when the data point is being represented on a graph (from 0-100, where 100 is the max value).
+  yMax: Int
 }
 
 type PropertyCooling {
@@ -2250,7 +2574,8 @@ type PropertyFire implements FireStatistics & Excluding {
   insuranceHippo(
     # Class to return. By default quotes for all insurance classes will be returned.
     classification: InsuranceClassification
-  ): PropertyInsuranceHippo @deprecated(reason: "Insurance field is deprecated. Use InsuranceQuotes.")
+  ): PropertyInsuranceHippo
+    @deprecated(reason: "Insurance field is deprecated. Use InsuranceQuotes.")
 
   # Insurance quotes from providers
   insuranceQuotes(
@@ -2284,11 +2609,23 @@ type PropertyFireConsequencesCumulative {
   # Year, as relative to the current year
   relativeYear: Int64!
 
-  # The max height of the y axis when the data point is being represented on a graph (from 0-100, where 100 is the max value).
+  # The max height of the y axis when the data point is being represented on a graph (from 0-100, where 100 is the max value) based on combined (greater of burn or ember) wildfire risk.
   yMax: Int
 
-  # The data point.
+  # The data point based on combined (greater of burn or ember) wildfire risk.
   point: Float
+
+  # The max height of the y axis when the data point is being represented on a graph (from 0-100, where 100 is the max value) based on ember risk.
+  emberYMax: Int
+
+  # The data point based on ember risk.
+  emberPoint: Float
+
+  # The max height of the y axis when the data point is being represented on a graph (from 0-100, where 100 is the max value) based on burn(flame) risk.
+  flameYMax: Int
+
+  # The data point based on burn(flame) risk.
+  flamePoint: Float
 }
 
 type PropertyFireConsequencesDamage {
@@ -2329,6 +2666,9 @@ type PropertyFireConsequencesDamageConditional {
 
   # Relative level of risk of wildfire embers falling on this property
   emberRiskRating: EmberRiskRating
+    @deprecated(
+      reason: "Ember risk percentage is now available from emberPercent field"
+    )
 }
 
 input PropertyFireConsequencesInput {
@@ -2342,8 +2682,14 @@ input PropertyFireConsequencesInput {
   # The type of roofing material.
   roofCoverId: String
 
+  # The roof cover's combustibility id.
+  roofCoverCombustibililtyId: Int
+
   # The predominant construction material of the building
   constructionId: String
+
+  # The construction's combustibility id.
+  constructionCombustibilityId: Int
 
   # Number of stories for the Property
   stories: Int
@@ -2416,11 +2762,17 @@ type PropertyFireProbability {
 type PropertyFireProbabilityBurn {
   year: Int64!
 
-  # Year relative to 2020.
+  # Year relative to 2023.
   relativeYear: Int64!
 
-  # The percent chance of burn for the given year
+  # The percent chance of burn for the given year based on combined wildfire risk (greater of burn and ember).
   percent: Float
+
+  # The percent chance of burn for the given year based on ember risk.
+  emberPercent: Float
+
+  # The percent chance of burn for the given year based on burn(flame) risk.
+  flamePercent: Float
 
   # Max height of flame length
   flameMax: Float!
@@ -2436,7 +2788,7 @@ type PropertyFireProbabilityBurn {
   emberZone: Boolean!
 }
 
-# The wildfire risk likelihood (% probability) to the building footprint by cumulative year.
+# The wildfire risk likelihood (% probability) to the building footprint by cumulative year based on combined wildfire risk (greater of burn and ember).
 type PropertyFireProbabilityCumulative {
   # Year asscociated with the point.
   year: Int64!
@@ -2444,11 +2796,23 @@ type PropertyFireProbabilityCumulative {
   # Year increments in relation to this year.
   relativeYear: Int64!
 
-  # The max height of the y axis when the data point is being represented on a graph (from 0-100, where 100 is the max value).
+  # The max height of the y axis when the data point is being represented on a graph (from 0-100, where 100 is the max value) based on combined (greater of burn or ember) wildfire risk.
   yMax: Int
 
-  # The data point.
+  # The data point based on combined (greater of burn or ember) wildfire risk.
   point: Float
+
+  # The max height of the y axis when the data point is being represented on a graph (from 0-100, where 100 is the max value) based on ember risk.
+  emberYMax: Int
+
+  # The data point based on ember risk.
+  emberPoint: Float
+
+  # The max height of the y axis when the data point is being represented on a graph (from 0-100, where 100 is the max value) based on burn(flame) risk.
+  flameYMax: Int
+
+  # The data point based on burn(flame) risk.
+  flamePoint: Float
 }
 
 # Fire damage probability.
@@ -2559,7 +2923,8 @@ type PropertyFlood implements FloodStatistic & Excluding {
     #
     # Example: *3*
     stories: Int64
-  ): PropertyFloodAAL @deprecated(reason: "'AAL' is deprecated, use 'consequences' instead")
+  ): PropertyFloodAAL
+    @deprecated(reason: "'AAL' is deprecated, use 'consequences' instead")
 
   # Details for property flood losses.
   consequences(input: PropertyFloodConsequencesInput): PropertyFloodConsequences
@@ -2585,13 +2950,17 @@ type PropertyFlood implements FloodStatistic & Excluding {
   environmental: LocalityFloodEnvironmental
 
   # Provides insurance quotes from insurance providers. TODO: need more precise definition.
-  insurance: [PropertyFloodInsurance] @deprecated(reason: "Insurance field is deprecated. Use InsuranceQuotes.")
+  insurance: [PropertyFloodInsurance]
+    @deprecated(reason: "Insurance field is deprecated. Use InsuranceQuotes.")
 
   # Insurance quote from Hippo Insurance. (This is being redirected to Neptune Flood.)
   insuranceHippo(
     # Class to return. By default quotes for all insurance classes will be returned.
     classification: InsuranceClassification
-  ): PropertyInsuranceHippo @deprecated(reason: "InsuranceHippo field is deprecated. Use InsuranceQuotes.")
+  ): PropertyInsuranceHippo
+    @deprecated(
+      reason: "InsuranceHippo field is deprecated. Use InsuranceQuotes."
+    )
 
   # Insurance quotes from providers
   insuranceQuotes(
@@ -2939,7 +3308,9 @@ type PropertyHeat implements Excluding {
   cooling(filter: PropertyCoolingFilter): [PropertyCooling]
 
   # Average High Temperature in the hottest month in Fahrenheit.
-  temperatureAverageHigh(filter: PropertyHeatTemperatureHighFilter): [PropertyHeatTemperatureHigh]
+  temperatureAverageHigh(
+    filter: PropertyHeatTemperatureHighFilter
+  ): [PropertyHeatTemperatureHigh]
 
   # Distribution of days by temperature.
   days: PropertyHeatDays
@@ -2967,20 +3338,36 @@ type PropertyHeatConsequencesCosts {
   # Average cooling degree days
   averageCoolingDegreeDays: Int64
 
-  # The average cooling degree days Y height in a chart.
+  # The average cooling degree days Y height in a chart. Floating point value between 0-1.
   averageCoolingDegreeDaysYMax: Float
+    @deprecated(
+      reason: "Switch to averageCoolingDegreeDaysYAxisHeight instead."
+    )
+
+  # The average cooling degree days Y height in a chart. Integer value between 0-100.
+  averageCoolingDegreeDaysYAxisHeight: Int
 
   # Annual costs associated with cooling
   annualCoolingCosts: Int64
 
-  # The annual cooling costs Y height in a chart.
+  # The annual cooling costs Y height in a chart. Floating point value between 0-1.
   annualCoolingCostsYMax: Float
+    @deprecated(reason: "Switch to annualCoolingCostsYAxisHeight instead.")
+
+  # The annual cooling costs Y height in a chart. Integer value between 0-100.
+  annualCoolingCostsYAxisHeight: Int
 
   # Estimated A/C Energy consumption
   estimatedEnergyConsumption: Int64
 
-  # The estimated A/C Energy consumption Y height in a chart.
+  # The estimated A/C Energy consumption Y height in a chart. Floating point value between 0-1.
   estimatedEnergyConsumptionYMax: Float
+    @deprecated(
+      reason: "Switch to estimatedEnergyConsumptionYAxisHeight instead."
+    )
+
+  # The estimated A/C Energy consumption Y height in a chart. Integer value between 0-100.
+  estimatedEnergyConsumptionYAxisHeight: Int
 
   # Estimated A/C Emissions (in lbs CO2)
   estimatedEmissions: Int64
@@ -3015,8 +3402,11 @@ type PropertyHeatDay {
   # Days within bin
   days: Int64
 
-  # The Y height in a chart.
-  yMax: Float
+  # The Y height in a chart. Floating point number between 0 and 1.
+  yMax: Float @deprecated(reason: "Use yAxisHeight instead")
+
+  # The Y height in a chart. Integer between 0 and 100.
+  yAxisHeight: Int
 }
 
 # Filter a property's temperature-day distributions.
@@ -3313,7 +3703,10 @@ type PropertyWindHistoricEdge {
   node: PropertyWindHistoricEvent!
 }
 
-union PropertyWindHistoricEvent = PropertyWindHistoricEventCyclone | PropertyWindHistoricEventTornado | PropertyWindHistoricEventThunderstorm
+union PropertyWindHistoricEvent =
+    PropertyWindHistoricEventCyclone
+  | PropertyWindHistoricEventTornado
+  | PropertyWindHistoricEventThunderstorm
 
 # Post-2004 cyclone information
 type PropertyWindHistoricEventCyclone implements WindHistoricEvent {
@@ -3423,10 +3816,15 @@ type PropertyWindProbability {
   direction: [PropertyWindProbabilityDirection!]
 
   # Probability for wind speeds by speed thresholds
-  chance(filter: PropertyWindProbabilityFilter): [PropertyWindProbabilityChance!]
+  chance(
+    filter: PropertyWindProbabilityFilter
+  ): [PropertyWindProbabilityChance!]
 
   # Cumulative probability for wind speeds over time
-  cumulative(input: PropertyWindProbabilityInput, filter: PropertyWindProbabilityFilter): [PropertyWindProbabilityCumulative!]
+  cumulative(
+    input: PropertyWindProbabilityInput
+    filter: PropertyWindProbabilityFilter
+  ): [PropertyWindProbabilityCumulative!]
 }
 
 # Probability for wind speeds by speed thresholds
@@ -3473,7 +3871,7 @@ type PropertyWindProbabilityCumulative implements OverTime {
 # Probability for wind directions
 type PropertyWindProbabilityDirection {
   # Socio-economic pathway of the prediction model.
-  ssp: SSP!
+  ssp: SSP! @deprecated
   direction: CompassDirection!
 
   # The percentage of winds coming from a given direction
@@ -3537,7 +3935,10 @@ type Query {
   propertyByAPN(APN: String!, FIPS: String!): Property
 
   # Property lookup by Lightbox location_id.
-  propertyByLocationId(locationId: String!): Property @deprecated(reason: "propertyByLocationId is deprecated. Other options include search by FSID, APN, address, and coordinates.")
+  propertyByLocationId(locationId: String!): Property
+    @deprecated(
+      reason: "propertyByLocationId is deprecated. Other options include search by FSID, APN, address, and coordinates."
+    )
 
   # City lookup by FSID.
   city(fsid: Int64!): City
@@ -3595,6 +3996,12 @@ type Query {
 
   # Query to obtain heat-related data.
   heat: HeatQuery
+
+  # Query to obtain wind-related data.
+  wind: WindQuery
+
+  # Query to obtain air-related data.
+  air: AirQuery
   ping: String!
 
   # Current API version
@@ -3606,7 +4013,7 @@ type Query {
   # Returns an array of the database values
   metadataLookup: MetadataLookup!
 
-  # Health check point 
+  # Health check point
   healthcheck: Boolean!
 }
 
@@ -3667,11 +4074,13 @@ enum Service {
   FIRE
   HEAT
   WIND
+  AIR
   EXTERNALAVM
   FLOODCONSEQUENCES
   FIRECONSEQUENCES
   HEATCONSEQUENCES
   WINDCONSEQUENCES
+  AIRCONSEQUENCES
 }
 
 # US state or federal district
@@ -3777,7 +4186,48 @@ type State implements Location {
   # fsfLink is First Street's link to the state on FirstStreet's website.
   #
   # Example: *https://floodfactor.com/state/12_fsid?utm_medium=overlay*
-  fsfLink: String @deprecated(reason: "fsfLink is deprecated, use the child `link` field within the climate peril.")
+  fsfLink: String
+    @deprecated(
+      reason: "fsfLink is deprecated, use the child `link` field within the climate peril."
+    )
+}
+
+type TRIFacility {
+  # EPA's ID of facility
+  triFacilityID: String!
+
+  # Name of the facility
+  name: String!
+
+  # The facility's emission percentile
+  emissionPercentile: Int!
+
+  # Sectory
+  industry: IndustrySector!
+}
+
+# The property's nearby TRI facilities.
+type TRIFacilityConnection {
+  # Returns a list type that wraps edge type.
+  edges: [TRIFacilityEdge!]!
+
+  # Pagination information in relation to current page.
+  pageInfo: PageInfo!
+
+  # Total number of records for the connection.
+  # Example: *15382*
+  totalCount: Int64
+}
+
+# Represents one TRI Facility record for the current page.
+type TRIFacilityEdge {
+  # Cursor is a string that can be used in subsequent request as value of a connection "after" argument, to request page starting after this item.
+  #
+  # Example: *Y3Vyc29yOjEyNTI0MA==*
+  cursor: String
+
+  # Contains one page record data.
+  node: TRIFacility!
 }
 
 # A TideStation provides metadata as well as the annual observed mean sea level rise (1980-2020), and sea level rise projection by 10 year increments (2020-2050).
@@ -3870,7 +4320,10 @@ type Tract implements Location {
   wind: LocalityWind
 
   # fsfLink is always null for tracts, as they are not displayed on FirstStreet's website.
-  fsfLink: String @deprecated(reason: "fsfLink is deprecated, use the child `link` field within the climate peril.")
+  fsfLink: String
+    @deprecated(
+      reason: "fsfLink is deprecated, use the child `link` field within the climate peril."
+    )
 
   # List of properties within the tract, as a connection.
   propertyConnection(
@@ -3915,7 +4368,7 @@ interface WindHistoricEvent {
   year: Int64
 }
 
-# Filters returned historic events. 
+# Filters returned historic events.
 input WindHistoricFilter {
   # When false will return all known events: cyclones pre- and post-2004, tornados, and thunderstorms (aka severe wind events.)
   # When true will return only events for which we have maps: post-2004 cyclones and tornados.
@@ -3934,6 +4387,9 @@ enum WindHistoricSort {
 
 # Query to obtain wind-related data.
 type WindQuery {
+  # Map lookup.  Returns map metadata such as legends.
+  mapLegend: MapLegend!
+
   # Current wind model version
   version: VersionRelease!
 }
@@ -3991,7 +4447,10 @@ type Zcta implements Location {
   # fsfLink is First Street's link to the zcta on FirstStreet's website.
   #
   # Example: *https://floodfactor.com/zcta/82633_fsid?utm_medium=overlay*
-  fsfLink: String @deprecated(reason: "fsfLink is deprecated, use the child `link` field within the climate peril.")
+  fsfLink: String
+    @deprecated(
+      reason: "fsfLink is deprecated, use the child `link` field within the climate peril."
+    )
 
   # List of properties in the zcta, as a connection.
   propertyConnection(
