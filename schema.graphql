@@ -44,33 +44,118 @@ type AVMProvider {
   logo: String
 }
 
-# Air Quality Index category
-type AirAQICategory {
-  # AQI category id
-  aqiCategoryId: Int!
+# Air Quality Color category. Color reflects severity of pollution, on a scale 1-6, with 6 being most severe.
+type AirColor {
+  # Color id
+  colorId: Int!
 
-  # Description of air quality
+  # Description of color meaning
   description: String!
 
   # Category color. The color makes it easy for people to quickly determine whether air quality is reaching unhealthy levels in their communities.
   color: String!
 
-  # Minimum of the AQI range.
-  aqiMin: Int64!
+  # PM 2.5 measurement range corresponding to color. Contains an array with two values, the lower and upper bounds of the range.
+  pm25Range: [Float]!
 
-  # Maximum of the AQI range.
-  aqiMax: Int64!
+  # Ozone measurement range corresponding to color. Contains an array with two values, the lower and upper bounds of the range.
+  ozoneRange: [Int64]!
+}
+
+# Filter to narrow the values by year, relative year, or threshold.
+input AirDayFilter {
+  relativeYears: [Int64!]
+}
+
+# Historical air quality index for the property.
+type AirHistoricAQI {
+  # The historic year.
+  year: Int64!
+
+  # Average AQI of the year.
+  aqiAvg: Int64
+
+  # Worst AQI of the year.
+  aqiMax: Int64
+
+  # Date of the worst AQI of the year.
+  worstDate: Date
+
+  # Criteria pollutant
+  criteriaPollutant: CriteriaPollutant!
+}
+
+# Filter to narrow air historic days.
+input AirHistoricDayFilter {
+  colorID: Int64!
+}
+
+# Historical air quality days by pollutants for the property.
+type AirHistoricQualityDay {
+  # The historic year
+  year: Int64!
+
+  # Number of ozone days. Null means no data.
+  ozoneDays: Int64
+
+  # Number of human-caused pm 2.5 days. Null means no data.
+  smokeDays: Int64
+
+  # Number of ahthropogenic days. Null means no data.
+  anthroDays: Int64
+
+  # Total number of days with pollution. Null means no data.
+  totalDays: Int64
+}
+
+type AirQualityDay {
+  # Year asscociated with the point.
+  year: Int64!
+
+  # Relative year to this year. Can be negative.
+  relativeYear: Int64!
+
+  # Air Quality Color, based on severity of pollution.
+  color: AirColor!
+
+  # Number of ozone days.
+  ozoneDays: Int64!
+
+  # The max height of the y axis when the data point is being represented on a graph (from 0-100, where 100 is the max value) based on ozoneDays.
+  ozoneDaysYAxisHeight: Int
+
+  # Number of human-caused pm 2.5 days.
+  anthroPM25Days: Int64!
+
+  # The max height of the y axis when the data point is being represented on a graph (from 0-100, where 100 is the max value) based on anthroPM25Days.
+  anthroPM25DaysYAxisHeight: Int
+
+  # Maximum number of days with smoke.
+  smokeMaxDays: Int64!
+
+  # The max height of the y axis when the data point is being represented on a graph (from 0-100, where 100 is the max value) based on smokeMaxDays.
+  smokeMaxDaysYAxisHeight: Int
+
+  # Average number of days with smoke.
+  smokeAvgDays: Int64!
+
+  # The max height of the y axis when the data point is being represented on a graph (from 0-100, where 100 is the max value) based on smokeAvgDays.
+  smokeAvgDaysYAxisHeight: Int
+
+  # Total number of days from all pollutants.
+  totalDays: Int64!
+
+  # The max height of the y axis when the data point is being represented on a graph (from 0-100, where 100 is the max value) based on totalDays.
+  totalDaysYAxisHeight: Int
 }
 
 # Query to obtain air-related data.
 type AirQuery {
   # Air Quality Index category
-  aqiCategory: [AirAQICategory]
-}
+  color: [AirColor]
 
-enum AirRiskType {
-  OZONE
-  SMOKE
+  # Current Air Model version
+  version: VersionRelease!
 }
 
 # The bounding box GeoJSON (Polygon)
@@ -169,6 +254,9 @@ type City implements Location {
   # Example: *5301920*
   fsid: Int64!
 
+  # An identifier in the city url.
+  slug: String!
+
   # Name of the city.
   #
   # Example: *Redmond*
@@ -214,6 +302,9 @@ type City implements Location {
 
   # Wind details for the city.
   wind: LocalityWind
+
+  # Air details for the city.
+  air: LocalityAir
 
   # fsfLink is First Street's link to the neighborhood on FirstStreet's website.
   #
@@ -270,6 +361,9 @@ type CongressionalDistrict implements Location {
   # Example: *3904*
   fsid: Int64!
 
+  # An identifier in the congressional district url.
+  slug: String!
+
   # The name associated with the congressional district.
   #
   # Example: *Ohio Congressional District 4*
@@ -310,6 +404,9 @@ type CongressionalDistrict implements Location {
   # Wind details for the congressional district.
   wind: LocalityWind
 
+  # Air details for the state.
+  air: LocalityAir
+
   # fsfLink is always null for congressional districts, as they are not displayed on FirstStreet's website.
   fsfLink: String
     @deprecated(
@@ -335,6 +432,9 @@ type County implements Location {
   #
   # Example: *1003*
   fsid: Int64!
+
+  # An identifier in the county url.
+  slug: String!
 
   # The Federal Information Processing Standards code which uniquely identified counties and county equivalents, and certain freely associated states.
   #
@@ -422,6 +522,9 @@ type CountySubdivision implements Location {
   # Example: *5303391392*
   fsid: Int64!
 
+  # An identifier in the county subdivision url.
+  slug: String!
+
   # Name of the county subdivision.
   #
   # Example: *Issaquah Plateau*
@@ -450,6 +553,9 @@ type CountySubdivision implements Location {
   # Wind details for the subdivision.
   wind: LocalityWind
 
+  # Air details for the subdivision.
+  air: LocalityAir
+
   # A collection of nodes that represents geographical information for the county subdivision.
   geometry: LocationGeometry
 
@@ -468,10 +574,19 @@ type CriteriaPollutant {
 
   # Name of criteria pollutant
   name: String!
+
+  # Description of criteria pollutant
+  description: String!
 }
 
 # Remap Graphql Types to Go Types
 scalar Date
+
+# The depth of the building footprint used for calculation of flood probabilities and damages. Depending on which statistic used, will lead to difference in projected values. Statistic options we support: "MAX" and "MEAN" depth at the building footprint.
+enum DepthFlavor {
+  MEAN
+  MAX
+}
 
 enum EmberRiskRating {
   MINOR
@@ -638,6 +753,9 @@ type FireQuery {
 
   # Historic event batch lookup. Can lookup up to 35 historic events.
   historicEvents(eventIds: [Int64!]!): [FireHistoricEventRecord]
+
+  # Per state insurer of last resort or FAIR plan for property insurance
+  lastResortInsurers: [LastResortInsurer!]!
 
   # Current Fire Model version
   version: VersionRelease!
@@ -836,9 +954,9 @@ type HeatQuery {
 
 type IndustrySector {
   # ID of the TRI sector
-  industrySectorID: Int!
+  industrySectorId: Int!
 
-  # Name of the TRI sector
+  # Name of the TRI sector. Some examples: Electric Utilities, Computers and Electronic Products, Chemicals.
   name: String
 }
 
@@ -922,9 +1040,129 @@ type InsuranceRate {
 
 scalar Int64
 
-type LocalityAir {
+type KeyInsight {
+  name: String!
+  details: [KeyInsightValue]
+}
+
+type KeyInsightValue {
+  name: String
+  value: String
+}
+
+type LastResortInsurer {
+  state: State!
+  name: String!
+  website: String!
+}
+
+type LocalityAir implements Excluding {
+  # The location's risk direction represented in a numeric value based on the change in risk for the location from relative year 0 to year 30.
+  #
+  # -1 = decreasing
+  # 0 = stationary
+  # 1 = increasing
+  riskDirection: Int64
+
+  # Risk Factor link to Air Report for the locality
+  link: String!
+
+  # Distribution of days by Air Quality Index, ozone and pm25.
+  days: LocalityAirDays
+
+  # Data about air risk for locality infrastructure and community facilities.
+  communityRisk: LocalityAirFacilityRisk
+
   # Counties that do not meet the NAAQS standards are described as being in a state of "nonattainment".
   nonAttainments: [NonAttainment]
+
+  # The count of properties at risk by risk level
+  atRisk: [LocalityAirAtRisk]
+
+  # Internal. Derived locality stats for air.
+  stats: LocalityAirStats
+  population: LocalityAirPopulation
+  historic: LocalityAirHistoric
+
+  # List of TRI facilities(in the 75th percentile of emitters) within locality
+  triFacilityConnection(
+    # Number of records(edges) to return. A number between 0 and 100.
+    first: Int
+
+    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.
+    after: String
+  ): TRIFacilityConnection
+
+  # If locality is excluded, the reason for exclusion.
+  exclusion: Exclusion
+}
+
+# The count of properties at risk by risk level
+type LocalityAirAtRisk {
+  # Scale level. Possible options are: minimal, low, moderate, major, severe, extreme.
+  level: FactorScale!
+
+  # Count of properties at risk
+  propertyCount: Int64
+}
+
+# Distribution of days by Air Quality Index, ozone and pm25.
+type LocalityAirDays {
+  # Number of poor air quality days in a year by severity. Each severity level includes days in that bracket and all days with worse air quality.
+  # Example: days with orange color include days with orange, red, purple, and maroon colors.
+  outdoorDays(filter: AirDayFilter): [AirQualityDay]
+}
+
+# Data about air risk for locality infrastructure and community facilities.
+type LocalityAirFacilityRisk {
+  # A categorical 0-5 score for each county in each category.
+  score: Int64
+
+  # Score scale description
+  scoreScale: CommunityRiskScoreScale
+
+  # The location's risk direction represented in a numeric value based on the change in risk for the location.
+  # -1 = decreasing
+  # 0 = stationary
+  # 1 = increasing
+  riskDirection: Int64!
+
+  # Relative AQ risk within the state.
+  riskPercentileState: Float
+
+  # Relative AQ risk within the country.
+  riskPercentileNational: Float
+}
+
+type LocalityAirHistoric {
+  # The locality's historic air quality days by pollutants.
+  days(filter: AirHistoricDayFilter!): [AirHistoricQualityDay!]
+}
+
+type LocalityAirPopulation {
+  totalPopulation: Int64
+  atRisk: LocalityAirPopulationAtRisk
+}
+
+type LocalityAirPopulationAtRisk {
+  under18: Int64
+  elderly: Int64
+  asthmaPediatric: Int64
+  asthmaAdult: Int64
+  copd: Int64
+  lungCancer: Int64
+  cvDisease: Int64
+  pregnancy: Int64
+  poverty: Int64
+  poc: Int64
+}
+
+type LocalityAirStats {
+  # Calculated for state only. Three worst cities with population above 50th percentile in the state, by air score.
+  worstCities: [City!]
+
+  # Calculated for state only. Three best cities with population above 50th percentile in the state, by air score.
+  bestCities: [City!]
 }
 
 # Fire details for locality.
@@ -954,8 +1192,36 @@ type LocalityFire implements FireStatistics & Excluding {
   # Data about fire risk for locality infrastructure and community facilities.
   communityRisk: LocalityFireFacilityRisk
 
+  # Locality fire losses.
+  AAL: LocalityFireAAL
+
+  # Internal. Derived locality stats for fire.
+  stats: LocalityFireStats
+
   # If locality is excluded, the reason for exclusion.
   exclusion: Exclusion
+}
+
+type LocalityFireAAL {
+  # Estimated locality fire losses by year.
+  annualLossByYear: [LocalityFireAALByYear]
+}
+
+type LocalityFireAALByYear {
+  # Year used for the model.
+  year: Int64!
+
+  # Year relative to this year.
+  relativeYear: Int64!
+
+  # Provides the loss in US dollars due to fire risk for the locality.
+  damages: Int64
+
+  # Average annual structures destoryed
+  avgDestroyed: Float
+
+  # Percent relative to year 0
+  percent: Int64
 }
 
 type LocalityFireFacilityRisk {
@@ -1061,6 +1327,14 @@ type LocalityFireProbabilityCount {
   relativeYear: Int64!
 }
 
+type LocalityFireStats {
+  # Calculated for state only. Three worst cities with population above 50th percentile in the state, by fire score.
+  worstCities: [City!]
+
+  # Calculated for state only. Three best cities with population above 50th percentile in the state, by fire score.
+  bestCities: [City!]
+}
+
 # Flood details for locality.
 type LocalityFlood implements FloodStatistic & Excluding {
   # The location's risk direction represented in a numeric value based on the change in risk for the location from 2020 to 2050 for the climate model realization of the RCP 4.5 mid emissions scenario.
@@ -1087,7 +1361,6 @@ type LocalityFlood implements FloodStatistic & Excluding {
 
   # Provides the number of residential properties with any loss and the average dollar value loss broken down by Flood Factor score.
   AAL: LocalityFloodAAL
-    @deprecated(reason: "'AAL' is deprecated, use 'consequences' instead")
 
   # The list of modeled historic events that inundated the location.
   # Inundation is defined as having flood depth >0 for property queries or >1 property with >0 flood depth for higher-level locations.
@@ -1119,6 +1392,13 @@ type LocalityFlood implements FloodStatistic & Excluding {
 
   # Details about flood environmental details, such as precipitation, sea level and tide stations.
   environmental: LocalityFloodEnvironmental
+
+  # Provides insurance quotes from insurance providers.
+  insurance: LocalityFloodInsurance
+  femaInsurance: LocalityFloodFemaInsurance
+
+  # Internal. Derived locality stats for flood.
+  stats: LocalityFloodStats
 
   # If locality is excluded, the reason for exclusion.
   exclusion: Exclusion
@@ -1336,6 +1616,16 @@ type LocalityFloodFacilityType {
   name: String
 }
 
+# FEMA-related insurance information for locality.
+type LocalityFloodFemaInsurance {
+  #  Applicable to zcta locations only.
+  #  Average risk-based premiums in this ZIP.
+  # Risk based cost of insurance is what policyholders would pay if they were paying their full actuarial
+  #  rate (a rate based on the expected costs of losses and associated programmatic expenses).
+  #  Note that rates will be updated periodically to reflect changes in risk.
+  avgRiskBasedCost: Int64
+}
+
 # The information associated with the event(s) for event(s) where the area of the model simulation of the historic event overlaps any area of the location.
 # This includes event ID (unique First Street ID assigned to all modeled historic events), type, name and flood impact to the location.
 # Impact includes the total count of affected properties broken down by depth bin.
@@ -1386,17 +1676,11 @@ type LocalityFloodInsurance {
   # Count of properties requiring insurance
   propertyInsuranceCount: Int64
 
-  # Insurance premium based on 125000$ coverage minimum.
-  premium125Min: Int64
+  # Minimum insurance premium in the locality.
+  premiumMin: Int64
 
-  # Insurance premium based on 125000$ coverage maximum.
-  premium125Max: Int64
-
-  # Insurance premium based on 250000$ coverage minimum.
-  premium250Min: Int64
-
-  # Insurance premium based on 250000$ coverage maximum.
-  premium250Max: Int64
+  # Maximum insurance premium in the locality.
+  premiumMax: Int64
 
   # Insurance provider details.
   provider: InsuranceProvider!
@@ -1494,6 +1778,14 @@ type LocalityFloodSovi {
   percentile: Float
 }
 
+type LocalityFloodStats {
+  # Calculated for state only. Three worst cities with population above 50th percentile in the state, by flood score.
+  worstCities: [City!]
+
+  # Calculated for state only. Three best cities with population above 50th percentile in the state, by flood score.
+  bestCities: [City!]
+}
+
 type LocalityHeat implements Excluding {
   # The 98th percentile or "hot day" temperature in a locality
   hotTemperature: Int64
@@ -1543,12 +1835,18 @@ type LocalityHeat implements Excluding {
   emissions: LocalityHeatEmission
   communityRisk: LocalityHeatFacilityRisk
 
+  # Internal. Derived locality stats for heat.
+  stats: LocalityHeatStats
+
   # If locality is excluded, the reason for exclusion.
   exclusion: Exclusion
 }
 
 type LocalityHeatAtRisk {
+  # Scale level. Possible options are: minimal, low, moderate, major, severe, extreme.
   level: FactorScale!
+
+  # Count of properties at risk
   propertyCount: Int64
 }
 
@@ -1614,6 +1912,14 @@ type LocalityHeatFacilityRisk {
   scoreScale: CommunityRiskScoreScale
 }
 
+type LocalityHeatStats {
+  # Calculated for state only. Three worst cities with population above 50th percentile in the state, by heat score.
+  worstCities: [City!]
+
+  # Calculated for state only. Three best cities with population above 50th percentile in the state, by heat score.
+  bestCities: [City!]
+}
+
 type LocalityHeatTemperatureHigh {
   # Year asscociated with the point.
   year: Int64!
@@ -1661,39 +1967,23 @@ type LocalityHeatWaves {
   hotHeatWave: [LocalityHeatWave]
 }
 
-# Provides information on the number of policies, number of claims, amount of coverage, and amount paid on claims for buildings and contents as well as the increased cost of compliance for the location.
-type LocalityNFIP {
-  # The total count of entries in the claims dataset for the location. The claims data is sourced from FEMA's release of anonymized claims data in March of 2019. For county and tract queries, the geography is matched to the FIPS code. For ZIP queries, the reported ZIP of the property is used.
-  claimCount: Int64
-
-  # The total count of National Flood Insurance Program (NFIP) insurance policies for the location from the Federal Emergency Management Agency (FEMA) dataset.
-  policyCount: Int64
-
-  # The total sum cost in US dollars paid on the claims related to buildings. The claims data is sourced from FEMA's release of anonymized claims data in March of 2019. For county and tract queries, the geography is matched to the FIPS code. For ZIP queries, the reported ZIP of the property is used.
-  buildingPaid: Int64
-
-  # The total sum cost in US dollars paid on the claims related to the contents of buildings. The claims data is sourced from FEMA's release of anonymized claims data in March of 2019. For county and tract queries, the geography is matched to the FIPS code. For ZIP queries, the reported ZIP of the property is used.
-  contentPaid: Int64
-
-  # The total sum in US dollars of insurance coverage on buildings through National Flood Insurance Program (NFIP) insurance policies for the location.
-  buildingCoverage: Int64
-
-  # The total sum in US dollars of insurance coverage on contents of buildings through National Flood Insurance Program (NFIP) insurance policies for the location.
-  contentCoverage: Int64
-
-  # The total sum in US dollars paid on the Increased Cost of Compliance (ICC) claims for the location. ICC coverage is one of several flood insurances resources for policyholders who need additional help rebuilding after a flood. It provides up to $30,000 to help cover the cost of mitigation measures that will reduce the flood risk.
-  ICCPaid: Int64
+# A collection of nodes that represents insurance information for a location.
+type LocalityInsurance {
+  # ZIP-code level data on yearly average homeowners insurance cost. Based on https://www.policygenius.com/homeowners-insurance/home-insurance-rates-by-zip-code/
+  avgInsuranceCost: Int64
 }
 
 type LocalityWind implements Excluding {
   # The community risk level from wind, 0 to 5.
   riskLevel: Int64
 
-  # The greatest wind risk type. One of 'cyclone', 'tornado' and 'thunderstorm'.
+  # Event Type: cyclone, tornado, thunderstorm
   greatestWindRisk: WindType
 
   # The count of properties at risk
   atRisk(filter: LocalityWindAtRiskFilter): [LocalityWindAtRisk]
+
+  # Predicted wind speeds
   probability: LocalityWindProbability
 
   # This locality has risk of thunderstorms
@@ -1722,14 +2012,47 @@ type LocalityWind implements Excluding {
     # Filter returned historic events
     filter: WindHistoricFilter
   ): LocalityWindHistoricConnection
+
+  # Data about wind risk for locality infrastructure and community facilities.
   communityRisk: LocalityWindFacilityRisk
+
+  # Wind insurance information for locality: ZIP codes where hurricane and wind is excluded from regular homeowners insurance policies
+  insurance: LocalityWindInsurance
+
+  # Locality wind losses.
+  AAL: LocalityWindAAL
+
+  # Internal. Derived locality stats for wind.
+  stats: LocalityWindStats
 
   # If locality is excluded, the reason for exclusion.
   exclusion: Exclusion
 }
 
+# Locality wind losses.
+type LocalityWindAAL {
+  # Estimated locality wind losses by year.
+  annualLossByYear: [LocalityWindAALByYear]
+}
+
+# Estimated locality wind losses by year.
+type LocalityWindAALByYear {
+  # Year used for the model.
+  year: Int64!
+
+  # Year relative to this year.
+  relativeYear: Int64!
+
+  # Provides the loss in US dollars due to wind risk for the locality.
+  damages: Int64
+}
+
+# The count of properties at risk
 type LocalityWindAtRisk {
+  # Scale level. Possible options are: minimal, low, moderate, major, severe, extreme.
   level: FactorScale!
+
+  # Count of properties at risk
   propertyCount: Int64
 }
 
@@ -1737,6 +2060,7 @@ input LocalityWindAtRiskFilter {
   level: [FactorScale]
 }
 
+# Data about wind risk for locality infrastructure and community facilities.
 type LocalityWindFacilityRisk {
   # A categorical 0-5 score for each county in each category.
   score: Int64
@@ -1780,7 +2104,7 @@ type LocalityWindHistoricEventCyclone implements WindHistoricEvent {
   # Cyclone id
   eventId: Int64!
 
-  # Event Type
+  # Event Type: cyclone, tornado, thunderstorm
   eventType: WindType!
 
   # Max sustained 1 min wind speeds in MpH
@@ -1822,7 +2146,7 @@ type LocalityWindHistoricEventThunderstorm implements WindHistoricEvent {
   # Thunderstorm id
   eventId: Int64!
 
-  # Event Type
+  # Event Type: cyclone, tornado, thunderstorm
   eventType: WindType!
 
   # Date of the event
@@ -1849,7 +2173,7 @@ type LocalityWindHistoricEventTornado implements WindHistoricEvent {
   # Tornado id
   eventId: Int64!
 
-  # Event Type
+  # Event Type: cyclone, tornado, thunderstorm
   eventType: WindType!
 
   # Date of the event
@@ -1874,10 +2198,20 @@ type LocalityWindHistoricEventTornado implements WindHistoricEvent {
   geometry: LocationGeometry
 }
 
+# Wind insurance information for locality
+type LocalityWindInsurance {
+  # Applicable to zcta only.
+  # ZIP codes where hurricane and wind is excluded from regular homeowners insurance policies and additional policy is needed to cover tropical cyclone wind.
+  policyExclusion: Boolean
+}
+
+# Predicted wind speeds
 type LocalityWindProbability {
+  # Predicted wind speeds by year and return period for a specfific SSP.
   speed: [LocalityWindProbabilitySpeed!]
 }
 
+# Predicted wind speeds by year and return period for a specfific SSP.
 type LocalityWindProbabilitySpeed {
   # Socio-economic pathway of the prediction model.
   ssp: SSP!
@@ -1896,6 +2230,15 @@ type LocalityWindProbabilitySpeed {
 
   # The maximum 3-second gust speed for a given return period
   maxGust: Int64
+}
+
+# Statistics for locality
+type LocalityWindStats {
+  # Calculated for state only. Three worst cities with population above 50th percentile in the state, by wind score.
+  worstCities: [City!]
+
+  # Calculated for state only. Three best cities with population above 50th percentile in the state, by wind score.
+  bestCities: [City!]
 }
 
 # A `location` is a parcel that is represented in the First Street API. Each location has a unique `fsid` that is canonically attached to its parcel, based on its type.
@@ -2021,6 +2364,9 @@ type MetadataLookup {
 
   # Air filter types
   airFilter: [MetadataItem!]
+
+  # TRI industry sectors
+  triIndustrySector: [MetadataItem!]
 }
 
 enum MissileEnvironment {
@@ -2036,6 +2382,9 @@ type Neighborhood implements Location {
   #
   # Example: 68501
   fsid: Int64!
+
+  # An identifier in the neighborhood url.
+  slug: String!
 
   # The neighborhood's city.
   city: [City]
@@ -2071,6 +2420,9 @@ type Neighborhood implements Location {
 
   # Wind details for the neighborhood.
   wind: LocalityWind
+
+  # Air details for the neighborhood.
+  air: LocalityAir
 
   # fsfLink is First Street's link to the neighborhood on FirstStreet's website.
   #
@@ -2122,12 +2474,6 @@ enum NeighborhoodSort {
 }
 
 type NonAttainment {
-  # Year asscociated with the nonattainment
-  year: Int64!
-
-  # Relative year to this year.
-  relativeYear: Int64!
-
   # Area classification, blank for pollutant standards without classifications.
   classification: String
 
@@ -2226,6 +2572,9 @@ type Property implements Location & Excluding {
   # Example: 392804911
   fsid: Int64!
 
+  # An identifier in the property url.
+  slug: String!
+
   # The property's address fields.
   address: PropertyAddress
 
@@ -2269,6 +2618,18 @@ type Property implements Location & Excluding {
     # Sort returned neighborhoods based on requested value
     sort: NeighborhoodSort
   ): NeighborhoodConnection
+
+  # Other properties near the current property, as a paginated list.
+  nearbyProperties(
+    # Number of nearby properties to return.
+    first: Int
+
+    # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call.
+    after: String
+
+    # The maximum radius to search for nearby properties, in miles.
+    radius: Int
+  ): [PropertyEdge]
 
   # The property's county subdivision, including the county subdivision FSID and name.
   cousub: CountySubdivision
@@ -2365,7 +2726,7 @@ type PropertyAir implements Excluding {
   # The property's Air Factor
   airFactor: Int64
 
-  # Text representation of the AirQuality Factor.
+  # Text representation of the AirQuality Factor. Possible values are: minimal, low, moderate, major, severe, extreme.
   factorScale: FactorScale
 
   # The sign of future air quality probability minus current air quality probability (-1 is decreasing, 0 is unchanging, 1 is increasing)
@@ -2377,8 +2738,8 @@ type PropertyAir implements Excluding {
   # Distribution of days by Air Quality Index, ozone and pm25.
   days: PropertyAirDays
 
-  # An array of the air quality risk types ordered by the number of at-risk days in descending order. Possible entries: "ozone", "smoke". If an entry is not in the array then the risk is not present for this property.
-  greatestAirRisks: [AirRiskType!]
+  # The greatest AQ risk to the property.
+  greatestRisk: CriteriaPollutant!
 
   # Is the property within 30 miles of a 75th percentile TRI facility.
   triNearby: Boolean
@@ -2391,24 +2752,31 @@ type PropertyAir implements Excluding {
     # Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.
     after: String
   ): TRIFacilityConnection
+  historic: PropertyAirHistoric
 
   # Details for property air damages.
-  consequences(input: PropertyAirConsequencesInput): PropertyAirConsequences!
+  consequences(input: PropertyAirConsequencesInput): PropertyAirConsequences
+
+  # Percentile ranking across geography based on poor air quality days.
+  percentile: PropertyAirPercentile
+
+  # Internal. Get key insight items for the property
+  insights: [KeyInsight]
 
   # If property is excluded, the reason for exclusion.
   exclusion: Exclusion
 }
 
+# Estimated poor indoow air quality data
 type PropertyAirConsequences {
   # Indoor air quality index estimate
-  aqi: [PropertyAirConsequencesAQI!]
-  indoorPoorAQdays: [PropertyAirQualityDay!]
+  indoorAQI: [PropertyAirConsequencesAQI!]
 }
 
 # Indoor air quality index estimate based on outdoor air quality and house parameters
 type PropertyAirConsequencesAQI {
-  # Outdoor Air Quality Index category
-  aqiCategory: AirAQICategory
+  # Air quality color category
+  color: AirColor
 
   # Lower estimate for indoor Air Quality Index
   aqiLower: Int
@@ -2435,7 +2803,7 @@ input PropertyAirConsequencesInput {
   stories: Int
 
   # The type of air filter
-  filterId: Int
+  airFilterId: Int
 
   # Does the structure have an air purifier?
   hasAirPurifier: Boolean
@@ -2444,38 +2812,25 @@ input PropertyAirConsequencesInput {
   hasEnergyStarInsulation: Boolean
 }
 
-# Filter to narrow the values by year, relative year, or threshold.
-input PropertyAirDayFilter {
-  relativeYears: [Int64!]
-}
-
+# Distribution of days by Air Quality Index, ozone and pm25.
 type PropertyAirDays {
-  # Distribution of poor air quality days in a year.
-  outdoorPoorAQDaysCombined(
-    filter: PropertyAirDayFilter
-  ): [PropertyAirQualityDay]
-  outdoorPoorAQDaysSmoke(filter: PropertyAirDayFilter): [PropertyAirQualityDay]
-  outdoorPoorAQDaysOzone(filter: PropertyAirDayFilter): [PropertyAirQualityDay]
+  # Number of poor air quality days in a year by severity. Each severity level includes days in that bracket and all days with worse air quality.
+  # Example: days with orange color include days with orange, red, purple, and maroon colors.
+  outdoorDays(filter: AirDayFilter): [AirQualityDay]
 }
 
-type PropertyAirQualityDay {
-  # Year asscociated with the point
-  year: Int64!
+type PropertyAirHistoric {
+  # The property's historic Air Quality Index.
+  aqi: [AirHistoricAQI!]
 
-  # Relative year to this year. Can be negative.
-  relativeYear: Int64!
+  # The property's historic air quality days by pollutants.
+  days(filter: AirHistoricDayFilter!): [AirHistoricQualityDay!]
+}
 
-  # Air Quality Index
-  aqiCategory: AirAQICategory!
-
-  # Days within the current Air Quality Index
-  days: Int64!
-
-  # Days within the current and worse Air Quality Index
-  cumulativeDays: Int64!
-
-  # The max height of the y axis when the data point is being represented on a graph (from 0-100, where 100 is the max value).
-  yMax: Int
+# Percentile ranking across geography based on poor air quality days.
+type PropertyAirPercentile {
+  national: Int!
+  state: Int!
 }
 
 type PropertyCooling {
@@ -2502,6 +2857,17 @@ type PropertyCooling {
 input PropertyCoolingFilter {
   # Filter property cooling costs by relative years.  e.g. relativeYears=[0,30]
   relativeYear: [Int64!]
+}
+
+# Represents one record for the current page.
+type PropertyEdge {
+  # Cursor is a string that can be used in subsequent request as value of a connection "after" argument, to request page starting after this item.
+  #
+  # Example: *Y3Vyc29yOjEyNTI0MA==*
+  cursor: String
+
+  # Contains one page record data.
+  node: Property!
 }
 
 # Property filters related to flood factor
@@ -2537,7 +2903,7 @@ type PropertyFire implements FireStatistics & Excluding {
   # The property's Fire Factor
   fireFactor: Int64
 
-  # Text representation of the Fire Factor.
+  # Text representation of the Fire Factor. Possible values are: minimal, low, moderate, major, severe, extreme.
   factorScale: FactorScale
 
   # Risk Factor link to Fire Report for the property
@@ -2583,6 +2949,9 @@ type PropertyFire implements FireStatistics & Excluding {
     classification: InsuranceClassification
   ): [PropertyInsurance]
 
+  # Internal. Get key insight items for the property
+  insights: [KeyInsight]
+
   # If property is excluded, the reason for exclusion.
   exclusion: Exclusion
 }
@@ -2610,19 +2979,28 @@ type PropertyFireConsequencesCumulative {
   relativeYear: Int64!
 
   # The max height of the y axis when the data point is being represented on a graph (from 0-100, where 100 is the max value) based on combined (greater of burn or ember) wildfire risk.
-  yMax: Int
+  yMax: Int @deprecated(reason: "Switch to yAxisHeight instead.")
+
+  # The max height of the y axis when the data point is being represented on a graph (from 0-100, where 100 is the max value) based on combined (greater of burn or ember) wildfire risk.
+  yAxisHeight: Int
 
   # The data point based on combined (greater of burn or ember) wildfire risk.
   point: Float
 
   # The max height of the y axis when the data point is being represented on a graph (from 0-100, where 100 is the max value) based on ember risk.
-  emberYMax: Int
+  emberYMax: Int @deprecated(reason: "Switch to emberYAxisHeight instead.")
+
+  # The max height of the y axis when the data point is being represented on a graph (from 0-100, where 100 is the max value) based on ember risk.
+  emberYAxisHeight: Int
 
   # The data point based on ember risk.
   emberPoint: Float
 
   # The max height of the y axis when the data point is being represented on a graph (from 0-100, where 100 is the max value) based on burn(flame) risk.
-  flameYMax: Int
+  flameYMax: Int @deprecated(reason: "Switch to flameYAxisHeight instead.")
+
+  # The max height of the y axis when the data point is being represented on a graph (from 0-100, where 100 is the max value) based on burn(flame) risk.
+  flameYAxisHeight: Int
 
   # The data point based on burn(flame) risk.
   flamePoint: Float
@@ -2640,11 +3018,17 @@ type PropertyFireConsequencesDamageConditional {
   # Year, as relative to the current year
   relativeYear: Int64!
 
-  # Percentage chance of destruction, assuming that a fire reaches this building (out of 1)
+  # Percentage chance of destruction due to wildfire flames, assuming that a fire reaches this building (out of 1)
   flameLossConditional: Float
 
-  # Time lost to repair or rebuild, assuming that a fire reaches this building (in days)
+  # Time lost to repair or rebuild due to wildfire flames, assuming that a fire reaches this building (in days)
   flameTimeConditional: Float
+
+  # Percentage chance of destruction due to wildfire embers, assuming that embers reach this building (out of 1)
+  emberLossConditional: Float
+
+  # Time lost to repair or rebuild due to wildfire embers, assuming that embers reach this building (in days)
+  emberTimeConditional: Float
 
   # Average annual loss due to wildfire flames (in dollars)
   flameLoss: Float
@@ -2797,19 +3181,28 @@ type PropertyFireProbabilityCumulative {
   relativeYear: Int64!
 
   # The max height of the y axis when the data point is being represented on a graph (from 0-100, where 100 is the max value) based on combined (greater of burn or ember) wildfire risk.
-  yMax: Int
+  yMax: Int @deprecated(reason: "Switch to yAxisHeight instead.")
+
+  # The max height of the y axis when the data point is being represented on a graph (from 0-100, where 100 is the max value) based on combined (greater of burn or ember) wildfire risk.
+  yAxisHeight: Int
 
   # The data point based on combined (greater of burn or ember) wildfire risk.
   point: Float
 
   # The max height of the y axis when the data point is being represented on a graph (from 0-100, where 100 is the max value) based on ember risk.
-  emberYMax: Int
+  emberYMax: Int @deprecated(reason: "Switch to emberYAxisHeight instead.")
+
+  # The max height of the y axis when the data point is being represented on a graph (from 0-100, where 100 is the max value) based on ember risk.
+  emberYAxisHeight: Int
 
   # The data point based on ember risk.
   emberPoint: Float
 
   # The max height of the y axis when the data point is being represented on a graph (from 0-100, where 100 is the max value) based on burn(flame) risk.
-  flameYMax: Int
+  flameYMax: Int @deprecated(reason: "Switch to flameYAxisHeight instead.")
+
+  # The max height of the y axis when the data point is being represented on a graph (from 0-100, where 100 is the max value) based on burn(flame) risk.
+  flameYAxisHeight: Int
 
   # The data point based on burn(flame) risk.
   flamePoint: Float
@@ -2851,7 +3244,7 @@ type PropertyFlood implements FloodStatistic & Excluding {
   # Flood depth is calculated at the lowest elevation of the building footprint (largest if more than 1 exists, or property centroid where footprint does not exist).
   floodFactor: Int64
 
-  # Text representation of the Flood Factor.
+  # Text representation of the Flood Factor. Possible values are: minimal, low, moderate, major, severe, extreme.
   factorScale: FactorScale
 
   # Risk Factor link to Flood Report for the property
@@ -2902,7 +3295,7 @@ type PropertyFlood implements FloodStatistic & Excluding {
     # Maximum number of depths: 35, each depth is a whole number (non-negative integer) under 1000.
     #
     # Example: *30, 45*
-    # Default: *5,15,30*
+    # Default: *3,15,31*
     depths: [Int64!]
 
     # Whether or not the building contains a basement.
@@ -2971,6 +3364,12 @@ type PropertyFlood implements FloodStatistic & Excluding {
   # Requirements for flood insurance
   insuranceRequirement: FloodInsuranceRequirement!
 
+  # Internal. Get key insight items for the property
+  insights: [KeyInsight]
+
+  # Internal. Derived property stats
+  stats: PropertyFloodStats
+
   # If property is excluded, the reason for exclusion.
   exclusion: Exclusion
 }
@@ -3025,6 +3424,9 @@ type PropertyFloodConsequencesAnnualized implements OverTime {
   # Year, as relative to the current year
   relativeYear: Int64!
 
+  # Socio-economic pathway of the prediction model.
+  ssp: SSP!
+
   # Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
   percentile: Int
 
@@ -3037,7 +3439,7 @@ type PropertyFloodConsequencesAnnualized implements OverTime {
 
 # Expected losses for specified depth.
 type PropertyFloodConsequencesByDepth {
-  # Depth values for calculating consequences. By default one of: 5, 15, 30. Can be adjusted through PropertyFloodConsequencesInput parameter.
+  # Depth values for calculating consequences, in cm. By default one of: 3, 15, 31. Can be adjusted through PropertyFloodConsequencesInput parameter.
   depth: Int64!
 
   # Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
@@ -3101,8 +3503,11 @@ input PropertyFloodConsequencesInput {
   # Maximum number of depths: 35, each depth is a whole number (non-negative integer) under 1000.
   #
   # Example: *30, 45*
-  # Default: *5,15,30*
+  # Default: *3,15,31*
   depths: [Int64!]
+
+  # Replacement cost of the building in dollars.
+  pricePerSqft: Int64
 }
 
 type PropertyFloodDepthLoss {
@@ -3184,7 +3589,7 @@ type PropertyFloodProbability {
   chance(
     filter: PropertyFloodProbabilityFilter
 
-    # Optional depth values for calculating chance. One of: 5, 15, 30.
+    # Optional depth values for calculating chance, in cm. One of: 5, 15, 30.
     depths: [Int64!]
   ): [PropertyFloodProbabilityChance]
 
@@ -3192,7 +3597,7 @@ type PropertyFloodProbability {
   cumulative(
     filter: PropertyFloodProbabilityFilter
 
-    # Optional depth values for calculating cumulative flooding. One of: 5, 15, 30.
+    # Optional depth values for calculating cumulative flooding, in cm. One of: 5, 15, 30.
     depths: [Int64!]
   ): [PropertyFloodProbabilityCumulative]
 }
@@ -3218,13 +3623,22 @@ type PropertyFloodProbabilityChance implements OverTime {
   high: Float
 
   # The max height of the y axis when the low point is being represented on a graph (from 0-100, where 100 is the max value).
-  yMaxLow: Int!
+  yMaxLow: Int! @deprecated(reason: "Switch to yAxisHeightLow instead.")
 
   # The max height of the y axis when the mid point is being represented on a graph (from 0-100, where 100 is the max value).
-  yMaxMid: Int!
+  yMaxMid: Int! @deprecated(reason: "Switch to yAxisHeightMid instead.")
 
   # The max height of the y axis when the high point is being represented on a graph (from 0-100, where 100 is the max value).
-  yMaxHigh: Int!
+  yMaxHigh: Int! @deprecated(reason: "Switch to yAxisHeightHigh instead.")
+
+  # The max height of the y axis when the low point is being represented on a graph (from 0-100, where 100 is the max value).
+  yAxisHeightLow: Int!
+
+  # The max height of the y axis when the mid point is being represented on a graph (from 0-100, where 100 is the max value).
+  yAxisHeightMid: Int!
+
+  # The max height of the y axis when the high point is being represented on a graph (from 0-100, where 100 is the max value).
+  yAxisHeightHigh: Int!
 }
 
 # The risk likelihood (% probability) for flooding to the building footprint broken down by depth threshold and cumulative year.
@@ -3248,13 +3662,22 @@ type PropertyFloodProbabilityCumulative implements OverTime {
   high: Float
 
   # The max height of the y axis when the low point is being represented on a graph (from 0-100, where 100 is the max value).
-  yMaxLow: Int!
+  yMaxLow: Int! @deprecated(reason: "Switch to yAxisHeightLow instead.")
 
   # The max height of the y axis when the mid point is being represented on a graph (from 0-100, where 100 is the max value).
-  yMaxMid: Int!
+  yMaxMid: Int! @deprecated(reason: "Switch to yAxisHeightMid instead.")
 
   # The max height of the y axis when the high point is being represented on a graph (from 0-100, where 100 is the max value).
-  yMaxHigh: Int!
+  yMaxHigh: Int! @deprecated(reason: "Switch to yAxisHeightHigh instead.")
+
+  # The max height of the y axis when the low point is being represented on a graph (from 0-100, where 100 is the max value).
+  yAxisHeightLow: Int!
+
+  # The max height of the y axis when the mid point is being represented on a graph (from 0-100, where 100 is the max value).
+  yAxisHeightMid: Int!
+
+  # The max height of the y axis when the high point is being represented on a graph (from 0-100, where 100 is the max value).
+  yAxisHeightHigh: Int!
 }
 
 # The flood depth (in centimeters) for flooding to the building footprint broken down by return period and year of annual risk.
@@ -3285,6 +3708,13 @@ input PropertyFloodProbabilityFilter {
   relativeYear: [Int64]
   threshold: [Int64]
   returnPeriod: [Int64]
+
+  # The building footprint depth used for flood risk calculations. Default is "MAX".
+  depthFlavor: DepthFlavor
+}
+
+type PropertyFloodStats {
+  floodfactorRankInCity: Float
 }
 
 # Heat details for property.
@@ -3292,7 +3722,7 @@ type PropertyHeat implements Excluding {
   # The property's Heat Factor
   heatFactor: Int64
 
-  # Text representation of the Heat Factor.
+  # Text representation of the Heat Factor. Possible values are: minimal, low, moderate, major, severe, extreme.
   factorScale: FactorScale
 
   # Risk Factor link to Heat Report for the property
@@ -3318,6 +3748,9 @@ type PropertyHeat implements Excluding {
   # Distribution of heat waves by temperature.
   heatWaves: PropertyHeatWaves
   consequences(input: PropertyHeatConsequencesInput): PropertyHeatConsequences
+
+  # Internal. Get key insight items for the property
+  insights: [KeyInsight]
 
   # If property is excluded, the reason for exclusion.
   exclusion: Exclusion
@@ -3511,7 +3944,7 @@ type PropertyWind implements WindStatistics & Excluding {
   # The property's Wind Factor
   windFactor: Int64
 
-  # Text representation of the Wind Factor.
+  # Text representation of the Wind Factor. Possible values are: minimal, low, moderate, major, severe, extreme.
   factorScale: FactorScale
 
   # Risk Factor link to Wind Report for the property
@@ -3529,7 +3962,7 @@ type PropertyWind implements WindStatistics & Excluding {
   # This property has risk of cyclones
   hasCycloneRisk: Boolean
 
-  # The greatest wind risk type. One of 'cyclone', 'tornado' and 'thunderstorm'.
+  # Event Type: cyclone, tornado, thunderstorm
   greatestWindRisk: WindType
 
   # The level of risk from flying objects in this building's surrounding area. (Low/High)
@@ -3559,14 +3992,24 @@ type PropertyWind implements WindStatistics & Excluding {
   # Details for property wind losses.
   consequences(input: PropertyWindConsequencesInput): PropertyWindConsequences
 
+  # Internal. Get key insight items for the property
+  insights: [KeyInsight]
+
   # If property is excluded, the reason for exclusion.
   exclusion: Exclusion
 }
 
 type PropertyWindConsequences {
+  # The cost of damage expected to the building and the number of days that it would be expected to repair wind damage, based on predicted probability
   byProbability: [PropertyWindConsequencesByProbability!]
+
+  # The annualized cost of damages expected to the building.
   annualized: [PropertyWindConsequencesAnnualized!]
+
+  # The cost of damage expected to the building and the number of days that it would be expected to repair wind damage, based on predicted wind gust speed
   byWindGust: [PropertyWindConsequencesByWindGust!]
+
+  # The cost of damages to the building in case it's hit by a tornado
   tornado: [PropertyWindConsequencesTornado!]
 }
 
@@ -3655,6 +4098,9 @@ input PropertyWindConsequencesInput {
 
   # Floor size in square feet
   buildingSqft: Int
+
+  # Replacement cost of the building in dollars.
+  pricePerSqft: Int64
 }
 
 # The cost of damages to the building in case it's hit by a tornado
@@ -3713,7 +4159,7 @@ type PropertyWindHistoricEventCyclone implements WindHistoricEvent {
   # Cyclone id
   eventId: Int64!
 
-  # Event Type
+  # Event Type: cyclone, tornado, thunderstorm
   eventType: WindType!
 
   # Max sustained 1 min wind speeds in MpH
@@ -3755,7 +4201,7 @@ type PropertyWindHistoricEventThunderstorm implements WindHistoricEvent {
   # Thunderstorm id
   eventId: Int64!
 
-  # Event Type
+  # Event Type: cyclone, tornado, thunderstorm
   eventType: WindType!
 
   # Date of the event
@@ -3782,7 +4228,7 @@ type PropertyWindHistoricEventTornado implements WindHistoricEvent {
   # Tornado id
   eventId: Int64!
 
-  # Event Type
+  # Event Type: cyclone, tornado, thunderstorm
   eventType: WindType!
 
   # Date of the event
@@ -3950,7 +4396,11 @@ type Query {
   neighborhood(fsid: Int64!): Neighborhood
 
   # Neighborhood lookup by coordinate. This lookup will check the coordinates to see if that point intersects within a boundary of a parcel from the database.
-  neighborhoodByCoordinate(lat: Float!, lng: Float!): Neighborhood
+  neighborhoodByCoordinate(
+    lat: Float!
+    lng: Float!
+    searchString: String
+  ): Neighborhood
 
   # Congressional District lookup by FSID.
   cd(fsid: Int64!): CongressionalDistrict
@@ -4028,11 +4478,6 @@ enum RankInStateLocalityStat {
   DANGEROUSDAYS_ASC
 }
 
-# Data resource currently supported
-enum Resource {
-  FLOOD
-}
-
 enum SSP {
   SSP_2_45
   SSP_3_70
@@ -4081,6 +4526,8 @@ enum Service {
   HEATCONSEQUENCES
   WINDCONSEQUENCES
   AIRCONSEQUENCES
+  LOCATIONINSURANCE
+  KEYINSIGHTS
 }
 
 # US state or federal district
@@ -4089,6 +4536,9 @@ type State implements Location {
   #
   # Example: *12*
   fsid: Int64!
+
+  # An identifier in the state url.
+  slug: String!
 
   # The name of the state.
   #
@@ -4180,6 +4630,9 @@ type State implements Location {
   # Wind details for the state.
   wind: LocalityWind
 
+  # Air details for the state.
+  air: LocalityAir
+
   # Rank child localities in state by certain attributes.
   rankLocalities: RankInState
 
@@ -4192,17 +4645,18 @@ type State implements Location {
     )
 }
 
+# Toxics Release Inventory (TRI) facility deatils. More info: https://en.wikipedia.org/wiki/Toxics_Release_Inventory
 type TRIFacility {
   # EPA's ID of facility
-  triFacilityID: String!
+  triFacilityId: String!
 
   # Name of the facility
   name: String!
 
-  # The facility's emission percentile
-  emissionPercentile: Int!
+  # The lat/lng location of the TRI facility.
+  center: Center
 
-  # Sectory
+  # Industry sector information
   industry: IndustrySector!
 }
 
@@ -4284,6 +4738,9 @@ type Tract implements Location {
   # Example: *39119912800*
   fsid: Int64!
 
+  # An identifier in the tract url.
+  slug: String!
+
   # The Federal Information Processing Standards code which uniquely identified counties and county equivalents, and certain freely associated states.
   #
   # Example: *39119912800*
@@ -4318,6 +4775,9 @@ type Tract implements Location {
 
   # Wind details for the tract.
   wind: LocalityWind
+
+  # Air details for the tract.
+  air: LocalityAir
 
   # fsfLink is always null for tracts, as they are not displayed on FirstStreet's website.
   fsfLink: String
@@ -4363,8 +4823,14 @@ type WindCategory {
 interface WindHistoricEvent {
   # Wind Historic Event id
   eventId: Int64!
+
+  # Event Type: cyclone, tornado, thunderstorm
   eventType: WindType!
+
+  # Date of the event where it's available
   date: Date
+
+  # Year of the event, for example: 2017
   year: Int64
 }
 
@@ -4390,6 +4856,9 @@ type WindQuery {
   # Map lookup.  Returns map metadata such as legends.
   mapLegend: MapLegend!
 
+  # Per state insurer of last resort or FAIR plan for property insurance
+  lastResortInsurers: [LastResortInsurer!]!
+
   # Current wind model version
   version: VersionRelease!
 }
@@ -4411,6 +4880,9 @@ type Zcta implements Location {
   #
   # Example: *82633*
   fsid: Int64!
+
+  # An identifier in the zip url.
+  slug: String!
 
   # The zcta name.
   #
@@ -4444,6 +4916,9 @@ type Zcta implements Location {
   # Wind details for the zcta.
   wind: LocalityWind
 
+  # Air details for the zcta.
+  air: LocalityAir
+
   # fsfLink is First Street's link to the zcta on FirstStreet's website.
   #
   # Example: *https://floodfactor.com/zcta/82633_fsid?utm_medium=overlay*
@@ -4451,6 +4926,7 @@ type Zcta implements Location {
     @deprecated(
       reason: "fsfLink is deprecated, use the child `link` field within the climate peril."
     )
+  insurance: LocalityInsurance
 
   # List of properties in the zcta, as a connection.
   propertyConnection(
