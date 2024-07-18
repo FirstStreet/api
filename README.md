@@ -1,6 +1,6 @@
-# First Street Foundation API
+# First Street API
 
-First Street exists to make climate risk accessible, easy to understand and actionable for individuals, governments, and industry. The First Street Foundation API provides climate risks probability data to over 140 million homes in America and is scaled to support enterprise usage. 
+The First Street API provides physical climate risk data to over 140 million homes in America and is scaled to support enterprise usage.
 
 ## Official Documentation
 
@@ -12,10 +12,13 @@ For access information and partnerships, please contact api@firststreet.org
 
 ### Security
 
-Please report vulnerabilities to security@firststreet.org
+Please report vulnerabilities to security@firststreet.org. For more information of our security policies, [please visit our trust center](https://security.firststreet.org).
 
 ### Copyright Notice
 
-First Street Foundation is registered in the State of New York as a 501(c)(3) organization.
+First Street Technology, Inc. Is a Delaware public benefit corporation.
 
-© 2022 First Street Foundation. All Rights Reserved.
+© 2024 First Street Tehnology, Inc. All Rights Reserved.
+
+https://firststreet.org/privacy-policy
+https://firststreet.org/terms-of-use
