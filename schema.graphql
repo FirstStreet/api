@@ -297,6 +297,9 @@ type Building implements Location & Excluding {
   A collection of nodes that represents geographical information for the building.
   """
   geometry: LocationGeometry
+
+  """Property Value Implications due to Insurance"""
+  insuranceImpact: BuildingInsuranceImpact
 }
 
 """AirQuality details for building."""
@@ -542,6 +545,9 @@ type BuildingFireConsequencesDamageConditional {
   """Year, as relative to the current year"""
   relativeYear: Int64!
 
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
+
   """
   Percentage chance of destruction due to wildfire flames, assuming that a fire reaches this building (out of 1)
   """
@@ -727,6 +733,9 @@ type BuildingFireProbabilityDamageConditional {
   year: Int64!
   relativeYear: Int64!
 
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
+
   """
   Chance of structural destruction assuming a wildfire reaches this building (out of 1)
   """
@@ -876,6 +885,9 @@ type BuildingFloodConsequencesByProbability {
 
   """Year, as relative to the current year"""
   relativeYear: Int64!
+
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
 
   """Return period of flooding"""
   returnPeriod: Int64!
@@ -1270,6 +1282,32 @@ type BuildingHeatDay {
   yAxisHeight: Int
 }
 
+type BuildingInsuranceImpact {
+  """Current average insurance premium on the building"""
+  insurancePremiumMean: Int64
+
+  """
+  Percent change in property value due to the correction of underpriced insurance
+  """
+  insurancePropertyValueChange: Float!
+
+  """
+  Impact on property value as a percent adjustment due to insurance increases over X years
+  """
+  propertyValueEffect: [BuildingInsuranceImpactPropertyValueEffect]
+}
+
+"""
+Impact on property value as a percent adjustment due to insurance increases over X years
+"""
+type BuildingInsuranceImpactPropertyValueEffect {
+  year: Int64!
+  relativeYear: Int64!
+  ssp: SSP!
+  insurancePercent: Float!
+  propertyValueChange: Float!
+}
+
 interface BuildingMaterial {
   """The material for the specified building node"""
   material: String
@@ -1341,7 +1379,7 @@ type BuildingWind implements WindStatistics & Excluding & WindPerilSummary {
   probability: BuildingWindProbability
 
   """Details for building wind losses."""
-  consequences(input: BuildingWindConsequencesInput): BuildingWindConsequences
+  consequences(input: BuildingWindConsequencesInput, filter: BuildingWindConsequencesFilter): BuildingWindConsequences
 
   """Internal. Get key insight items for the building"""
   insights: [KeyInsight]
@@ -1446,6 +1484,14 @@ type BuildingWindConsequencesByWindGust {
   Provides the loss in days due to wind risk for the building by wind gust
   """
   days: Int64!
+}
+
+input BuildingWindConsequencesFilter {
+  """
+  For backwards compatibility, passing no ssp value implies SSP 2.45. If empty array is provided then the response will include data for all ssps.
+  When a list of values is provided then the response will include data for the provided ssps.
+  """
+  ssp: [SSP!]
 }
 
 input BuildingWindConsequencesInput {
@@ -1590,6 +1636,12 @@ input BuildingWindProbabilityFilter {
   relativeYear: [Int64]
   threshold: [Int64]
   returnPeriod: [Int64]
+
+  """
+  For backwards compatibility, passing no ssp value implies SSP 2.45. If empty array is provided then the response will include data for all ssps.
+  When a list of values is provided then the response will include data for the provided ssps.
+  """
+  ssp: [SSP!]
 }
 
 input BuildingWindProbabilityInput {
@@ -4187,6 +4239,12 @@ type LocationGeometry {
   polygon: Polygon
 }
 
+"""Query to obtain location-related data."""
+type LocationQuery {
+  """Current Location version."""
+  version: VersionRelease!
+}
+
 input LocationSearchItem {
   fsid: Int64!
   type: LocationType!
@@ -5001,7 +5059,7 @@ type PropertyFire implements FireStatistics & Excluding & FirePerilSummary {
   probability: PropertyFireProbability
 
   """Details for property fire losses."""
-  consequences(input: PropertyFireConsequencesInput): PropertyFireConsequences!
+  consequences(input: PropertyFireConsequencesInput, filter: PropertyFireConsequencesFilter): PropertyFireConsequences!
 
   """Insurance quote from Hippo Insurance"""
   insuranceHippo(
@@ -5103,6 +5161,9 @@ type PropertyFireConsequencesDamageConditional {
   """Year associated with this data point."""
   year: Int64!
 
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
+
   """Year, as relative to the current year"""
   relativeYear: Int64!
 
@@ -5146,6 +5207,14 @@ type PropertyFireConsequencesDamageConditional {
 
   """Relative level of risk of wildfire embers falling on this property"""
   emberRiskRating: EmberRiskRating @deprecated(reason: "Ember risk percentage is now available from emberPercent field")
+}
+
+input PropertyFireConsequencesFilter {
+  """
+  For backwards compatibility, passing no ssp value implies SSP 2.45. If empty array is provided then the response will include data for all ssps.
+  When a list of values is provided then the response will include data for the provided ssps.
+  """
+  ssp: [SSP!]
 }
 
 input PropertyFireConsequencesInput {
@@ -5247,7 +5316,7 @@ type PropertyFireHistoric implements FireHistoricEvent {
 """Fire probability details for property."""
 type PropertyFireProbability {
   """
-  For backwards compatibility, not passing in filter imlplies SSP 2.45. See filter details for more info.
+  For backwards compatibility, not passing in filter implies SSP 2.45. See filter details for more info.
   """
   burn(filter: PropertyFireProbabilityBurnFilter): [PropertyFireProbabilityBurn]
   cumulative: [PropertyFireProbabilityCumulative]
@@ -5296,7 +5365,7 @@ type PropertyFireProbabilityBurn {
 
 input PropertyFireProbabilityBurnFilter {
   """
-  For backwards compatibility, passing no ssp value imlplies SSP 2.45. If empty array is provided then the response will include data for all ssps.
+  For backwards compatibility, passing no ssp value implies SSP 2.45. If empty array is provided then the response will include data for all ssps.
   When a list of values is provided then the response will include data for the provided ssps.
   """
   ssp: [SSP!]
@@ -5356,7 +5425,7 @@ type PropertyFireProbabilityCumulative {
 
 """Fire damage probability."""
 type PropertyFireProbabilityDamage {
-  conditional: [PropertyFireProbabilityDamageConditional]
+  conditional(filter: PropertyFireProbabilityDamageConditionalFilter): [PropertyFireProbabilityDamageConditional]
 }
 
 """
@@ -5365,6 +5434,9 @@ The likelihood a structure ignites if it is within a fire. This field is beta an
 type PropertyFireProbabilityDamageConditional {
   year: Int64!
   relativeYear: Int64!
+
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
 
   """
   Chance of structural destruction assuming a wildfire reaches this property (out of 1)
@@ -5389,6 +5461,14 @@ type PropertyFireProbabilityDamageConditional {
 
   """Annualized downtime due to wildfire embers"""
   emberTime: Float
+}
+
+input PropertyFireProbabilityDamageConditionalFilter {
+  """
+  For backwards compatibility, passing no ssp value implies SSP 2.45. If empty array is provided then the response will include data for all ssps.
+  When a list of values is provided then the response will include data for the provided ssps.
+  """
+  ssp: [SSP!]
 }
 
 """Flood details for property."""
@@ -5497,7 +5577,7 @@ type PropertyFlood implements FloodStatistic & Excluding & FloodPerilSummary {
   ): PropertyFloodAAL @deprecated(reason: "'AAL' is deprecated, use 'consequences' instead")
 
   """Details for property flood losses."""
-  consequences(input: PropertyFloodConsequencesInput): PropertyFloodConsequences
+  consequences(input: PropertyFloodConsequencesInput, filter: PropertyFloodConsequencesFilter): PropertyFloodConsequences
 
   """
   Provides information from community-wide grey and green adaptation projects across the United States categorized into 40 different Adaptation Types.
@@ -5613,6 +5693,10 @@ type PropertyFloodAnnualLoss implements OverTime {
 """Details for property flood losses."""
 type PropertyFloodConsequences {
   byDepth: [PropertyFloodConsequencesByDepth]
+
+  """
+  For backwards compatibility, not passing in consequences filter implies SSP 2.45. See filter PropertyFloodConsequencesFilter details for more info.
+  """
   byProbability: [PropertyFloodConsequencesByProbability]
   annualized: [PropertyFloodConsequencesAnnualized!]
 }
@@ -5669,6 +5753,9 @@ type PropertyFloodConsequencesByProbability {
   """Year, as relative to the current year"""
   relativeYear: Int64!
 
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
+
   """Return period of flooding"""
   returnPeriod: Int64!
 
@@ -5685,6 +5772,14 @@ type PropertyFloodConsequencesByProbability {
 
   """Estimated loss of property use in days"""
   days: Int64
+}
+
+input PropertyFloodConsequencesFilter {
+  """
+  For backwards compatibility, passing no ssp value implies SSP 2.45. If empty array is provided then the response will include data for all ssps.
+  When a list of values is provided then the response will include data for the provided ssps.
+  """
+  ssp: [SSP!]
 }
 
 input PropertyFloodConsequencesInput {
@@ -6347,7 +6442,7 @@ type PropertyWind implements WindStatistics & Excluding & WindPerilSummary {
   ): PropertyWindHistoricConnection
 
   """Details for property wind losses."""
-  consequences(input: PropertyWindConsequencesInput): PropertyWindConsequences
+  consequences(input: PropertyWindConsequencesInput, filter: PropertyWindConsequencesFilter): PropertyWindConsequences
 
   """Internal. Get key insight items for the property"""
   insights: [KeyInsight]
@@ -6452,6 +6547,14 @@ type PropertyWindConsequencesByWindGust {
   Provides the loss in days due to wind risk for the property by wind gust
   """
   days: Int64!
+}
+
+input PropertyWindConsequencesFilter {
+  """
+  For backwards compatibility, passing no ssp value implies SSP 2.45. If empty array is provided then the response will include data for all ssps.
+  When a list of values is provided then the response will include data for the provided ssps.
+  """
+  ssp: [SSP!]
 }
 
 input PropertyWindConsequencesInput {
@@ -6743,6 +6846,12 @@ input PropertyWindProbabilityFilter {
   relativeYear: [Int64]
   threshold: [Int64]
   returnPeriod: [Int64]
+
+  """
+  For backwards compatibility, passing no ssp value implies SSP 2.45. If empty array is provided then the response will include data for all ssps.
+  When a list of values is provided then the response will include data for the provided ssps.
+  """
+  ssp: [SSP!]
 }
 
 input PropertyWindProbabilityInput {
@@ -6881,6 +6990,9 @@ type Query {
 
   """Query to obtain air-related data."""
   air: AirQuery
+
+  """Query to obtain location-related data."""
+  location: LocationQuery
   ping: String!
 
   """Current API version"""
@@ -6969,6 +7081,7 @@ enum Service {
   AIRCONSEQUENCES
   LOCATIONINSURANCE
   KEYINSIGHTS
+  BUILDINGINSURANCE
 }
 
 """US state or federal district"""
