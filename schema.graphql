@@ -20,6 +20,8 @@ enum APIUsageService {
   HEAT
   WIND
   AIR
+  DROUGHT
+  HAIL
 }
 
 """The AVM Provider provides metadata for an AVM provider."""
@@ -267,6 +269,12 @@ type Building implements Location & Excluding {
 
   """The landuse code id of this building."""
   landuseCodeId: Int64
+
+  """The foundation type id of this building."""
+  foundationTypeId: String
+
+  """The foundation type of this building."""
+  foundationType: String
 
   """
   Indicates if the building is used for residential purposes.
@@ -1314,6 +1322,23 @@ interface BuildingMaterial {
   combustibility: CombustibilityRating
 }
 
+type BuildingPreview {
+  """Property FSID"""
+  fsid: Int64
+
+  """Building ID, consecutive integers """
+  buildingID: Int
+
+  """Latitude"""
+  lat: Float
+
+  """Longitude"""
+  lng: Float
+
+  """Sqft"""
+  sqft: Int64
+}
+
 type BuildingRoof implements BuildingMaterial {
   """Material used for the roof"""
   material: String
@@ -2090,6 +2115,12 @@ enum DepthFlavor {
   MAX
 }
 
+"""Query to obtain drought-related data."""
+type DroughtQuery {
+  """Current Drought Model version."""
+  version: VersionRelease!
+}
+
 enum EmberRiskRating {
   MINOR
   MODERATE
@@ -2561,6 +2592,12 @@ interface FloodStatistic {
   Coastal areas on the East Coast and Hawaii will return 3, other coastal areas will return 2 and all other locations will return 1.
   """
   environmentalRisk: Int64
+}
+
+"""Query to obtain hail-related data."""
+type HailQuery {
+  """Current Hail Model version."""
+  version: VersionRelease!
 }
 
 interface HeatPerilSummary {
@@ -4276,6 +4313,8 @@ type LocationSearchPreview implements Location {
   windFactorLink: String!
   overviewLink: String!
   isResidential: Boolean!
+  buildingTotalCount: Int64
+  buildingPreview: [BuildingPreview!]
 }
 
 enum LocationType {
@@ -6991,6 +7030,12 @@ type Query {
   """Query to obtain air-related data."""
   air: AirQuery
 
+  """Query to obtain drought-related data."""
+  drought: DroughtQuery
+
+  """Query to obtain hail-related data."""
+  hail: HailQuery
+
   """Query to obtain location-related data."""
   location: LocationQuery
   ping: String!
@@ -7082,6 +7127,8 @@ enum Service {
   LOCATIONINSURANCE
   KEYINSIGHTS
   BUILDINGINSURANCE
+  DROUGHT
+  HAIL
 }
 
 """US state or federal district"""
