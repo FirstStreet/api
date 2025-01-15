@@ -179,6 +179,13 @@ type AirQuery {
   version: VersionRelease!
 }
 
+"""Enterprise module status enum."""
+enum AsyncStatusEnum {
+  ACTIVE
+  LOADING
+  FAILED
+}
+
 """The bounding box GeoJSON (Polygon)"""
 type Bbox {
   """GeoJSON geometry type Polygon."""
@@ -206,6 +213,35 @@ type Building implements Location & Excluding {
 
   """Property on which the building is located"""
   property: Property!
+
+  """Building Macroeconomic statistics"""
+  macroeconomicAsync: BuildingMacroeconomicAsync
+
+  """
+  Most recent property value in US dollars. Required for some financial impact metrics.
+  """
+  propertyValuation: Int64
+
+  """Outstanding balance in US dollars."""
+  outstandingBalance: Int64
+
+  """Date of most recent property value assessment. YYYY-MM-DD format"""
+  propertyValueDate: Date
+
+  """
+  Annual Net Operating Income for Commercial Real Estate. Required for some financial impact metrics.
+  """
+  propertyNOI: Int64
+
+  """
+  Property type codes. E.g. "M" for multifamily, "R" for retail, "H" for hotel.
+  """
+  propertyType: String
+
+  """
+  Area of structure's footprint in square feet. If not available, will be assumed to be sqft divided by stories
+  """
+  footprintArea: Int64
 
   """
   Whether or not the property has a basement.
@@ -253,6 +289,11 @@ type Building implements Location & Excluding {
   """
   windDesignStandard: BuildingWindDesignStandard
 
+  """
+  The expected design standard of structures, based on ASCE 7-22 wind risk zones (1: low, 2: mid, 3: high).
+  """
+  designStandardId: Int
+
   """The air filter type used in the building"""
   airFilterId: Int
   source: BuildingSource
@@ -270,6 +311,9 @@ type Building implements Location & Excluding {
   """The landuse code id of this building."""
   landuseCodeId: Int64
 
+  """Foundation height (or first floor elevation) in centimeters"""
+  foundationHeight: Int
+
   """The foundation type id of this building."""
   foundationTypeId: String
 
@@ -282,6 +326,135 @@ type Building implements Location & Excluding {
   Example: true
   """
   isResidential: Boolean
+
+  """
+  1 = complies with stricter WUI building code. 0 = does not comply. If this is unavailable, will be assumed to be 0.
+  """
+  wuiCompliant: Int
+
+  """Annual cost of the currently held insurance policy"""
+  currentInsurancePremium: Int
+
+  """Dollar value of general insurance coverage for the property"""
+  propertyGeneralInsuredValue: Int64
+
+  """
+  Percentage of physical general insurance coverage for the property relative to property value (if Insured Value is unavailable). 1.0 = 100%
+  """
+  propertyGeneralCoverageRatio: Float
+
+  """Property general insurance deductible amounts (in dollars)"""
+  propertyGeneralDeductible: Int
+
+  """
+  Property general insurance deductible amounts as a percentage of insured value (if dollar value unavailable). 1.0 = 100%
+  """
+  propertyGeneralDeductiblePerc: Float
+
+  """Number of days of business interruption general insurance coverage"""
+  biGeneralCoverageDays: Int
+
+  """Business interruption general insurance deductible days"""
+  biGeneralDeductible: Int
+
+  """
+  Indicator for whether National Flood Insurance Program coverage exists. "true" for present, "false" for not present. Default: 80% coverage assumed for properties in SFHAs and with rebuild costs up to $500,000
+  """
+  flNFIPCoverage: Boolean
+
+  """Annual cost of the currently held NFIP flood insurance policy"""
+  flNFIPInsurancePremium: Int
+
+  """NFIP flood insurance coverage for the property (in dollars)"""
+  flNFIPInsuredValue: Int64
+
+  """NFIP flood insurance deductible for the property (in dollars)"""
+  flNFIPInsuranceDeductible: Int
+
+  """
+  NFIP deductible amounts as a percentage of NFIP insured value (if dollar value unavailable). 1.0 = 100%
+  """
+  flNFIPInsuranceDeductiblePerc: Float
+
+  """Annual cost of the currently held non-NFIP flood insurance policy"""
+  flNonNFIPInsurancePremium: Int
+
+  """
+  Total combined physical and business interruption non-NFIP flood insurance coverage for the property (in dollars)
+  """
+  flNonNFIPInsuredValue: Int64
+
+  """
+  Percentage of non-NFIP insurance coverage for the property relative to property value (if Insured Value is unavailable). 1.0 = 100%
+  """
+  flNonNFIPInsuranceCoverageRatio: Float
+
+  """
+  Total combined physical and business interruption non-NFIP flood insurance deductible for the property (in dollars)
+  """
+  flNonNFIPInsuranceDeductible: Int
+
+  """
+  Non-NFIP deductible amounts as a percentage of non-NFIP insured value (if dollar value unavailable). 1.0 = 100%
+  """
+  flNonNFIPInsuranceDeductiblePerc: Float
+
+  """Annual cost of the currently held Named Storm insurance policy"""
+  stormInsurancePremium: Int
+
+  """
+  Total combined physical and business interruption Named Storm insurance coverage for the property (in dollars)
+  """
+  stormInsuredValue: Int64
+
+  """
+  Percentage of Named Storm insurance coverage for the property relative to property value (if Insured Value is unavailable). 1.0 = 100%
+  """
+  stormInsuranceCoverageRatio: Float
+
+  """
+  Total combined physical and business interruption Named Storm insurance deductible for the property (in dollars)
+  """
+  stormInsuranceDeductible: Int
+
+  """
+  Named Storm deductible amounts as a percentage of Non-NFIP insured value (if dollar value unavailable). 1.0 = 100%
+  """
+  stormInsuranceDeductiblePerc: Float
+
+  """
+  Statistics for the property are calculated at the building footprint geometry (1) or at the centroid of the parcel geometry (0). This flag only refers to the geometry, and we can and do model structures for which we have no geometry, we just use observations at the parcel centroid.
+  """
+  footprintFlag: Boolean
+
+  """A persistent ID to each parcel assigned by LightBox."""
+  parcelLid: String
+
+  """
+  Indicates if the structure could receive damage (1) or can't receive damage (0) i.e. agricultural, vacant, or open space.
+  """
+  damageable: Boolean
+
+  """
+  The estimated replacement cost of the building (today's dollars) based on standard regional replacement cost per square foot and square footage of existing building.
+  """
+  rebuildCost: Int64
+
+  """Cost of residential insurance"""
+  insurancePremium: Int
+
+  """USGS 10-digit Hydrologic Unit Code."""
+  hucId: Int
+
+  """
+  Level of combustibility associated with defensible space (1: low, 3: high).
+  """
+  defensibleSpace: Int
+
+  """
+  Likelihood of damaging airborne missile in this vicinity. Based on built-up density at the Census tract level (1: low, 3: high).
+  """
+  missileEnvironment: Int
 
   """If property is excluded, the reason for exclusion."""
   exclusion: Exclusion
@@ -300,6 +473,12 @@ type Building implements Location & Excluding {
 
   """Air details for the building."""
   air: BuildingAir
+
+  """Drought details for the building."""
+  drought: BuildingDrought
+
+  """Hail details for the building."""
+  hail: BuildingHail
 
   """
   A collection of nodes that represents geographical information for the building.
@@ -433,6 +612,18 @@ type BuildingCooling {
   coolingTemp: Float
 }
 
+"""Drought details for building."""
+type BuildingDrought implements Excluding {
+  """Number of weeks with drought."""
+  weeks: [DroughtWeeks]
+
+  """Risk Factor link to Drought page for the property."""
+  link: String!
+
+  """If property is excluded, the reason for exclusion."""
+  exclusion: Exclusion
+}
+
 type BuildingEdge {
   """
   Cursor is a string that can be used in subsequent request as value of a connection "after" argument, to request page starting after this item.
@@ -484,8 +675,20 @@ type BuildingFire implements FireStatistics & Excluding & FirePerilSummary {
   """Internal. Get key insight items for the property"""
   insights: [KeyInsight]
 
+  """Building's fire AAL"""
+  aalAsync: BuildingFireAALAsync
+
   """If property is excluded, the reason for exclusion."""
   exclusion: Exclusion
+}
+
+"""Building's ClimateExposure module data for fire."""
+type BuildingFireAALAsync {
+  """The BuildingFireAALAsync's sync status."""
+  asyncStatus: AsyncStatusEnum
+
+  """Average Annualized Loss."""
+  aal: [PropertyAAL]
 }
 
 type BuildingFireConsequences {
@@ -648,7 +851,7 @@ type BuildingFireConsequencesRebuild {
 """Fire probability details for building."""
 type BuildingFireProbability {
   burn: [BuildingFireProbabilityBurn]
-  cumulative: [BuildingFireProbabilityCumulative]
+  cumulative(filter: BuildingFireProbabilityCumulativeFilter): [BuildingFireProbabilityCumulative]
   damage: BuildingFireProbabilityDamage
 }
 
@@ -696,6 +899,9 @@ type BuildingFireProbabilityBurn {
 The wildfire risk likelihood (% probability) to the building footprint by cumulative year based on combined wildfire risk (greater of burn and ember).
 """
 type BuildingFireProbabilityCumulative {
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
+
   """Year asscociated with the point."""
   year: Int64!
 
@@ -727,6 +933,14 @@ type BuildingFireProbabilityCumulative {
 
   """The data point based on burn(flame) risk."""
   flamePoint: Float
+}
+
+input BuildingFireProbabilityCumulativeFilter {
+  """
+  For backwards compatibility, passing no ssp value implies SSP 2.45. If empty array is provided then the response will include data for all ssps.
+  When a list of values is provided then the response will include data for the provided ssps.
+  """
+  ssp: [SSP!]
 }
 
 """Building fire damage probability damage."""
@@ -831,8 +1045,20 @@ type BuildingFlood implements FloodStatistic & Excluding & FloodPerilSummary {
   """Internal. Get key insight items for the building"""
   insights: [KeyInsight]
 
+  """Building's flood AAL"""
+  aalAsync: BuildingFloodAALAsync
+
   """If building flood data is excluded, the reason for exclusion."""
   exclusion: Exclusion
+}
+
+"""Building's ClimateExposure module data for flood."""
+type BuildingFloodAALAsync {
+  """The BuildingFloodAALAsync's sync status."""
+  asyncStatus: AsyncStatusEnum
+
+  """Average Annualized Loss."""
+  aal: [PropertyAAL]
 }
 
 """Details for building flood losses."""
@@ -1188,6 +1414,33 @@ input BuildingFloodProbabilityFilter {
   depthFlavor: DepthFlavor
 }
 
+"""Hail details for building."""
+type BuildingHail implements Excluding {
+  """Number of days with hail."""
+  days: [HailDays]!
+
+  """Hail consequences"""
+  consequences(input: HailConsequencesInput, filter: HailConsequencesFilter): HailConsequences!
+
+  """Risk Factor link to Hail page for the property."""
+  link: String!
+
+  """Building's hail AAL"""
+  aalAsync: BuildingHailAALAsync
+
+  """If property is excluded, the reason for exclusion."""
+  exclusion: Exclusion
+}
+
+"""Building's ClimateExposure module data for hail."""
+type BuildingHailAALAsync {
+  """The BuildingHailAALAsync's sync status."""
+  asyncStatus: AsyncStatusEnum
+
+  """Average Annualized Loss."""
+  aal: [PropertyAAL]
+}
+
 """Heat details for building."""
 type BuildingHeat implements Excluding & HeatPerilSummary {
   """Building Heat Factor"""
@@ -1316,6 +1569,152 @@ type BuildingInsuranceImpactPropertyValueEffect {
   propertyValueChange: Float!
 }
 
+"""Macroeconomic module data for the building."""
+type BuildingMacroeconomicAsync {
+  """The BuildingMacroeconomicAsync's sync status."""
+  asyncStatus: AsyncStatusEnum
+  buildingImpact: [BuildingMacroeconomicBuildingImpacts]
+  buildingImpactByPercentile: [BuildingMacroeconomicBuildingImpactByPercentile]
+  buildingPerilImpact: [BuildingMacroeconomicEventImpact]
+  insuranceBuildingImpact: [BuildingMacroeconomicInsuranceImpact]
+  insuranceBuildingPremium: [BuildingMacroeconomicInsurancePremium]
+}
+
+"""Building Macroeconomic module impact by percentile premiums"""
+type BuildingMacroeconomicBuildingImpactByPercentile {
+  """Relative year of the data."""
+  relativeYear: Int64
+
+  """SSP of the data."""
+  ssp: SSP
+
+  """
+  Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+  """
+  percentile: Int
+
+  """Combined Average Annualized Loss (Flood+Wind+Fire+etc) (dollar amount)"""
+  combinedAAL: Int64
+
+  """
+  Combined Average Annualized Loss (Flood+Wind+Fire+etc) (% of Total Property Value)(%). 100% is 1.0.
+  """
+  combinedAALPct: Float
+}
+
+"""Building's Macroeconomic module building impacts"""
+type BuildingMacroeconomicBuildingImpacts {
+  """Relative year of the data."""
+  relativeYear: Int64
+
+  """SSP of the data."""
+  ssp: SSP
+
+  """Property value loss percent. 100% is 1.0."""
+  propertyValueLossPct: Float
+
+  """Property value loss (dollar amount)."""
+  propertyValueLoss: Int64
+}
+
+"""Building Macroeconomic module post-event impact section"""
+type BuildingMacroeconomicEventImpact {
+  """
+  Post flood impact on Debt-to-Income Ratio (county level) as a percent change
+  """
+  countyFloodEventDTIImpact: Float
+
+  """
+  Post wildfire impact on Debt-to-Income Ratio (county level) as a percent change
+  """
+  countyFireEventDTIImpact: Float
+
+  """
+  Post wind impact on Debt-to-Income Ratio (county level) as a percent change
+  """
+  countyWindEventDTIImpact: Float
+
+  """
+  Post flood impact on House Price Index (county level) as a percent change
+  """
+  countyFloodEventHPIImpact: Float
+
+  """
+  Post wildfire impact on House Price Index (county level) as a percent change
+  """
+  countyFireEventHPIImpact: Float
+
+  """
+  Post Wind impact on House Price Index (county level) as a percent change
+  """
+  countyWindEventHPIImpact: Float
+
+  """
+  Post flood impact on Gross Domestic Product (county level) as a percent change
+  """
+  countyFloodEventGDPImpact: Float
+
+  """
+  Post wildfire impact on Gross Domestic Product (county level) as a percent change
+  """
+  countyFireEventGDPImpact: Float
+
+  """
+  Post wind impact on Gross Domestic Product (county level) as a percent change
+  """
+  countyWindEventGDPImpact: Float
+
+  """Post flood impact on unemployment (county level) as a percent change"""
+  countyFloodEventUnemploymentImpact: Float
+
+  """
+  Post wildfire impact on unemployment (county level) as a percent change
+  """
+  countyFireEventUnemploymentImpact: Float
+
+  """Post wind impact on unemployment (county level) as a percent change"""
+  countyWindEventUnemploymentImpact: Float
+}
+
+"""Building Macroeconomic module insurance BuildingMarketEffects section"""
+type BuildingMacroeconomicInsuranceImpact {
+  """Relative year of the data."""
+  relativeYear: Int64
+
+  """SSP of the  data."""
+  ssp: SSP
+
+  """Property value loss due to insurance impact(%)."""
+  propertyValueLossPct: Float
+
+  """Property value loss (dollar amount) due to insurance impact."""
+  propertyValueLoss: Int64
+
+  """
+  Impact on property value due to insurance increases and macroeconomic changes over X years.
+  """
+  totalPropertyValueLoss: Int64
+
+  """
+  Impact on property value as a percent adjustment due to insurance increases and macroeconomic changes over X years (%).
+  """
+  totalPropertyValueLossPct: Float
+
+  """
+  Expected insurance premium given climate events. This does not represent the current insurance premium.
+  """
+  expectedRiskAdjustedPremium: Int64
+}
+
+"""Building Macroeconomic module insurance premiums section"""
+type BuildingMacroeconomicInsurancePremium {
+  """Insurance premiums(dollar amount)."""
+  premiumMean: Float
+
+  """Estimated current NFIP premium for this structure."""
+  nfipPremium: Float
+}
+
 interface BuildingMaterial {
   """The material for the specified building node"""
   material: String
@@ -1409,8 +1808,20 @@ type BuildingWind implements WindStatistics & Excluding & WindPerilSummary {
   """Internal. Get key insight items for the building"""
   insights: [KeyInsight]
 
+  """Building's wind AAL"""
+  aalAsync: BuildingWindAALAsync
+
   """If property is excluded, the reason for exclusion."""
   exclusion: Exclusion
+}
+
+"""Building's ClimateExposure module data for wind."""
+type BuildingWindAALAsync {
+  """The BuildingWindAALAsync's sync status."""
+  asyncStatus: AsyncStatusEnum
+
+  """Average Annualized Loss."""
+  aal: [PropertyAAL]
 }
 
 type BuildingWindConsequences {
@@ -1997,6 +2408,9 @@ type County implements Location {
   """Air details for the county."""
   air: LocalityAir
 
+  """County regional statistics."""
+  regionalStats: LocalityRegionalStats
+
   """
   fsfLink is First Street's link to the neighborhood on FirstStreet's website.
 
@@ -2119,6 +2533,24 @@ enum DepthFlavor {
 type DroughtQuery {
   """Current Drought Model version."""
   version: VersionRelease!
+}
+
+type DroughtWeeks {
+  """The Shared Socioeconomic Pathway (SSP) for the property."""
+  ssp: SSP!
+
+  """
+  The relative year for the data. 0 is the current year, 1 is next year, etc.
+  """
+  relativeYear: Int!
+
+  """
+  The return period (100, 20, 10, 5, or 2 years) that the projection was calculated for.
+  """
+  returnPeriod: Int64!
+
+  """Probability of drought for the property, in weeks per year."""
+  weeks: Int!
 }
 
 enum EmberRiskRating {
@@ -2594,6 +3026,64 @@ interface FloodStatistic {
   environmentalRisk: Int64
 }
 
+type HailConsequences {
+  damage: [HailConsequencesDamage]!
+  roofRepair: HailConsequencesRoofRepair
+}
+
+type HailConsequencesDamage {
+  """The Shared Socioeconomic Pathway (SSP) for the property."""
+  ssp: SSP!
+
+  """
+  The relative year for the data. 0 is the current year, 1 is next year, etc.
+  """
+  relativeYear: Int!
+
+  """The loss value due to hail, in dollars"""
+  loss: Int64
+}
+
+input HailConsequencesFilter {
+  """
+  For backwards compatibility, passing no ssp value implies SSP 2.45. If empty array is provided then the response will include data for all ssps.
+  When a list of values is provided then the response will include data for the provided ssps.
+  """
+  ssp: [SSP!]
+}
+
+input HailConsequencesInput {
+  """The type of roofing material."""
+  roofCoverId: String
+
+  """Area of the roof in square feet."""
+  roofAreaSqft: Int
+
+  """
+  The general land use code
+  Example: 1 (residential)
+  """
+  landuseCodeId: Int
+}
+
+type HailConsequencesRoofRepair {
+  """The cost of roof repair due to hail, in dollars"""
+  cost: Int64
+}
+
+type HailDays {
+  """The Shared Socioeconomic Pathway (SSP) for the property."""
+  ssp: SSP!
+
+  """
+  The relative year for the data. 0 is the current year, 1 is next year, etc.
+  """
+  relativeYear: Int!
+
+  """The number of days with hail."""
+  days: Float
+}
+
 """Query to obtain hail-related data."""
 type HailQuery {
   """Current Hail Model version."""
@@ -2716,6 +3206,19 @@ type KeyInsight {
 type KeyInsightValue {
   name: String
   value: String
+}
+
+"""Landuse enum of a building."""
+enum LanduseEnum {
+  RESIDENTIAL
+  COMMERCIAL
+  COMMERCIAL_OFFICE
+  RECREATIONAL_ENTERTAINMENT
+  INDUSTRIAL
+  HEAVY_INDUSTRIAL_AND_TRANSPORTATION
+  AGRICULTURAL_RURAL
+  SPECIAL_PURPOSE_VACANT_LAND
+  EXEMPT_GOVERNMENTAL_PUBLIC_USE_HISTORICAL_PRIVATE_INSTITUTIONAL
 }
 
 type LastResortInsurer {
@@ -3950,6 +4453,73 @@ type LocalityInsurance {
   avgInsuranceCost: Int64
 }
 
+"""
+Area statistics and census data for the locality. Available for county only.
+"""
+type LocalityRegionalAreaStats {
+  """Relative year."""
+  relativeYear: Int64!
+
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
+
+  """Debt to income ratio."""
+  debtToIncomeRatio: Float
+
+  """Housing price index."""
+  homePriceIndex: Float
+
+  """Gross domestic product."""
+  grossDomesticProduct: Float
+}
+
+"""Population statistics for the locality. Available for tract only."""
+type LocalityRegionalPopulationStats {
+  """Relative year."""
+  relativeYear: Int64!
+
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
+
+  """Population."""
+  population: Int64
+
+  """Median income."""
+  medianIncome: Int64
+
+  """Poverty level, %"""
+  povertyLevelPercent: Float
+
+  """Unemployment rate, %"""
+  unemployedPercent: Float
+
+  """Rent-to-income ratio, %"""
+  rentToIncomeRatio: Float
+
+  """Median age, years"""
+  medianAge: Float
+
+  """Asian, % of population"""
+  asianPopulationPercent: Float
+
+  """Black, % of population"""
+  blackPopulationPercent: Float
+
+  """Hispanic, % of population"""
+  hispanicPopulationPercent: Float
+
+  """White, % of population"""
+  whitePopulationPercent: Float
+}
+
+type LocalityRegionalStats {
+  """Area statistics and census data for the locality."""
+  areaStats: [LocalityRegionalAreaStats]!
+
+  """Population statistics for the locality."""
+  populationStats: [LocalityRegionalPopulationStats]
+}
+
 type LocalityWind implements Excluding {
   """The community risk level from wind, 0 to 5."""
   riskLevel: Int64
@@ -4809,11 +5379,24 @@ type Property implements Location & Excluding {
   """AirQuality details for the property."""
   air: PropertyAir
 
+  """Drought details for the property."""
+  drought: PropertyDrought
+
+  """Hail details for the property."""
+  hail: PropertyHail
+
   """If property is excluded, the reason for exclusion."""
   exclusion: Exclusion
 
   """Property's assessor's parcel number (APN)."""
   APN: String
+}
+
+type PropertyAAL {
+  relativeYear: Int64!
+  ssp: SSP
+  percentile: Int
+  aal: Int!
 }
 
 """
@@ -5004,6 +5587,18 @@ input PropertyCoolingFilter {
   Filter property cooling costs by relative years.  e.g. relativeYears=[0,30]
   """
   relativeYear: [Int64!]
+}
+
+"""Drought details for property."""
+type PropertyDrought implements Excluding {
+  """Number of weeks with drought."""
+  weeks: [DroughtWeeks]
+
+  """Risk Factor link to Drought page for the property."""
+  link: String!
+
+  """If property is excluded, the reason for exclusion."""
+  exclusion: Exclusion
 }
 
 """Represents one record for the current page."""
@@ -5358,7 +5953,7 @@ type PropertyFireProbability {
   For backwards compatibility, not passing in filter implies SSP 2.45. See filter details for more info.
   """
   burn(filter: PropertyFireProbabilityBurnFilter): [PropertyFireProbabilityBurn]
-  cumulative: [PropertyFireProbabilityCumulative]
+  cumulative(filter: PropertyFireProbabilityCumulativeFilter): [PropertyFireProbabilityCumulative]
   damage: PropertyFireProbabilityDamage
 }
 
@@ -5414,6 +6009,9 @@ input PropertyFireProbabilityBurnFilter {
 The wildfire risk likelihood (% probability) to the building footprint by cumulative year based on combined wildfire risk (greater of burn and ember).
 """
 type PropertyFireProbabilityCumulative {
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
+
   """Year asscociated with the point."""
   year: Int64!
 
@@ -5460,6 +6058,14 @@ type PropertyFireProbabilityCumulative {
 
   """The data point based on burn(flame) risk."""
   flamePoint: Float
+}
+
+input PropertyFireProbabilityCumulativeFilter {
+  """
+  For backwards compatibility, passing no ssp value implies SSP 2.45. If empty array is provided then the response will include data for all ssps.
+  When a list of values is provided then the response will include data for the provided ssps.
+  """
+  ssp: [SSP!]
 }
 
 """Fire damage probability."""
@@ -6167,6 +6773,21 @@ input PropertyFloodProbabilityFilter {
 
 type PropertyFloodStats {
   floodfactorRankInCity: Float
+}
+
+"""Hail details for property."""
+type PropertyHail implements Excluding {
+  """Number of days with hail."""
+  days: [HailDays]!
+
+  """Hail consequences"""
+  consequences(input: HailConsequencesInput, filter: HailConsequencesFilter): HailConsequences!
+
+  """Risk Factor link to Hail page for the property."""
+  link: String!
+
+  """If property is excluded, the reason for exclusion."""
+  exclusion: Exclusion
 }
 
 """Heat details for property."""
@@ -7124,11 +7745,13 @@ enum Service {
   HEATCONSEQUENCES
   WINDCONSEQUENCES
   AIRCONSEQUENCES
+  HAILCONSEQUENCES
   LOCATIONINSURANCE
   KEYINSIGHTS
   BUILDINGINSURANCE
   DROUGHT
   HAIL
+  ENTERPRISE
 }
 
 """US state or federal district"""
@@ -7426,6 +8049,9 @@ type Tract implements Location {
 
   """Air details for the tract."""
   air: LocalityAir
+
+  """Tract regional statistics."""
+  regionalStats: LocalityRegionalStats
 
   """
   fsfLink is always null for tracts, as they are not displayed on FirstStreet's website.
