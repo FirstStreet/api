@@ -1,0 +1,1907 @@
+"""
+Directs the executor to defer this fragment when the `if` argument is true or undefined.
+"""
+directive @defer(
+    """
+    Deferred when true or undefined.
+    """
+    if: Boolean = true
+
+    """
+    Unique name
+    """
+    label: String
+) on FRAGMENT_SPREAD | INLINE_FRAGMENT
+
+directive @fsApplyExclusion on FIELD_DEFINITION
+
+directive @fsHasPolicy(
+    service: Service!
+) on FIELD_DEFINITION | ARGUMENT_DEFINITION
+
+directive @fsRecordAPIUsage(
+    service: APIUsageService!
+) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+
+directive @fsValidation(
+    constraint: String!
+) on INPUT_FIELD_DEFINITION | ARGUMENT_DEFINITION | FIELD_DEFINITION
+
+directive @goField(
+    forceResolver: Boolean
+    name: String
+) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+
+enum APIUsageService {
+    PLACE
+    FLOOD
+    FIRE
+    HEAT
+    COLD
+    WIND
+    AIR
+    DROUGHT
+    HAIL
+    PRIMARY_PERIL
+}
+
+type AssetType {
+    id: AssetTypeId!
+    description: String!
+}
+
+enum AssetTypeId {
+    S1
+    S2
+    M1
+    M2
+    M3
+    M4
+    M5
+    M6
+    M7
+    M8
+    M9
+    H1
+    H2
+    H3
+    H4
+    H5
+    H6
+    O1
+    O2
+    O3
+    O4
+    O5
+    O6
+    R1
+    R2
+    R3
+    R4
+    X1
+    X2
+    X3
+    I1
+    I2
+    I3
+    I4
+    I5
+    I6
+    I7
+    I8
+    I9
+    W1
+    W2
+    W3
+    W4
+    W5
+    W6
+    W7
+    L1
+    R5
+    L2
+    L3
+    L4
+    L5
+    L6
+    L7
+    N1
+    N2
+    N3
+    N4
+    N5
+    N6
+    N7
+    N8
+    N9
+    NS
+    A1
+    A2
+    V1
+    V2
+    V3
+}
+
+enum Basement {
+    NONE
+    UNFINISHED
+    FINISHED
+}
+
+type Building {
+    """
+    Asset type for the building.
+    """
+    assetTypeId: AssetTypeId
+
+    """
+    The rebuild price per square foot for a structure (if it exists). Used to compute building damages
+    """
+    rebuildCostPerSf: Int64
+
+    """
+    Total square footage for the structure
+    """
+    buildingSf: Int
+
+    """
+    Orientation of building. Options are N (default), NE, E, SE, S, SW, W, NW.
+    """
+    buildingDirection: CompassDirection
+
+    """
+    The presence of defensible space around this property.
+    true = adequate defensible space exists, defined as a five foot buffer zone of cleared space around house AND <15% tree canopy within 50 ft. false (default) = defensible space does not exist.
+    """
+    defensibleSpace: Boolean
+
+    """
+    Number of units in structure. Default value is 1.
+    """
+    units: Int
+
+    """
+    Number of stories. Default value is 1.
+    """
+    stories: Int
+
+    """
+    Estimated height of first finished floor above grade (in ft).
+    """
+    foundationHeight: Float
+
+    """
+    The type of foundation. Used when exact foundation height isn't available.
+    """
+    foundationType: FoundationType
+
+    """
+    Whether or not the property has a basement.
+    """
+    basement: Basement
+
+    """
+    The predominant construction material of the building
+    """
+    constructionType: ConstructionType
+
+    """
+    Level of combustibility of construction materials for this property.
+    """
+    constructionCombustibilityLevel: ConstructionCombustibilityLevel
+
+    """
+    The type of roofing material.
+    """
+    roofType: RoofType
+
+    """
+    Level of combustibility of construction materials for this property.
+    """
+    roofCombustibilityLevel: RoofCombustibilityLevel
+
+    """
+    Year of construction
+    """
+    yearBuilt: Int
+
+    """
+    Whether or not the property abides by the Fireproofing building code.
+    true = fire proofing measures exist for the home (such as fire-proofed windows, flame resistant exterior walls and ignition-resistant exterior doors). false (default) = does not exist.
+    """
+    fireProofing: Boolean
+
+    """
+    Likelihood of damaging airborne missile in this vicinity. Based on built-up density at the Census tract level.
+    """
+    denseUrbanEnvironment: MissileEnvironment
+
+    """
+    The expected design standard of structures, based on ASCE 7-22 wind risk zones.
+    """
+    windDesignStandard: WindDesignStandard
+
+    """
+    [DEPRECATED] The estimated replacement cost of the building (today's dollars) based on standard regional replacement cost per square foot and square footage of existing building.
+    """
+    rebuildCost: Int64 @deprecated(reason: "Use rebuildCostPerSf instead.")
+
+    """
+    [DEPRECATED] Likelihood of damaging airborne missile in this vicinity. Based on built-up density at the Census tract level.
+    """
+    missileEnvironment: MissileEnvironment
+        @deprecated(reason: "Use denseUrbanEnvironment instead.")
+}
+
+input BuildingInput {
+    """
+    The type of building.
+    """
+    buildingType: LandUseType
+
+    """
+    Asset type for the building.
+    """
+    assetTypeId: AssetTypeId
+
+    """
+    The rebuild price dollars per square foot for a structure (if it exists). Used to compute building damages
+    """
+    rebuildCostSf: Int64
+
+    """
+    Floor size in square feet
+    """
+    buildingSf: Int
+
+    """
+    The type of roofing material.
+    """
+    roofType: RoofType
+
+    """
+    The predominant construction material of the building
+    """
+    constructionType: ConstructionType
+
+    """
+    Number of stories. Default value is 1.
+    """
+    stories: Int
+
+    """
+    Number of units in structure. Default value is 1.
+    """
+    units: Int
+
+    """
+    Year of construction
+    """
+    yearBuilt: Int
+
+    """
+    Orientation of building. options are N (default), NE, E, SE, S, SW, W, NW
+    """
+    buildingDirection: CompassDirection
+
+    """
+    The expected design standard of structures, based on ASCE 7-22 wind risk zones
+    """
+    windDesignStandard: WindDesignStandard
+
+    """
+    Likelihood of damaging airborne missile in this vicinity. Based on built-up density at the Census tract level.
+    """
+    denseUrbanEnvironment: MissileEnvironment
+
+    """
+    The presence of defensible space around this property.
+    true = adequate defensible space exists, defined as a five foot buffer zone of cleared space around house AND <15% tree canopy within 50 ft. false (default) = defensible space does not exist.
+    """
+    defensibleSpace: Boolean
+
+    """
+    Whether or not the property abides by the Fireproofing building code.
+    true = fire proofing measures exist for the home (such as fire-proofed windows, flame resistant exterior walls and ignition-resistant exterior doors). false (default) = does not exist.
+    """
+    fireProofing: Boolean
+
+    """
+    Whether or not the property has a basement. 0 (default) = no basement, 1 = has basement.
+    """
+    basement: Basement
+
+    """
+    The height associated with the first floor elevation for the building (in ft).
+    """
+    foundationHeight: Float
+
+    """
+    The type of foundation. Used when exact foundation height isn't available.
+    """
+    foundationType: FoundationType
+}
+
+"""
+The center GeoJSON (Point)
+"""
+type Center {
+    """
+    GeoJSON geometry type Point.
+    """
+    type: String
+
+    """
+    Coordinates of the Point
+
+    Example: *[-76.96286,39.40059]*
+    """
+    coordinates: [Float!]
+}
+
+enum CompassDirection {
+    N
+    NE
+    E
+    SE
+    S
+    SW
+    W
+    NW
+}
+
+enum ConstructionCombustibilityLevel {
+    LOW
+    MEDIUM
+    HIGH
+}
+
+enum ConstructionType {
+    ADOBE
+    BRICK
+    CONCRETE
+    CONCRETE_BLOCK
+    DOME
+    FRAME
+    HEAVY
+    LIGHT
+    LOG
+    MANUFACTURED
+    OTHER
+    MASONRY
+    METAL
+    STEEL
+    STONE
+    TILT_UP
+    WOOD
+    MIXED
+}
+
+"""
+Remap Graphql Types to Go Types
+"""
+scalar Date
+
+interface Excluding {
+    exclusion: Exclusion
+}
+
+type Exclusion {
+    description: String
+}
+
+"""
+The status of a First Street Model operation.
+"""
+type FSModelResponseStatus {
+    """
+    The current state of model generation.
+    """
+    name: FSModelStatusName!
+}
+
+"""
+Descrbies the current status of the data generation operation
+"""
+enum FSModelStatusName {
+    """
+    The operation is awaiting to be acknolwedged
+    """
+    PENDING
+
+    """
+    The operation is in progress
+    """
+    RUNNING
+
+    """
+    The operation has completed successfully
+    """
+    SUCCESS
+
+    """
+    The operation has failed
+    """
+    FAILED
+
+    """
+    The operation has timed out
+    """
+    TIMEOUT
+
+    """
+    The operation has encountered an error
+    """
+    ERROR
+}
+
+"""
+The corresponding text description that describes the `factor` score that is associated with the property.
+"""
+enum FactorScale {
+    MINIMAL
+    MINOR
+    MODERATE
+    MAJOR
+    SEVERE
+    EXTREME
+}
+
+"""
+The flood source modeled at this location.
+"""
+enum FloodSource {
+    FLUVIAL
+    PLUVIAL
+    COASTAL
+}
+
+enum FoundationType {
+    CRAWL_OR_RAISED
+    CROSSED_WALLS
+    MASONRY
+    EARTH
+    MUD_SILL
+    STONE
+    CONCRETE_BLOCK
+    PILING
+    OTHER
+    PIERS
+    RETAINING_WALL
+    SLAB
+    FOOTING
+    WOOD
+    CONCRETE
+    BRICK
+    OPEN_PIERS
+    CLOSED_PIERS
+}
+
+input InputOptions {
+    measurementSystem: MeasurementSystem
+    vintageId: Int64
+}
+
+scalar Int64
+
+enum LandUseType {
+    SINGLE_FAMILY_RESIDENTIAL
+    MULTIFAMILY
+    RETAIL
+    HOTEL
+    OFFICE
+    INDUSTRIAL
+    WAREHOUSE
+    AGRICULTURAL
+    VACANT
+}
+
+enum MeasurementSystem {
+    """
+    Convert return values to imperial. This is the default MeasurementSystem.
+    """
+    IMPERIAL
+
+    """
+    Convert return values to metric.
+    """
+    METRIC
+}
+
+type MetadataLookup {
+    """
+    The list of available vintages.
+    """
+    vintages: [Vintage!]!
+}
+
+enum MissileEnvironment {
+    LOW
+    HIGH
+}
+
+type Place implements PlaceResponse {
+    """
+    The vintage version for the returned data. Vintage uniquely identifies the property and peril data version.
+    """
+    vintage: Vintage!
+
+    """
+    First Street place ID.
+    """
+    placeId: String!
+
+    """
+    ISO-3166-a3 country code.
+    """
+    countryCode: String
+
+    """
+    Street address.
+    """
+    address: String
+
+    """
+    The type of place.
+    """
+    placeType: PlaceType!
+
+    """
+    The geometry details of place.
+    """
+    geometry: PlaceGeometry!
+
+    """
+    Flag indicating if the place has known buildings.
+    """
+    hasBuildings: Boolean
+    flood: PlaceFlood
+    wildfire: PlaceWildfire
+    wind: PlaceWind
+    heat: PlaceHeat
+    cold: PlaceCold
+    drought: PlaceDrought
+    primaryPeril: PlacePrimaryPeril
+    building: Building
+}
+
+type PlaceCold implements ResponseStatus {
+    status: FSModelResponseStatus!
+    data: PlaceColdData
+}
+
+type PlaceColdData implements Excluding {
+    """
+    The place's Cold Factor
+    """
+    coldFactor: Int
+
+    """
+    Text representation of the Cold Factor. Possible values are: minimal, minor, moderate, major, severe, extreme.
+    """
+    factorScale: FactorScale
+
+    """
+    Cold probability details for place.
+    """
+    probability: PlaceColdProbability
+
+    """
+    If property is excluded, the reason for exclusion.
+    """
+    exclusion: Exclusion
+}
+
+type PlaceColdProbability {
+    coldDays(
+        input: PlaceColdProbabilityColdDaysInput
+    ): [PlaceColdProbabilityColdDays!]
+    heatingDays(
+        input: PlaceColdProbabilityHeatingDaysInput
+    ): [PlaceColdProbabilityHeatingDays!]
+}
+
+type PlaceColdProbabilityColdDays {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP!
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: Int!
+
+    """
+    Threshold temperature in °F cold index.
+    """
+    threshold: Int!
+
+    """
+    Days with wind chill index below a threshold (°F)
+    """
+    windchillDays: Int
+}
+
+"""
+Return number of days at or above given cold index thresholds.
+"""
+input PlaceColdProbabilityColdDaysInput {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: [SSP]
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: [Int]
+
+    """
+    Thresholds are in °F cold index.
+    """
+    threshold: [Int]
+}
+
+type PlaceColdProbabilityHeatingDays {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP!
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: Int!
+
+    """
+    Heating degree days for a given indoor temp (°F)
+    """
+    heatingDegreeDays: Int
+}
+
+input PlaceColdProbabilityHeatingDaysInput {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: [SSP]
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: [Int]
+
+    """
+    Indoor temp is in °F, heatingdegreedays is °F-based, default is 70 °F.
+    """
+    indoorTemperature: Int
+}
+
+type PlaceDrought implements ResponseStatus {
+    status: FSModelResponseStatus!
+    data: PlaceDroughtData
+}
+
+type PlaceDroughtData implements Excluding {
+    """
+    The place's Drought Factor
+    """
+    droughtFactor: Int
+
+    """
+    Text representation of the Drought Factor. Possible values are: minimal, minor, moderate, major, severe, extreme.
+    """
+    factorScale: FactorScale
+
+    """
+    Drought probability details for place.
+    """
+    probability: PlaceDroughtProbability
+
+    """
+    If property is excluded, the reason for exclusion.
+    """
+    exclusion: Exclusion
+}
+
+type PlaceDroughtProbability {
+    """
+    Return lengths of drought by return period for a given location
+    """
+    duration(
+        input: PlaceDroughtProbabilityDurationInput
+    ): [PlaceDroughtProbabilityDuration!]
+}
+
+type PlaceDroughtProbabilityDuration {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP!
+
+    """
+    Return period for the drought probability.
+    """
+    returnPeriod: ReturnPeriod!
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: Int!
+
+    """
+    Length of drought in duration, in weeks
+    """
+    weeks: Int
+}
+
+input PlaceDroughtProbabilityDurationInput {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: [SSP]
+
+    """
+    Return period for the drought probability.
+    """
+    returnPeriod: [ReturnPeriod]
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: [Int]
+}
+
+type PlaceFlood implements ResponseStatus {
+    status: FSModelResponseStatus!
+    data: PlaceFloodData
+}
+
+"""
+Details for building flood losses.
+"""
+type PlaceFloodDamages {
+    building(
+        input: PlaceFloodDamagesBuildingInput
+    ): [PlaceFloodDamagesBuilding!]
+    aal(input: PlaceFloodDamagesAALInput): [PlaceFloodDamagesAAL!]
+}
+
+"""
+Annualized damage cost to the structure in the current year due to flood.
+"""
+type PlaceFloodDamagesAAL {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP!
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: Int!
+
+    """
+    Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+    """
+    percentile: Int!
+
+    """
+    Annualized damage cost to the structure in the current year due to flood.
+    """
+    aal: Int64
+}
+
+input PlaceFloodDamagesAALInput {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: [SSP]
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: [Int]
+}
+
+type PlaceFloodDamagesBuilding {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP!
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: Int!
+
+    """
+    Return period of flooding.
+    """
+    returnPeriod: ReturnPeriod!
+
+    """
+    Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+    """
+    percentile: Int!
+
+    """
+    Estimated number of days to rebuild or repair damage due to flood.
+    """
+    repairDays: Int
+
+    """
+    Estimated cost to repair damage due to flood.
+    """
+    repairCost: Int64
+}
+
+input PlaceFloodDamagesBuildingInput {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: [SSP]
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: [Int]
+
+    """
+    Return period of flooding.
+    """
+    returnPeriod: [ReturnPeriod]
+}
+
+type PlaceFloodData implements Excluding {
+    """
+    The building's Flood Factor, a numeric integer from 1-10 (where 1 = minimal and 10 = extreme) based on flooding risk to the building footprint.
+    Flood risk is defined as a combination of cumulative risk over 30 years and flood depth.
+    Flood depth is calculated at the lowest elevation of the building footprint.
+    """
+    floodFactor: Int
+    source: [PlaceFloodSource!]
+
+    """
+    Text representation of the Flood Factor. Possible values are: minimal, minor, moderate, major, severe, extreme.
+    """
+    factorScale: FactorScale
+
+    """
+    Flood probability details for building.
+    """
+    probability: PlaceFloodProbability
+
+    """
+    Details for building flood losses.
+    """
+    floodDamages: PlaceFloodDamages
+
+    """
+    If property is excluded, the reason for exclusion.
+    """
+    exclusion: Exclusion
+}
+
+"""
+Flood probability details for building.
+"""
+type PlaceFloodProbability {
+    """
+    The flood depth for flooding to the building footprint.
+    """
+    depth(input: PlaceFloodProbabilityDepthInput): [PlaceFloodProbabilityDepth!]
+
+    """
+    Cumulative probability of depth reaching given thresholds for a location. Expressed in % probability, from 0 to 1, where 1 represents 100%.
+    """
+    cumulative(
+        input: PlaceFloodProbabilityCumulativeInput
+    ): [PlaceFloodProbabilityCumulative]
+}
+
+type PlaceFloodProbabilityCumulative {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP!
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: Int!
+
+    """
+    Threshold to calculate cumulative probability of flooding in feet.
+    """
+    depth: Float
+
+    """
+    Cumulative probability of floods of reaching the given mean depth at the building.
+    """
+    mean: Float
+
+    """
+    Cumulative probability of floods of a given depth reaching the building.
+    """
+    lowPoint: Float
+}
+
+input PlaceFloodProbabilityCumulativeInput {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: [SSP]
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: [Int]
+
+    """
+    Threshold to calculate cumulative probability of flooding in feet. Default is 3 feet, maximum is 50 feet.
+    """
+    depth: [Float]
+}
+
+type PlaceFloodProbabilityDepth {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP!
+
+    """
+    Return period of flooding.
+    """
+    returnPeriod: ReturnPeriod!
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: Int!
+
+    """
+    Flood depth at the selected point or the mean depth along building outline if there's a building outline (in feet).
+    """
+    mean: Float
+
+    """
+    Flood depth at the low point along a building outline. Same as depth if there's no building outline (in feet).
+    """
+    lowPoint: Float
+}
+
+input PlaceFloodProbabilityDepthInput {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: [SSP]
+
+    """
+    Return period of flooding.
+    """
+    returnPeriod: [ReturnPeriod]
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: [Int]
+}
+
+"""
+The flood source modeled at this location based on SSP.
+"""
+type PlaceFloodSource {
+    """
+    The flood source modeled at this location.
+    """
+    source: [FloodSource!]
+
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP!
+}
+
+type PlaceGeometry {
+    center: Center
+}
+
+type PlaceHeat implements ResponseStatus {
+    status: FSModelResponseStatus!
+    data: PlaceHeatData
+}
+
+type PlaceHeatData implements Excluding {
+    """
+    The building's Heat Factor
+    """
+    heatFactor: Int
+
+    """
+    Text representation of the Heat Factor. Possible values are: minimal, minor, moderate, major, severe, extreme.
+    """
+    factorScale: FactorScale
+
+    """
+    Heat probability details for building.
+    """
+    probability: PlaceHeatProbability
+
+    """
+    If property is excluded, the reason for exclusion.
+    """
+    exclusion: Exclusion
+}
+
+type PlaceHeatProbability {
+    heatDays(
+        input: PlaceHeatProbabilityHeatDaysInput
+    ): [PlaceHeatProbabilityHeatDays!]
+    coolingDays(
+        input: PlaceHeatProbabilityCoolingDaysInput
+    ): [PlaceHeatProbabilityCoolingDays!]
+}
+
+type PlaceHeatProbabilityCoolingDays {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP!
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: Int!
+
+    """
+    Cooling degree days for a given indoor temp (°F)
+    """
+    coolingDegreeDays: Int
+}
+
+input PlaceHeatProbabilityCoolingDaysInput {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: [SSP]
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: [Int]
+
+    """
+    Indoor temp is in °F, coolingdegreedays is °F-based, default is 70 °F.
+    """
+    indoorTemperature: Int
+}
+
+type PlaceHeatProbabilityHeatDays {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP!
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: Int!
+
+    """
+    Threshold temperature in °F heat index.
+    """
+    threshold: Int!
+
+    """
+    Days with high heat index at or above a threshold (°F).
+    """
+    heatIndexDays: Int
+}
+
+"""
+Return number of days at or above given heat index thresholds.
+"""
+input PlaceHeatProbabilityHeatDaysInput {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: [SSP]
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: [Int]
+
+    """
+    Thresholds are in °F heat index.
+    """
+    threshold: [Int]
+}
+
+type PlacePrimaryPeril implements ResponseStatus {
+    status: FSModelResponseStatus!
+    data: PlacePrimaryPerilData
+}
+
+type PlacePrimaryPerilDamages {
+    aal(input: PlacePrimaryPerilDamagesAALInput): [PlacePrimaryPerilDamagesAAL!]
+}
+
+"""
+Combined Average Annualized Loss (Flood+Wind+Fire)
+"""
+type PlacePrimaryPerilDamagesAAL {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP!
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: Int!
+
+    """
+    Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+    """
+    percentile: Int!
+
+    """
+    Combined Average Annualized Loss (Flood+Wind+Fire)
+    """
+    aal: Int64
+}
+
+input PlacePrimaryPerilDamagesAALInput {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: [SSP]
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: [Int]
+}
+
+type PlacePrimaryPerilData implements Excluding {
+    primaryPerilDamages: PlacePrimaryPerilDamages!
+
+    """
+    If property is excluded, the reason for exclusion.
+    """
+    exclusion: Exclusion
+}
+
+interface PlaceResponse {
+    """
+    The vintage version for the returned data. Vintage uniquely identifies the property and peril data version.
+    """
+    vintage: Vintage!
+
+    """
+    First Street place ID
+    """
+    placeId: String!
+
+    """
+    The type of place.
+    """
+    placeType: PlaceType!
+
+    """
+    The geometry details of place
+    """
+    geometry: PlaceGeometry!
+}
+
+enum PlaceType {
+    CITY
+    COUNTY
+    STATE
+    ZCTA
+    TRACT
+    CD
+    NEIGHBORHOOD
+    COUSUB
+    PLACE
+}
+
+type PlaceWildfire {
+    status: FSModelResponseStatus!
+    data: PlaceWildfireData
+}
+
+"""
+Details for property fire losses.
+"""
+type PlaceWildfireDamages {
+    building(
+        input: PlaceWildfireDamagesBuildingInput
+    ): [PlaceWildfireDamagesBuilding!]
+
+    """
+    Annualized damage cost to the structure in the current year due to wildfire
+    """
+    aal(input: PlaceWildfireDamagesAALInput): [PlaceWildfireDamagesAAL!]
+}
+
+"""
+Annualized damage cost to the structure in the current year due to wildfire.
+"""
+type PlaceWildfireDamagesAAL {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP!
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: Int!
+
+    """
+    Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+    """
+    percentile: Int!
+
+    """
+    Annualized damage cost to the structure in the current year due to wildfire.
+    """
+    aal: Int64
+}
+
+input PlaceWildfireDamagesAALInput {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: [SSP]
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: [Int]
+}
+
+type PlaceWildfireDamagesBuilding {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP!
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: Int!
+
+    """
+    Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean. At this moment, only 50th percentile is available for this node.
+    """
+    percentile: Int!
+
+    """
+    Estimated number of days to rebuild or repair damage due to wildfire.
+    """
+    repairDays: Int
+
+    """
+    Probability of building combustion by flames given a modeled wildfire and based on building characteristics.
+    """
+    combustionProbability: Float
+
+    """
+    Probability of wildfire flames destroying building in given year.
+    """
+    destructionProbability: Float
+
+    """
+    Cumulative probability of wildfire flames destroying building up to given year.
+    """
+    cumulativeDestructionProbability: Float
+}
+
+input PlaceWildfireDamagesBuildingInput {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: [SSP]
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: [Int]
+}
+
+type PlaceWildfireData implements Excluding {
+    """
+    The building's Fire Factor
+    """
+    fireFactor: Int
+
+    """
+    Text representation of the Fire Factor. Possible values are: minimal, minor, moderate, major, severe, extreme.
+    """
+    factorScale: FactorScale
+
+    """
+    Probability of fire impact to the building.
+    """
+    probability: PlaceWildfireProbability
+
+    """
+    Details for property fire losses.
+    """
+    wildfireDamages: PlaceWildfireDamages
+
+    """
+    If property is excluded, the reason for exclusion.
+    """
+    exclusion: Exclusion
+}
+
+"""
+Probability of fire impact to the building.
+"""
+type PlaceWildfireProbability {
+    """
+    Wildfire probability details for building
+    """
+    burn(
+        input: PlaceWildfireProbabilityBurnInput
+    ): [PlaceWildfireProbabilityBurn!]
+
+    """
+    The wildfire risk likelihood (% probability) to the building footprint by cumulative year based on combined wildfire risk (greater of burn and ember).
+    """
+    cumulative(
+        input: PlaceWildfireProbabilityCumulativeInput
+    ): [PlaceWildfireProbabilityCumulative!]
+}
+
+type PlaceWildfireProbabilityBurn {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP!
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: Int!
+
+    """
+    The probability of wildfire flamesreaching this building.
+    """
+    flameProbability: Float
+
+    """
+    The probability of wildfire embers reaching this building.
+    """
+    emberProbability: Float
+
+    """
+    The probability of wildfire flames or embers reaching this building.
+    """
+    probability: Float
+}
+
+input PlaceWildfireProbabilityBurnInput {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: [SSP]
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: [Int]
+}
+
+type PlaceWildfireProbabilityCumulative {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP!
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: Int!
+
+    """
+    Cumulative probability of wildfire flamesreaching this building.
+    """
+    flameProbability: Float
+
+    """
+    Cumulative probability of wildfire embers reaching this building.
+    """
+    emberProbability: Float
+
+    """
+    Cumulative probability of wildfire flames at the given place.
+    """
+    probability: Float
+}
+
+input PlaceWildfireProbabilityCumulativeInput {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: [SSP]
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: [Int]
+}
+
+type PlaceWind implements ResponseStatus {
+    status: FSModelResponseStatus!
+    data: PlaceWindData
+}
+
+"""
+Details for property wind damages.
+"""
+type PlaceWindDamages {
+    """
+    Annualized damage cost to the structure in the current year due to wind.
+    """
+    building(input: PlaceWindDamagesBuildingInput): [PlaceWindDamagesBuilding!]
+
+    """
+    Annualized damage cost to the structure in the current year due to wind.
+    """
+    aal(input: PlaceWindDamagesAALInput): [PlaceWindDamagesAAL!]
+}
+
+"""
+Annualized damage cost to the structure in the current year due to wind.
+"""
+type PlaceWindDamagesAAL {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP!
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: Int!
+
+    """
+    Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+    """
+    percentile: Int!
+
+    """
+    Annualized damage cost to the structure due to wind.
+    """
+    aal: Int64
+}
+
+input PlaceWindDamagesAALInput {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: [SSP]
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: [Int]
+}
+
+type PlaceWindDamagesBuilding {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP!
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: Int!
+
+    """
+    Return period for the wind probability.
+    """
+    returnPeriod: ReturnPeriod!
+
+    """
+    Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+    """
+    percentile: Int!
+
+    """
+    Estimated number of days to rebuild or repair damage due to wind.
+    """
+    repairDays: Int
+
+    """
+    Estimated cost to repair damage due to wind.
+    """
+    repairCost: Int64
+}
+
+input PlaceWindDamagesBuildingInput {
+    ssp: [SSP]
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: [Int]
+
+    """
+    Return period for the wind probability.
+    """
+    returnPeriod: [ReturnPeriod]
+}
+
+type PlaceWindData implements Excluding {
+    """
+    The building's Wind Factor
+    """
+    windFactor: Int
+
+    """
+    Text representation of the Wind Factor. Possible values are: minimal, minor, moderate, major, severe, extreme.
+    """
+    factorScale: FactorScale
+
+    """
+    Wind probability details for building.
+    """
+    probability: PlaceWindProbability
+
+    """
+    Details of damages caused by wind.
+    """
+    windDamages: PlaceWindDamages
+
+    """
+    If property is excluded, the reason for exclusion.
+    """
+    exclusion: Exclusion
+}
+
+type PlaceWindProbability {
+    """
+    Cumulative probability of 3-sec wind gusts of a given speed reaching the building, in miles per hour.
+    """
+    speed(input: PlaceWindProbabilitySpeedInput): [PlaceWindProbabilitySpeed!]
+
+    """
+    Cumulative probability of 3-sec wind gusts of a given speed (threshold) reaching the building.
+    """
+    cumulative(
+        input: PlaceWindProbabilityCumulativeInput
+    ): [PlaceWindProbabilityCumulative]
+}
+
+type PlaceWindProbabilityCumulative {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP!
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: Int!
+
+    """
+    Wind 3-sec speed threshold for the probability.
+    """
+    threshold: Float
+
+    """
+    Cumulative probability of winds of a given speed (3-sec) reaching the building.
+    """
+    probability: Float
+}
+
+input PlaceWindProbabilityCumulativeInput {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: [SSP]
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: [Int]
+
+    """
+    Return period for the wind probability.
+    """
+    returnPeriod: [ReturnPeriod]
+
+    """
+    Wind speed threshold, in miles per hour.
+    """
+    threshold: [Int]
+}
+
+type PlaceWindProbabilitySpeed {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP!
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: Int!
+
+    """
+    Return period for the wind probability.
+    """
+    returnPeriod: ReturnPeriod!
+
+    """
+    Three-second gust wind speed, in miles per hour.
+    """
+    speed3sec: Int
+}
+
+input PlaceWindProbabilitySpeedInput {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: [SSP]
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: [Int]
+
+    """
+    Return period for the wind probability.
+    """
+    returnPeriod: [ReturnPeriod]
+}
+
+type Query {
+    """
+    Place lookup by placeId.
+    """
+    place(
+        """
+        First Street Place ID.
+        """
+        placeId: String!
+
+        """
+        Building details for damages estimation.
+        """
+        building: BuildingInput
+
+        """
+        Input options.
+        """
+        options: InputOptions
+    ): Place
+
+    """
+    Place lookup by coordinate.
+    """
+    placeByCoordinate(
+        """
+        The latitude of the place.
+        """
+        lat: Float!
+
+        """
+        The longitude of the place.
+        """
+        lng: Float!
+
+        """
+        Building details for damages estimation.
+        """
+        building: BuildingInput
+
+        """
+        Input options.
+        """
+        options: InputOptions
+    ): Place
+
+    """
+    Asset type IDs along with human-readable descriptions.
+    """
+    assetTypes: [AssetType!]!
+
+    """
+    Metadata lookup.
+    """
+    metadataLookup: MetadataLookup!
+
+    """
+    Current API version
+    """
+    version: ReleaseVersion!
+}
+
+input RefreshStatisticsInput {
+    placeIDs: [String!]!
+    vintageID: Int64!
+}
+
+type RefreshStatisticsResponse {
+    places: [StatisticResponse!]!
+}
+
+type ReleaseVersion {
+    """
+    The current release version
+    """
+    release: String
+
+    """
+    The date of the release
+    """
+    date: Time
+}
+
+interface ResponseStatus {
+    status: FSModelResponseStatus!
+}
+
+enum ReturnPeriod {
+    """
+    2-year return period (50% chance)
+    """
+    RP2
+
+    """
+    5-year return period (20% chance)
+    """
+    RP5
+
+    """
+    20-year return period (5% chance)
+    """
+    RP20
+
+    """
+    100-year return period (1% chance)
+    """
+    RP100
+
+    """
+    200-year return period (0.5% chance)
+    """
+    RP200
+
+    """
+    300-year return period (0.33% chance)
+    """
+    RP300
+
+    """
+    500-year return period (0.2% chance)
+    """
+    RP500
+}
+
+enum RoofCombustibilityLevel {
+    LOW
+    MEDIUM
+    HIGH
+}
+
+enum RoofType {
+    ASBESTOS
+    BUILT_UP
+    COMPOSITION_SHINGLE
+    CONCRETE
+    METAL
+    SLATE
+    GRAVEL_OR_ROCK
+    TAR_AND_GRAVEL
+    BERMUDA
+    MASONITE_OR_CEMENT_SHAKE
+    FIBERGLASS
+    ALUMINUM
+    WOOD_SHAKE_OR_SHINGLES
+    OTHER
+    ASPHALT
+    ROLL_COMPOSITION
+    STEEL
+    TILE
+    URETHANE
+    NON_WOODEN_SHINGLES
+    WOOD
+    GYPSUM
+    SOLAR
+    CERAMIC_TILE
+    CLAY_TILE
+    CONCRETE_TILE
+    COPPER
+    TIN
+}
+
+"""
+Supported Shared Socio-economic Pathways.
+"""
+enum SSP {
+    """
+    The most optimistic climate scenario, projecting the lowest temperature increase.
+    Assumes strong climate action leading to warming limited to about 2°C by 2100.
+    """
+    SSP_1_26
+
+    """
+    A middle-ground climate scenario with moderate emissions reductions.
+    Projects medium levels of climate change and warming by 2100.
+    """
+    SSP_2_45
+
+    """
+    The most pessimistic climate scenario with highest emissions.
+    Projects the most severe climate impacts and warming by 2100.
+    """
+    SSP_5_85
+}
+
+enum Service {
+    PLACE
+    GEOMETRY
+    BUILDING
+    FEMA
+    FLOOD
+    FIRE
+    HEAT
+    COLD
+    WIND
+    AIR
+    DROUGHT
+    HAIL
+    PRIMARY_PERIL
+    ENTERPRISE
+    EXTERNALAVM
+    FLOODCONSEQUENCES
+    FIRECONSEQUENCES
+    HEATCONSEQUENCES
+    WINDCONSEQUENCES
+    AIRCONSEQUENCES
+    HAILCONSEQUENCES
+    PLACEINSURANCE
+    KEYINSIGHTS
+    BUILDINGINSURANCE
+}
+
+type StatisticResponse {
+    placeID: String!
+    status: FSModelStatusName!
+    statistics: String!
+}
+
+scalar Time
+
+type Vintage {
+    """
+    The vintage version for the returned data. Vintage uniquely identifies a set of property and peril data versions.
+    """
+    vintageId: Int64!
+
+    """
+    The human-readable name for the vintage.
+    """
+    name: String!
+
+    """
+    The date of the release of the vintage.
+    """
+    releaseDate: Date!
+}
+
+enum WindDesignStandard {
+    LOW
+    MEDIUM
+    HIGH
+}
