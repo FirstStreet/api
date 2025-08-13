@@ -1,0 +1,3682 @@
+directive @FsDBReadOnly on FIELD_DEFINITION
+
+"""
+Directs the executor to defer this fragment when the `if` argument is true or undefined.
+"""
+directive @defer(
+    """
+    Deferred when true or undefined.
+    """
+    if: Boolean = true
+
+    """
+    Unique name
+    """
+    label: String
+) on FRAGMENT_SPREAD | INLINE_FRAGMENT
+
+directive @fsValidation(
+    constraint: String!
+) on INPUT_FIELD_DEFINITION | ARGUMENT_DEFINITION | FIELD_DEFINITION
+
+directive @goExtraField(
+    name: String
+    type: String!
+    overrideTags: String
+    description: String
+) on OBJECT | INPUT_OBJECT
+
+directive @goField(
+    forceResolver: Boolean
+    name: String
+) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+
+"""
+Project module status
+"""
+enum AggregatedProjectModuleStatus {
+    ACTIVE
+    LOADING
+    LOCKED
+    DIRTY
+    FAILED
+}
+
+"""
+Project module section status
+"""
+enum AggregatedProjectSectionStatus {
+    ACTIVE
+    DISABLED
+    NODATA
+    DIRTY
+    FAILED
+}
+
+type AssetBuildingMetadata {
+    lat: Float
+    lng: Float
+    countryCode: String
+    rebuildCost: Int64
+    foundationHeight: Int64
+    constructionCombustibilityLevel: ConstructionCombustibilityLevel
+    roofCombustibilityLevel: RoofCombustibilityLevel
+    missileEnvironment: MissileEnvironment
+    windDesignStandard: WindDesignStandard
+}
+
+type AssetClimateExposure {
+    flood: AssetClimateExposureFlood
+    wildfire: AssetClimateExposureWildfire
+    heat: AssetClimateExposureHeat
+    cold: AssetClimateExposureCold
+    wind: AssetClimateExposureWind
+    drought: AssetClimateExposureDrought
+}
+
+type AssetClimateExposureCold {
+    """
+    The asset's Cold Factor, a numeric integer from 1-10 (where 1 = minimal and 10 = extreme).
+    """
+    coldFactor: Int
+
+    """
+    Text representation of the Cold Factor. Possible values are: minimal, minor, moderate, major, severe, extreme.
+    """
+    factorScale: FactorScale
+
+    """
+    Cold probability details for building.
+    """
+    probability: AssetColdProbability
+}
+
+type AssetClimateExposureDrought {
+    """
+    The asset's Drought Factor, a numeric integer from 1-10 (where 1 = minimal and 10 = extreme).
+    """
+    droughtFactor: Int
+
+    """
+    Text representation of the Drought Factor. Possible values are: minimal, minor, moderate, major, severe, extreme.
+    """
+    factorScale: FactorScale
+
+    """
+    Drought probability details for building.
+    """
+    probability: AssetDroughtProbability
+}
+
+type AssetClimateExposureFlood {
+    """
+    The asset's Flood Factor, a numeric integer from 1-10 (where 1 = minimal and 10 = extreme) based on flooding risk to the asset footprint.
+    """
+    floodFactor: Int
+
+    """
+    Text representation of the Flood Factor. Possible values are: minimal, minor, moderate, major, severe, extreme.
+    """
+    factorScale: FactorScale
+
+    """
+    Flood probabilty details for asset.
+    """
+    probability: AssetFloodProbability
+
+    """
+    Details for asset flood losses.
+    """
+    damages: AssetFloodDamages
+}
+
+type AssetClimateExposureHeat {
+    """
+    The asset's Heat Factor, a numeric integer from 1-10 (where 1 = minimal and 10 = extreme).
+    """
+    heatFactor: Int
+
+    """
+    Text representation of the Heat Factor. Possible values are: minimal, minor, moderate, major, severe, extreme.
+    """
+    factorScale: FactorScale
+
+    """
+    Heat probability details for asset.
+    """
+    probability: AssetHeatProbability
+}
+
+type AssetClimateExposureWildfire {
+    """
+    The asset's Fire Factor, a numeric integer from 1-10 (where 1 = minimal and 10 = extreme).
+    """
+    fireFactor: Int
+
+    """
+    Text representation of the Fire Factor. Possible values are: minimal, minor, moderate, major, severe, extreme.
+    """
+    factorScale: FactorScale
+
+    """
+    Probability data for the asset.
+    """
+    probability: AssetWildfireProbability
+
+    """
+    Details for property fire losses.
+    """
+    damages: AssetWildfireDamages
+}
+
+type AssetClimateExposureWind {
+    """
+    The asset's Wind Factor, a numeric integer from 1-10 (where 1 = minimal and 10 = extreme).
+    """
+    windFactor: Int
+
+    """
+    Text representation of the Wind Factor. Possible values are: minimal, minor, moderate, major, severe, extreme.
+    """
+    factorScale: FactorScale
+
+    """
+    Forecast probability.
+    """
+    probability: AssetWindProbability
+
+    """
+    Details of damages caused by wind.
+    """
+    damages: AssetWindDamages
+}
+
+type AssetColdProbabilitHeatingDays {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP!
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: Int!
+
+    """
+    Heating degree days for a given indoor temp (°F)
+    """
+    heatingDegreeDays: Int
+}
+
+type AssetColdProbability {
+    coldDays(
+        """
+        Filter the array of data based on filterBy, this is a further filtering based on result of projectAssetConnection level filter / sorting.
+        """
+        filterBy: AssetSortFilter
+    ): [AssetColdProbabilityColdDays!]
+    heatingDays(
+        """
+        Filter the array of data based on filterBy, this is a further filtering based on result of projectAssetConnection level filter / sorting.
+        """
+        filterBy: AssetSortFilter
+    ): [AssetColdProbabilitHeatingDays!]
+}
+
+type AssetColdProbabilityColdDays {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP!
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: Int!
+
+    """
+    Threshold temperature in °F cold index.
+    """
+    threshold: Int!
+
+    """
+    Days with wind chill index below a threshold (°F)
+    """
+    windchillDays: Int
+}
+
+type AssetDroughtProbability {
+    """
+    Return lengths of drought by return period for a given location
+    """
+    duration(
+        """
+        Filter the array of data based on filterBy, this is a further filtering based on result of projectAssetConnection level filter / sorting.
+        """
+        filterBy: AssetSortFilter
+    ): [AssetDroughtProbabilityDuration]
+}
+
+type AssetDroughtProbabilityDuration {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP!
+
+    """
+    Return period for the drought probability.
+    """
+    returnPeriod: ReturnPeriod!
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: Int!
+
+    """
+    Weeks of drought at or below SCPDSI (drought level) -2
+    """
+    weeks: Int
+}
+
+"""
+Details for asset flood losses.
+"""
+type AssetFloodDamages {
+    asset(filterBy: AssetSortFilter): [AssetFloodDamagesAsset!]
+    aal(filterBy: AssetSortFilter): [AssetFloodDamagesAAL!]
+}
+
+"""
+Annualized damage cost to the structure in the current year due to flood.
+"""
+type AssetFloodDamagesAAL {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP!
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: Int!
+
+    """
+    Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+    """
+    percentile: Int!
+
+    """
+    Annualized damage cost to the structure in the current year due to flood.
+    """
+    aal: Int64
+}
+
+type AssetFloodDamagesAsset {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP!
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: Int!
+
+    """
+    Return period of flooding.
+    """
+    returnPeriod: ReturnPeriod!
+
+    """
+    Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+    """
+    percentile: Int!
+
+    """
+    Estimated number of days to rebuild or repair damage due to flood.
+    """
+    repairDays: Int
+
+    """
+    Estimated cost to repair damage due to flood.
+    """
+    repairCost: Int64
+}
+
+"""
+Flood probability details for asset.
+"""
+type AssetFloodProbability {
+    """
+    Delivers the flood depth (in centimeters) for flooding to the asset footprint broken down by return period and year of annual risk.
+    The low, mid, high likelihood is returned within the associated threshold and year. Available depth thresholds include >0cm, >15cm, and >30cm, and are broken down by the following years within the model - 2020, 2025, 2030, 2035, 2040, 2045, and 2050.
+    """
+    depth(
+        """
+        Filter the array of data based on filterBy, this is a further filtering based on result of projectAssetConnection level filter / sorting.
+        Will return the full array without it. Ex - passing in filterBy={ssp:SSP_2_45, relativeYear:5, returnPeriod:100} will filter flood exposure array
+        and only keep array items have ssp=SSP_2_45, relativeYear=5, returnPeriod=100
+        """
+        filterBy: AssetSortFilter
+    ): [AssetFloodProbabilityDepth]
+
+    """
+    The risk likelihood (% probability) for flooding to the asset footprint.
+    """
+    cumulative(
+        """
+        Filter the array of data based on filterBy, this is a further filtering based on result of projectAssetConnection level filter / sorting.
+        Will return the full array without it. Ex - passing in filterBy={ssp:SSP_2_45, relativeYear:5, returnPeriod:100} will filter flood exposure array
+        and only keep array items have ssp=SSP_2_45, relativeYear=5, returnPeriod=100
+        """
+        filterBy: AssetSortFilter
+    ): [AssetFloodProbabilityCumulative]
+}
+
+type AssetFloodProbabilityCumulative {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP!
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: Int!
+
+    """
+    Threshold to calculate cumulative probability of flooding in feet.
+    """
+    depth: Float
+
+    """
+    Cumulative probability of floods of reaching the given mean depth at the asset.
+    """
+    mean: Float
+
+    """
+    Cumulative probability of floods of a given depth reaching the asset.
+    """
+    lowPoint: Float
+}
+
+"""
+The flood depth (in centimeters) for flooding to the asset footprint broken down by return period and year of annual risk.
+"""
+type AssetFloodProbabilityDepth {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP!
+
+    """
+    Return period of flooding.
+    """
+    returnPeriod: ReturnPeriod!
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: Int!
+
+    """
+    Flood depth at the selected point or the mean depth along asset outline if there's a asset outline (in feet).
+    """
+    mean: Float
+
+    """
+    Flood depth at the low point along a asset outline. Same as depth if there's no asset outline (in feet).
+    """
+    lowPoint: Float
+}
+
+type AssetHeatProbability {
+    heatDays(
+        """
+        Filter the array of data based on filterBy, this is a further filtering based on result of projectAssetConnection level filter / sorting.
+        """
+        filterBy: AssetSortFilter
+    ): [AssetHeatProbabilityHeatDays]
+    coolingDays(
+        """
+        Filter the array of data based on filterBy, this is a further filtering based on result of projectAssetConnection level filter / sorting.
+        """
+        filterBy: AssetSortFilter
+    ): [AssetHeatProbabilityCoolingDays]
+}
+
+type AssetHeatProbabilityCoolingDays {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP!
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: Int!
+
+    """
+    Cooling degree days for a given indoor temp (°F)
+    """
+    coolingDegreeDays: Float
+}
+
+type AssetHeatProbabilityHeatDays {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP!
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: Int!
+
+    """
+    Threshold temperature in °F heat index.
+    """
+    threshold: Int!
+
+    """
+    Days with high heat index at or above a threshold (°F).
+    """
+    heatIndexDays: Int
+}
+
+type AssetScenarioAnalysis {
+    """
+    Asset effects for the Scenario Analysis module.
+    """
+    assetEffects: [AssetScenarioAnalysisEffects]
+}
+
+type AssetScenarioAnalysisEffects {
+    """
+    Peril the data appies to. 2 = inland flood, 3 = hurricane, 4 = wildfire, 5 = overall.
+    """
+    perilId: Int
+
+    """
+    Relative year for the data.
+    """
+    relativeYear: Int
+
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP
+
+    """
+    Return period of calculation.
+    """
+    returnPeriod: ReturnPeriod
+
+    """
+    Average damage without insurance
+    """
+    damageGross: Int64
+
+    """
+    Average damage without insurance as a percentage of asset value
+    """
+    damageGrossPercent: Float
+
+    """
+    Average damage with insurance
+    """
+    damageNet: Int64
+
+    """
+    Average damage with insurance as a percentage of asset value
+    """
+    damageNetPercent: Float
+
+    """
+    Percent of synthetic years where asset is damaged
+    """
+    yearsDamagedPercent: Float
+
+    """
+    Average gross business interruption loss
+    """
+    businessInterruptionGross: Int64
+
+    """
+    Average gross business interruption loss as a percentage of asset value
+    """
+    businessInterruptionGrossPercent: Float
+
+    """
+    Average net business interruption loss
+    """
+    businessInterruptionNet: Int64
+
+    """
+    Average net business interruption loss as a percentage of asset value
+    """
+    businessInterruptionNetPercent: Float
+
+    """
+    Average cash gross loss
+    """
+    cashGross: Int64
+
+    """
+    Average cash gross loss
+    """
+    cashGrossPercent: Float
+
+    """
+    Average cash net loss
+    """
+    cashNet: Int64
+
+    """
+    Average cash net loss as a percentage of asset value
+    """
+    cashNetPercent: Float
+}
+
+"""
+Sort order for the asset connection.
+"""
+enum AssetSort {
+    DEFAULT
+    CUSTOM_ID_ASC
+    CUSTOM_ID_DESC
+    CLIMATE_EXPOSURE_FLOOD_FACTOR_ASC
+    CLIMATE_EXPOSURE_FLOOD_FACTOR_DESC
+    CLIMATE_EXPOSURE_FIRE_FACTOR_ASC
+    CLIMATE_EXPOSURE_FIRE_FACTOR_DESC
+    CLIMATE_EXPOSURE_WIND_FACTOR_ASC
+    CLIMATE_EXPOSURE_WIND_FACTOR_DESC
+    CLIMATE_EXPOSURE_HEAT_FACTOR_ASC
+    CLIMATE_EXPOSURE_HEAT_FACTOR_DESC
+    CLIMATE_EXPOSURE_COLD_FACTOR_ASC
+    CLIMATE_EXPOSURE_COLD_FACTOR_DESC
+    CLIMATE_EXPOSURE_DROUGHT_FACTOR_ASC
+    CLIMATE_EXPOSURE_DROUGHT_FACTOR_DESC
+    CLIMATE_EXPOSURE_FLOOD_DEPTH_MEAN_ASC
+    CLIMATE_EXPOSURE_FLOOD_DEPTH_MEAN_DESC
+    CLIMATE_EXPOSURE_FLOOD_DAMAGE_AAL_ASC
+    CLIMATE_EXPOSURE_FLOOD_DAMAGE_AAL_DESC
+    CLIMATE_EXPOSURE_FLOOD_REPAIR_DAYS_ASC
+    CLIMATE_EXPOSURE_FLOOD_REPAIR_DAYS_DESC
+    CLIMATE_EXPOSURE_FLOOD_REPAIR_COST_ASC
+    CLIMATE_EXPOSURE_FLOOD_REPAIR_COST_DESC
+    CLIMATE_EXPOSURE_WIND_SPEED3SEC_ASC
+    CLIMATE_EXPOSURE_WIND_SPEED3SEC_DESC
+    CLIMATE_EXPOSURE_WIND_DAMAGE_AAL_ASC
+    CLIMATE_EXPOSURE_WIND_DAMAGE_AAL_DESC
+    CLIMATE_EXPOSURE_WIND_REPAIR_DAYS_ASC
+    CLIMATE_EXPOSURE_WIND_REPAIR_DAYS_DESC
+    CLIMATE_EXPOSURE_WIND_REPAIR_COST_ASC
+    CLIMATE_EXPOSURE_WIND_REPAIR_COST_DESC
+    CLIMATE_EXPOSURE_FIRE_BURN_PROB_ASC
+    CLIMATE_EXPOSURE_FIRE_BURN_PROB_DESC
+    CLIMATE_EXPOSURE_FIRE_CUMU_PROB_ASC
+    CLIMATE_EXPOSURE_FIRE_CUMU_PROB_DESC
+    CLIMATE_EXPOSURE_FIRE_DAMAGE_AAL_ASC
+    CLIMATE_EXPOSURE_FIRE_DAMAGE_AAL_DESC
+    CLIMATE_EXPOSURE_FIRE_DESTRUCTION_PROB_ASC
+    CLIMATE_EXPOSURE_FIRE_DESTRUCTION_PROB_DESC
+    CLIMATE_EXPOSURE_FIRE_CUMU_DESTRUCTION_PROB_ASC
+    CLIMATE_EXPOSURE_FIRE_CUMU_DESTRUCTION_PROB_DESC
+    CLIMATE_EXPOSURE_FIRE_REPAIR_DAYS_ASC
+    CLIMATE_EXPOSURE_FIRE_REPAIR_DAYS_DESC
+    CLIMATE_EXPOSURE_HEAT_HEATING_INDEX_DAYS_ASC
+    CLIMATE_EXPOSURE_HEAT_HEATING_INDEX_DAYS_DESC
+    CLIMATE_EXPOSURE_HEAT_COOLING_DEGREE_DAYS_ASC
+    CLIMATE_EXPOSURE_HEAT_COOLING_DEGREE_DAYS_DESC
+    CLIMATE_EXPOSURE_COLD_WIND_CHILL_DAYS_ASC
+    CLIMATE_EXPOSURE_COLD_WIND_CHILL_DAYS_DESC
+    CLIMATE_EXPOSURE_COLD_HEATING_DEGREE_DAYS_ASC
+    CLIMATE_EXPOSURE_COLD_HEATING_DEGREE_DAYS_DESC
+    CLIMATE_EXPOSURE_DROUGHT_DURATION_WEEKS_ASC
+    CLIMATE_EXPOSURE_DROUGHT_DURATION_WEEKS_DESC
+}
+
+"""
+Filter for module asset sections sorting
+"""
+input AssetSortFilter {
+    ssp: SSP
+    relativeYear: Int
+    returnPeriod: ReturnPeriod
+    percentile: Int
+    perilId: Int
+    threshold: Int
+}
+
+type AssetType {
+    id: AssetTypeId!
+    description: String!
+}
+
+enum AssetTypeId {
+    S1
+    S2
+    M1
+    M2
+    M3
+    M4
+    M5
+    M6
+    M7
+    M8
+    M9
+    H1
+    H2
+    H3
+    H4
+    H5
+    H6
+    O1
+    O2
+    O3
+    O4
+    O5
+    O6
+    R1
+    R2
+    R3
+    R4
+    X1
+    X2
+    X3
+    I1
+    I2
+    I3
+    I4
+    I5
+    I6
+    I7
+    I8
+    I9
+    W1
+    W2
+    W3
+    W4
+    W5
+    W6
+    W7
+    L1
+    R5
+    L2
+    L3
+    L4
+    L5
+    L6
+    L7
+    N1
+    N2
+    N3
+    N4
+    N5
+    N6
+    N7
+    N8
+    N9
+    NS
+    A1
+    A2
+    V1
+    V2
+    V3
+}
+
+"""
+Details for property wildfire losses.
+"""
+type AssetWildfireDamages {
+    asset(filterBy: AssetSortFilter): [AssetWildfireDamagesAsset!]
+
+    """
+    Annualized damage cost to the structure in the current year due to wildfire
+    """
+    aal(filterBy: AssetSortFilter): [AssetWildfireDamagesAAL!]
+}
+
+"""
+Annualized damage cost to the structure in the current year due to wildfire.
+"""
+type AssetWildfireDamagesAAL {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP!
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: Int!
+
+    """
+    Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+    """
+    percentile: Int!
+
+    """
+    Annualized damage cost to the structure in the current year due to wildfire.
+    """
+    aal: Float
+}
+
+type AssetWildfireDamagesAsset {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP!
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: Int!
+
+    """
+    Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+    """
+    percentile: Int!
+
+    """
+    Estimated number of days to rebuild or repair damage due to wildfire.
+    """
+    repairDays: Int
+
+    """
+    Probability of asset combustion by flames given a modeled wildfire and based on asset characteristics.
+    """
+    combustionProbability: Float
+
+    """
+    Probability of wildfire flames destroying asset in given year.
+    """
+    destructionProbability: Float
+
+    """
+    Cumulative probability of wildfire flames destroying asset up to given year.
+    """
+    cumulativeDestructionProbability: Float
+}
+
+"""
+Fire probability details for asset.
+"""
+type AssetWildfireProbability {
+    """
+    Wildfire probability details for asset
+    """
+    burn(filterBy: AssetSortFilter): [AssetWildfireProbabilityBurn]
+
+    """
+    The wildfire risk likelihood (% probability) to the asset footprint by cumulative year based on combined wildfire risk (greater of burn and ember).
+    """
+    cumulative(filterBy: AssetSortFilter): [AssetWildfireProbabilityCumulative!]
+}
+
+type AssetWildfireProbabilityBurn {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP!
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: Int!
+
+    """
+    The probability of wildfire flamesreaching this building.
+    """
+    flameProbability: Float
+
+    """
+    The probability of wildfire embers reaching this building.
+    """
+    emberProbability: Float
+
+    """
+    The probability of wildfire flames or embers reaching this building.
+    """
+    probability: Float
+}
+
+type AssetWildfireProbabilityCumulative {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP!
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: Int!
+
+    """
+    Cumulative probability of wildfire flamesreaching this building.
+    """
+    flameProbability: Float
+
+    """
+    Cumulative probability of wildfire embers reaching this building.
+    """
+    emberProbability: Float
+
+    """
+    Cumulative probability of wildfire flames at the given place.
+    """
+    probability: Float
+}
+
+"""
+Details for property wind damages.
+"""
+type AssetWindDamages {
+    """
+    Annualized damage cost to the structure in the current year due to wind.
+    """
+    asset(filterBy: AssetSortFilter): [AssetWindDamagesAsset!]
+
+    """
+    Annualized damage cost to the structure in the current year due to wind.
+    """
+    aal(filterBy: AssetSortFilter): [AssetWindDamagesAAL!]
+}
+
+"""
+Annualized damage cost to the structure in the current year due to wind.
+"""
+type AssetWindDamagesAAL {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP!
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: Int!
+
+    """
+    Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+    """
+    percentile: Int!
+
+    """
+    Annualized damage cost to the structure due to wind.
+    """
+    aal: Float
+}
+
+type AssetWindDamagesAsset {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP!
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: Int!
+
+    """
+    Return period for the wind probability.
+    """
+    returnPeriod: ReturnPeriod!
+
+    """
+    Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+    """
+    percentile: Int!
+
+    """
+    Estimated number of days to rebuild or repair damage due to wind.
+    """
+    repairDays: Float
+
+    """
+    Estimated cost to repair damage due to wind.
+    """
+    repairCost: Float
+}
+
+"""
+Forecast probability
+"""
+type AssetWindProbability {
+    """
+    Probability for wind speeds.
+    """
+    speed(
+        """
+        Filter the array of data based on filterBy, this is a further filtering based on result of projectAssetConnection level filter / sorting.
+        """
+        filterBy: AssetSortFilter
+    ): [AssetWindProbabilitySpeed!]
+
+    """
+    Cumulative probability of 3-sec wind gusts of a given speed (threshold) reaching the building.
+    """
+    cumulative(filterBy: AssetSortFilter): [AssetWindProbabilityCumulative]
+}
+
+type AssetWindProbabilityCumulative {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP!
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: Int!
+
+    """
+    Wind 3-sec speed threshold for the probability.
+    """
+    threshold: Float
+
+    """
+    Cumulative probability of winds of a given speed (3-sec) reaching the building.
+    """
+    probability: Float
+}
+
+"""
+Probability for wind speeds
+"""
+type AssetWindProbabilitySpeed {
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP!
+
+    """
+    Year, as relative to the current year.
+    """
+    relativeYear: Int!
+
+    """
+    Return period for the wind probability.
+    """
+    returnPeriod: ReturnPeriod!
+
+    """
+    The maximum 3-second gust speed for a given return period.
+    """
+    speed3Sec: Float
+}
+
+enum Basement {
+    NONE
+    UNFINISHED
+    FINISHED
+}
+
+type ClimateExposureData {
+    hazardExposure(input: ClimateExposureHazardExposureInput): [HazardExposure]
+    hazardDamage(input: ClimateExposureHazardDamageInput): [HazardDamage]
+}
+
+"""
+The input to set the climate exposure tresholds.
+"""
+input ClimateExposureHazardDamageInput {
+    """
+    Flood depth threshold (default $0)
+    """
+    floodDamageThreshold: Float
+
+    """
+    Wind speed threshold (default $0)
+    """
+    windDamageThreshold: Int64
+}
+
+"""
+The input to set the climate exposure thresholds.
+"""
+input ClimateExposureHazardExposureInput {
+    """
+    Flood depth threshold (default 0 ft)
+    """
+    floodDepthThreshold: Float
+
+    """
+    Wind speed threshold (default 50 mph)
+    """
+    windSpeedThreshold: Int64
+
+    """
+    Drought length threshold (default 13 weeks)
+    """
+    droughtLengthThreshold: Int64
+
+    """
+    Heat days threshold (default 90 days)
+    """
+    heatDaysThreshold: Int64
+
+    """
+    coldThreshold (default 90 days)
+    """
+    coldDaysThreshold: Int64
+}
+
+"""
+Describes a Company.
+"""
+type Company {
+    """
+    All available names for the company.
+    """
+    names: [CompanyName!]
+
+    """
+    ID of the company.
+    """
+    id: Int64!
+
+    """
+    The data source for the company metadata.
+    """
+    dataSource: CompanyDataSource!
+
+    """
+    Company annual net revenue.
+    """
+    revenueAnnualNet: Int64
+
+    """
+    FS-assigned ID describing the industry.
+    """
+    industryId: String!
+
+    """
+    FS-assigned ID describing the sector
+    """
+    sectorId: String!
+
+    """
+    The ISO-4217 currency code used for this company.
+    """
+    currencyCode: String
+}
+
+"""
+Where the company data was provided by.
+"""
+enum CompanyDataSource {
+    DUNBRADSTREET
+    MSCI
+}
+
+"""
+Describes the name of a company.
+"""
+type CompanyName {
+    """
+    Name of the company.
+    """
+    name: String!
+
+    """
+    One of Legal Name, Ticker Symbol (i.e NYSE: TM), DBA name, Duns Number, MSCI Corporation Code, etc.
+    """
+    nameType: CompanyNameType!
+}
+
+"""
+The representation type of company name as identified by its data source.
+"""
+enum CompanyNameType {
+    TICKER
+    LEGAL_NAME
+    DBA_NAME
+    DUNS_NUMBER
+    MSCI_CODE
+}
+
+enum CompassDirection {
+    N
+    NE
+    E
+    SE
+    S
+    SW
+    W
+    NW
+}
+
+enum ConstructionCombustibilityLevel {
+    LOW
+    MEDIUM
+    HIGH
+}
+
+enum ConstructionType {
+    ADOBE
+    BRICK
+    CONCRETE
+    CONCRETE_BLOCK
+    DOME
+    FRAME
+    HEAVY
+    LIGHT
+    LOG
+    MANUFACTURED
+    OTHER
+    MASONRY
+    METAL
+    STEEL
+    STONE
+    TILT_UP
+    WOOD
+    MIXED
+}
+
+"""
+The payload of creating a project asset.
+"""
+type CreateProjectAssetPayload {
+    """
+    The ID of the created project asset.
+    """
+    projectAssetId: String!
+}
+
+"""
+The input to create a project.
+"""
+input CreateProjectInput {
+    """
+    The name of the project.
+    """
+    name: String!
+
+    """
+    The description of the project.
+    """
+    description: String
+
+    """
+    Type of the project. Default value: CUSTOMER. Only service user is allowed to create a project with type EQUITY.
+    """
+    projectType: ProjectType
+}
+
+"""
+The input to create a project job.
+"""
+input CreateProjectJobInput {
+    """
+    The name of the project job.
+    """
+    projectJobName: String!
+
+    """
+    The ID of the user group that owns the project job.
+    """
+    userGroupId: Int
+}
+
+"""
+The payload of creating a project job.
+"""
+type CreateProjectJobPayload {
+    """
+    The created project job.
+    """
+    projectJob: ProjectJob!
+}
+
+"""
+Generate a link to upload a project.
+"""
+input CreateProjectJobUploadLinkInput {
+    """
+    The name of the project job.
+    """
+    projectJobName: String!
+
+    """
+    The file format of the project job file. (Default: CSV)
+    """
+    fileFormat: ProjectUploadFileFormat
+
+    """
+    Custom headers to add to the uploaded file metadata. For internal use only.
+    """
+    customHeaders: [ProjectUploadHeadersInput]
+}
+
+"""
+The payload of creating a project job.
+"""
+type CreateProjectJobUploadLinkPayload {
+    """
+    The created project job.
+    """
+    projectJob: ProjectJob!
+
+    """
+    The link to upload the project job.
+    """
+    projectUploadLink: String!
+
+    """
+    The headers that must be provided when uploading the project job.
+    """
+    projectUploadHeaders: [ProjectUploadHeaders]!
+}
+
+"""
+The payload of creating a project.
+"""
+type CreateProjectPayload {
+    """
+    The ID of the created project.
+    """
+    projectId: Int64!
+}
+
+scalar Date
+
+input DeleteCustomBuildingValuesFieldsInput {
+    assetTypeId: Boolean
+    placeValuation: Boolean
+    placeOutstandingBalance: Boolean
+    placeNOI: Boolean
+    placeType: Boolean
+    rebuildCostPerSf: Boolean
+    buildingSf: Boolean
+    buildingDirection: Boolean
+    defensibleSpace: Boolean
+    units: Boolean
+    stories: Boolean
+    foundationHeightFt: Boolean
+    foundationType: Boolean
+    basement: Boolean
+    constructionType: Boolean
+    roofType: Boolean
+    yearBuilt: Boolean
+    fireProofing: Boolean
+    denseUrbanEnvironment: Boolean
+    windDesignStandard: Boolean
+    wildfireInsuredValue: Boolean
+    wildfireDeductible: Boolean
+    wildfireDeductiblePerc: Boolean
+    wildfireBICoverageIncluded: Boolean
+    windInsuredValue: Boolean
+    windDeductible: Boolean
+    windDeductiblePerc: Boolean
+    windBICoverageIncluded: Boolean
+    floodInsuredValue: Boolean
+    floodDeductible: Boolean
+    floodDeductiblePerc: Boolean
+    floodBICoverageIncluded: Boolean
+}
+
+"""
+The input for deleteUserGroupCustomBuildingValues mutation.
+
+When `deleteByField` parameter is not provided or is null then all customizations will be deleted.
+
+When `deleteByField` is provided then customizations for fields in `deleteByField` that are set to `true` will be cleared.
+When `deleteByField` is provided and is not null, if all fields are set to false or are not specified (null) then there will be no change to the building customizations.
+"""
+input DeleteCustomBuildingValuesInput {
+    """
+    placeId identifies the place to delete custom building values for.
+    """
+    placeId: String!
+
+    """
+    List of fields to clear building edits. When all are set to false then no changes will be made. When `deleteByField` is not provided or is null then all customizations will be deleted.
+    """
+    deleteByField: DeleteCustomBuildingValuesFieldsInput
+}
+
+"""
+The payload of deleting an existing building customization.
+"""
+type DeleteCustomBuildingValuesPayload {
+    """
+    Indicates if the building customization was deleted successfully.
+    """
+    success: Boolean!
+}
+
+"""
+The payload of deleting a project.
+"""
+input DeleteProjectInput {
+    """
+    The ID of the project to delete.
+    """
+    projectId: Int64!
+}
+
+"""
+The enterprise building type.
+"""
+type EnterpriseBuilding {
+    """
+    The description of the asset
+    """
+    descriptor: String
+
+    """
+    Customer-defined unique identifier for the place (ex: building name, internal asset ID, etc.)
+    """
+    customId: String
+
+    """
+    Unique identifier for the location.
+    """
+    placeId: String!
+
+    """
+    The alias of the asset.
+    """
+    alias: String
+
+    """
+    The corresponding asset type ID for the asset.
+    """
+    assetTypeId: AssetTypeId
+
+    """
+    Customer-provided longitude (at least 4 decimal point precision).
+    """
+    lng: Float
+
+    """
+    Customer-provided latitude (at least 4 decimal point precision).
+    """
+    lat: Float
+
+    """
+    Customer-provided address.
+    """
+    address: String
+
+    """
+    Iso-3166-a3 country code
+    """
+    country: String
+
+    """
+    Most recent valuation in US dollars. Required for some financial impact metrics
+    """
+    placeValuation: Int64
+
+    """
+    Date of most recent valuation assessment. YYYY-MM-DD format
+    """
+    placeValueDate: Date
+
+    """
+    Outstanding balance in US dollars
+    """
+    placeOutstandingBalance: Int64
+
+    """
+    Annual Net Operating Income. Required for some financial impact metrics
+    """
+    placeNOI: Int
+
+    """
+    The type of building.
+    """
+    placeType: LandUseType
+
+    """
+    The rebuild price per square foot for a structure (if it exists). Used to compute building damages
+    """
+    rebuildCostPerSf: Int64
+
+    """
+    Total square footage for the structure
+    """
+    buildingSf: Int
+
+    """
+    Orientation of building. Options are N (default), NE, E, SE, S, SW, W, NW.
+    """
+    buildingDirection: CompassDirection
+
+    """
+    The presence of defensible space around this property.
+    true = adequate defensible space exists, defined as a five foot buffer zone of cleared space around house AND <15% tree canopy within 50 ft. false (default) = defensible space does not exist.
+    """
+    defensibleSpace: Boolean
+
+    """
+    Number of units in structure. Default value is 1.
+    """
+    units: Int
+
+    """
+    Number of stories. Default value is 1.
+    """
+    stories: Int
+
+    """
+    The height associated with the first floor elevation for the building (in ft).
+    """
+    foundationHeightFt: Float
+
+    """
+    The type of foundation. Used when exact foundation height isn't available.
+    """
+    foundationType: FoundationType
+
+    """
+    Whether or not the property has a basement.
+    """
+    basement: Basement
+
+    """
+    The predominant construction material of the building
+    """
+    constructionType: ConstructionType
+
+    """
+    The type of roofing material.
+    """
+    roofType: RoofType
+
+    """
+    Year of construction
+    """
+    yearBuilt: Int
+
+    """
+    Whether or not the property abides by the Fireproofing building code.
+    true = fire proofing measures exist for the home (such as fire-proofed windows, flame resistant exterior walls and ignition-resistant exterior doors). false (default) = does not exist.
+    """
+    fireProofing: Boolean
+
+    """
+    Likelihood of damaging airborne missile in this vicinity. Based on built-up density at the Census tract level.
+    """
+    denseUrbanEnvironment: MissileEnvironment
+
+    """
+    The expected design standard of structures, based on ASCE 7-22 wind risk zones
+    """
+    windDesignStandard: WindDesignStandard
+
+    """
+    Dollar value of wildfire insurance coverage sublimit (default: place valuation)
+    """
+    wildfireInsuredValue: Int64
+
+    """
+    Wildfire insurance deductible amount in dollars (default: $100,000)
+    """
+    wildfireDeductible: Int64
+
+    """
+    Wildfire insurance deductible as percentage of insured value (if dollar value unavailable). 1.0 = 100%
+    """
+    wildfireDeductiblePerc: Float
+
+    """
+    true (default) = business interruption losses are covered under total wildfire insurance sublimit. false = business interruption losses are not covered
+    """
+    wildfireBICoverageIncluded: Boolean
+
+    """
+    Dollar value of wind insurance coverage sublimit (default: place valuation)
+    """
+    windInsuredValue: Int64
+
+    """
+    Wind insurance deductible amount in dollars (default: $100,000)
+    """
+    windDeductible: Int64
+
+    """
+    Wind insurance deductible as percentage of insured value (if dollar value unavailable). 1.0 = 100%
+    """
+    windDeductiblePerc: Float
+
+    """
+    true (default) = business interruption losses are covered under total wind insurance sublimit. false = business interruption losses are not covered
+    """
+    windBICoverageIncluded: Boolean
+
+    """
+    Dollar value of flood insurance coverage sublimit (default: $0)
+    """
+    floodInsuredValue: Int64
+
+    """
+    Flood insurance deductible amount in dollars (default: $0)
+    """
+    floodDeductible: Int64
+
+    """
+    Flood insurance deductible as percentage of insured value (if dollar value unavailable). 1.0 = 100%
+    """
+    floodDeductiblePerc: Float
+
+    """
+    true (default) = business interruption losses are covered under total flood insurance sublimit. false = business interruption losses are not covered
+    """
+    floodBICoverageIncluded: Boolean
+}
+
+"""
+The input to enterprise building edits.
+"""
+input EnterpriseBuildingInput {
+    """
+    Identifies the place to update.
+    """
+    placeId: String!
+
+    """
+    The alias of the asset.
+    """
+    alias: String
+
+    """
+    The corresponding asset type ID for the asset.
+    """
+    assetTypeId: AssetTypeId
+
+    """
+    Customer-provided unique identifier for the place (ex: internal asset ID, etc.)
+    """
+    customId: String
+
+    """
+    Most recent valuation in US dollars. Required for some financial impact metrics
+    """
+    placeValuation: Int64
+
+    """
+    Outstanding balance in US dollars
+    """
+    placeOutstandingBalance: Int64
+
+    """
+    Annual Net Operating Income. Required for some financial impact metrics
+    """
+    placeNOI: Int
+
+    """
+    The type of building.
+    """
+    placeType: LandUseType
+
+    """
+    The rebuild price per square foot for a structure (if it exists). Used to compute building damages
+    """
+    rebuildCostPerSf: Int64
+
+    """
+    Total square footage for the structure
+    """
+    buildingSf: Int
+
+    """
+    Orientation of building. Options are N (default), NE, E, SE, S, SW, W, NW.
+    """
+    buildingDirection: CompassDirection
+
+    """
+    The presence of defensible space around this property.
+    true = adequate defensible space exists, defined as a five foot buffer zone of cleared space around house AND <15% tree canopy within 50 ft. false (default) = defensible space does not exist.
+    """
+    defensibleSpace: Boolean
+
+    """
+    Number of units in structure.Three categories: 1 (default), 2–4 or 5 and up.
+    """
+    units: Int
+
+    """
+    Number of stories. Default = 1
+    """
+    stories: Int
+
+    """
+    Foundation height (or first floor elevation) in ft
+    """
+    foundationHeightFt: Float
+
+    """
+    The type of foundation. Used when exact foundation height isn't available.
+    """
+    foundationType: FoundationType
+
+    """
+    Whether or not the property has a basement.
+    """
+    basement: Basement
+
+    """
+    The predominant construction material of the building
+    """
+    constructionType: ConstructionType
+
+    """
+    The type of roofing material.
+    """
+    roofType: RoofType
+
+    """
+    Year of construction
+    """
+    yearBuilt: Int
+
+    """
+    Whether or not the property abides by the Fireproofing building code.
+    true = fire proofing measures exist for the home (such as fire-proofed windows, flame resistant exterior walls and ignition-resistant exterior doors). false (default) = does not exist.
+    """
+    fireProofing: Boolean
+
+    """
+    Likelihood of damaging airborne missile in this vicinity. Based on built-up density at the Census tract level.
+    """
+    denseUrbanEnvironment: MissileEnvironment
+
+    """
+    The expected design standard of structures, based on ASCE 7-22 wind risk zones
+    """
+    windDesignStandard: WindDesignStandard
+
+    """
+    Dollar value of wildfire insurance coverage sublimit (default: place valuation)
+    """
+    wildfireInsuredValue: Int64
+
+    """
+    Wildfire insurance deductible amount in dollars (default: $100,000)
+    """
+    wildfireDeductible: Int64
+
+    """
+    Wildfire insurance deductible as percentage of insured value (if dollar value unavailable). 1.0 = 100%
+    """
+    wildfireDeductiblePerc: Float
+
+    """
+    true (default) = business interruption losses are covered under total wildfire insurance sublimit. false = business interruption losses are not covered
+    """
+    wildfireBICoverageIncluded: Boolean
+
+    """
+    Dollar value of wind insurance coverage sublimit (default: place valuation)
+    """
+    windInsuredValue: Int64
+
+    """
+    Wind insurance deductible amount in dollars (default: $100,000)
+    """
+    windDeductible: Int64
+
+    """
+    Wind insurance deductible as percentage of insured value (if dollar value unavailable). 1.0 = 100%
+    """
+    windDeductiblePerc: Float
+
+    """
+    true (default) = business interruption losses are covered under total wind insurance sublimit. false = business interruption losses are not covered
+    """
+    windBICoverageIncluded: Boolean
+
+    """
+    Dollar value of flood insurance coverage sublimit (default: $0)
+    """
+    floodInsuredValue: Int64
+
+    """
+    Flood insurance deductible amount in dollars (default: $0)
+    """
+    floodDeductible: Int64
+
+    """
+    Flood insurance deductible as percentage of insured value (if dollar value unavailable). 1.0 = 100%
+    """
+    floodDeductiblePerc: Float
+
+    """
+    true (default) = business interruption losses are covered under total flood insurance sublimit. false = business interruption losses are not covered
+    """
+    floodBICoverageIncluded: Boolean
+}
+
+type EnterpriseGroup {
+    """
+    The name of the enterprise group.
+    """
+    name: String!
+
+    """
+    For enterprise user groups only. The maximum number of users that can be in the user group.
+    """
+    maxUsers: Int!
+
+    """
+    For enterprise user groups only. The maximum number of admins that can be in the user group.
+    """
+    maxAdmins: Int!
+
+    """
+    If set, the user group is in trial. Denotes the end date of the trial.
+    """
+    trialEnd: Date
+
+    """
+    Workspaces the user group can access
+    """
+    workspaceAccess: [FirstStreetWorkspace]
+
+    """
+    The default workspace for the user group
+    """
+    defaultWorkspace: FirstStreetWorkspace
+}
+
+"""
+An enterprise user is a member of an enterprise user group. Each enterprise user has either the member or the enterprise admin role.
+"""
+type EnterpriseUser {
+    """
+    The user assigned to the enterprise user group.
+    """
+    user: User!
+
+    """
+    The enterprise group that the user belongs to.
+    """
+    enterpriseGroup: EnterpriseGroup!
+
+    """
+    The role of the user in the user group.
+    """
+    enterpriseUserRole: EnterpriseUserRole!
+}
+
+"""
+Enterprise user role.
+"""
+enum EnterpriseUserRole {
+    """
+    Administrators can manage users and assets.
+    """
+    ADMIN
+
+    """
+    Users can manage projects and assets.
+    """
+    MEMBER
+
+    """
+    Users with read-only access to projects and assets.
+    """
+    VIEWER
+}
+
+"""
+An export job is a job that exports the assets of a project.
+"""
+type ExportJob implements ProjectJob {
+    """
+    The ID of the project job. Note this ID as you'll need it when importing assets from project job to project.
+    """
+    projectJobId: Int64!
+
+    """
+    The name of the project job.
+    """
+    projectJobName: String!
+
+    """
+    Project Job type.
+    """
+    projectJobType: ProjectJobType!
+
+    """
+    The status of the project job.
+    """
+    projectJobStatus: ProjectJobStatus!
+
+    """
+    The project this job is associated to.
+    """
+    project: Project
+
+    """
+    Export job type.
+    """
+    exportJobType: ProjectExportJobType!
+
+    """
+    The error code of the project job.
+    """
+    errorCode: String
+
+    """
+    The error message of the project job.
+    """
+    errorMessage: String
+
+    """
+    The date when the job was created.
+    """
+    createdOn: Date!
+
+    """
+    The date when the job was updated.
+    """
+    updatedOn: Date!
+
+    """
+    The user who started the job.
+    """
+    createdBy: User
+}
+
+"""
+The corresponding text description that describes the `factor` score that is associated with the property.
+"""
+enum FactorScale {
+    MINIMAL
+    MINOR
+    MODERATE
+    MAJOR
+    SEVERE
+    EXTREME
+}
+
+enum FirstStreetWorkspace {
+    UNITED_STATES
+    GLOBAL
+}
+
+enum FoundationType {
+    CRAWL_OR_RAISED
+    CROSSED_WALLS
+    MASONRY
+    EARTH
+    MUD_SILL
+    STONE
+    CONCRETE_BLOCK
+    PILING
+    OTHER
+    PIERS
+    RETAINING_WALL
+    SLAB
+    FOOTING
+    WOOD
+    CONCRETE
+    BRICK
+    OPEN_PIERS
+    CLOSED_PIERS
+}
+
+type GenerateProjectExportDownloadLinkPayload {
+    """
+    The presigned download link for the exported project.
+    """
+    downloadLink: String!
+
+    """
+    Expiry Date of the presigned download link.
+    """
+    expiryDate: Date!
+}
+
+type HazardDamage {
+    """
+    The peril exposed.
+    """
+    peril: String!
+
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP!
+
+    """
+    The relative year with current year being year 0.
+    """
+    relativeYear: Int64!
+
+    """
+    The return period (500, 100 years).
+    """
+    returnPeriod: ReturnPeriod
+
+    """
+    The number of assets with potential damages.
+    """
+    damagesCount: Int64!
+
+    """
+    The percentage of assets with potential damages. 100% is 1.0.
+    """
+    damagesPercent: Float!
+}
+
+type HazardExposure {
+    """
+    The peril exposed.
+    """
+    peril: String!
+
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP!
+
+    """
+    The relative year with current year being year 0.
+    """
+    relativeYear: Int64!
+
+    """
+    The return period (500, 250, 100, 50, 20, 10, 5, or 2 years).
+    """
+    returnPeriod: ReturnPeriod
+
+    """
+    The number of assets with this peril exposure.
+    """
+    exposedCount: Int64!
+
+    """
+    The percentage of of assets with this peril exposure. 100% is 1.0.
+    """
+    exposedPercent: Float!
+}
+
+"""
+The input to import staged assets from a project job into a project.
+"""
+input ImportProjectAssetsInput {
+    """
+    The ID of the target project to import the staged assets into.
+    """
+    projectId: Int64!
+
+    """
+    The ID of the source project job that contains the staged assets to import from.
+    """
+    projectJobId: Int64!
+}
+
+scalar Int64
+
+"""
+A issue is an additional status or information about an object.
+"""
+type Issue {
+    """
+    The severity of the issue.
+    """
+    severity: Severity!
+
+    """
+    The issue code.
+    """
+    code: String!
+
+    """
+    The customer facing description.
+    """
+    description: String
+}
+
+enum LandUseType {
+    SINGLE_FAMILY_RESIDENTIAL
+    MULTIFAMILY
+    RETAIL
+    HOTEL
+    OFFICE
+    INDUSTRIAL
+    WAREHOUSE
+    AGRICULTURAL
+    VACANT
+}
+
+enum MissileEnvironment {
+    LOW
+    HIGH
+}
+
+"""
+Data to support the Climate Exposure report.
+"""
+type ModuleClimateExposure {
+    """
+    Climate Exposure data.
+    """
+    status: AggregatedProjectModuleStatus
+    lastUpdated: Date
+    data: ClimateExposureData
+}
+
+"""
+Data to support project overview report.
+"""
+type ModuleOverview {
+    """
+    Overview data.
+    """
+    status: AggregatedProjectModuleStatus
+    lastUpdated: Date
+    data: ModuleOverviewData
+}
+
+type ModuleOverviewData {
+    """
+    Total rebuild cost
+    """
+    totalRebuildCost: Int64
+
+    """
+    Total asset valuation
+    """
+    totalAssetValuation: Int64
+
+    """
+    Total asset net operating income
+    """
+    totalAssetNOI: Int64
+
+    """
+    Total asset outstanding balance
+    """
+    totalAssetOutstandingBalance: Int64
+}
+
+"""
+A module refresh job is a project job that generates module data from the data in the project.
+"""
+type ModuleRefreshJob implements ProjectJob {
+    """
+    The ID of the project job. Note this ID as you'll need it when importing assets from project job to project.
+    """
+    projectJobId: Int64!
+
+    """
+    The project that this job is associated to.
+    """
+    project: Project
+
+    """
+    The name of the project job.
+    """
+    projectJobName: String!
+
+    """
+    Project Job type.
+    """
+    projectJobType: ProjectJobType!
+
+    """
+    The status of the project job.
+    """
+    projectJobStatus: ProjectJobStatus!
+
+    """
+    The error code of the project job.
+    """
+    errorCode: String
+
+    """
+    The error message of the project job.
+    """
+    errorMessage: String
+
+    """
+    The date when the job was created.
+    """
+    createdOn: Date!
+
+    """
+    The date when the job was updated.
+    """
+    updatedOn: Date!
+
+    """
+    The user who started the job.
+    """
+    createdBy: User
+}
+
+"""
+Data to support Scenario Analysis report.
+"""
+type ModuleScenarioAnalysis {
+    """
+    Scenario Analysis data.
+    """
+    status: AggregatedProjectModuleStatus
+    lastUpdated: Date
+    data: ScenarioAnalysisData
+}
+
+type Mutation {
+    """
+    Create a new project
+    """
+    createProject(input: CreateProjectInput!): CreateProjectPayload!
+
+    """
+    Update project
+    """
+    updateProject(input: UpdateProjectInput!): Project!
+
+    """
+    Delete a project along with all of its associated resources
+    """
+    deleteProject(input: DeleteProjectInput!): RequestStatus!
+
+    """
+    Set project Status
+    """
+    setProjectStatus(projectId: Int64!, projectStatus: ProjectStatus!): Project!
+
+    """
+    Create a new project upload job with a link to upload a project
+    """
+    createProjectJobUploadLink(
+        input: CreateProjectJobUploadLinkInput!
+    ): CreateProjectJobUploadLinkPayload!
+
+    """
+    Export a project
+    """
+    createProjectExport(input: ProjectExportInput!): ExportJob!
+
+    """
+    Generate a download link for an exported project.
+    """
+    generateProjectExportDownloadLink(
+        projectJobId: Int64!
+    ): GenerateProjectExportDownloadLinkPayload!
+
+    """
+    Cancel an ongoing project export job.
+    """
+    cancelProjectExport(projectJobId: Int64!): ExportJob!
+
+    """
+    Set upload job pendingImport flag.
+    """
+    setUploadJobPendingImport(
+        projectJobId: Int64!
+        pendingImport: Boolean!
+    ): UploadJob!
+
+    """
+    Set a user groups custom building details for a specific place.
+    """
+    updateUserGroupCustomBuildingValues(
+        input: UpdateCustomEnterpriseBuildingValuesInput!
+    ): UpdateCustomBuildingValuesPayload!
+
+    """
+    Delete a user groups custom building details for a specific place.
+    """
+    deleteUserGroupCustomBuildingValues(
+        input: DeleteCustomBuildingValuesInput
+    ): DeleteCustomBuildingValuesPayload!
+
+    """
+    Run project module refresh.
+    """
+    refreshProjectModule(
+        input: RefreshProjectModuleInput!
+    ): RefreshProjectModulePayload!
+    importProjectAssets(input: ImportProjectAssetsInput!): RequestStatus!
+}
+
+"""
+Representation of the object and database ID
+"""
+interface Node {
+    """
+    The unique identifier of the entity.
+    """
+    id: ID!
+}
+
+"""
+PageInfo is returned for a connection. It contains pagination-related info, as well as connection edges (page entries).
+"""
+type PageInfo {
+    """
+    hasPreviousPage informs if there is a previous page
+    """
+    hasPreviousPage: Boolean!
+
+    """
+    hasNextPage informs if there is a next page
+    """
+    hasNextPage: Boolean!
+
+    """
+    startCursor refers to the cursor at start of the first page.
+
+    Example: *Y3Vyc29yOjEwMDU=*
+    """
+    startCursor: String
+
+    """
+    endCursor refers to the the last item of the last page.
+
+    Example: *Y3Vyc29yOjEwMTI=*
+    """
+    endCursor: String
+}
+
+"""
+The project type. A project is a collection of assets.
+"""
+type Project {
+    """
+    The ID of the project.
+    """
+    id: Int64!
+
+    """
+    The name of the project.
+    """
+    name: String
+
+    """
+    The description of the project.
+    """
+    description: String
+
+    """
+    The vintage version for the returned data. Vintage uniquely identifies the place and peril data version.
+    """
+    vintage: String!
+
+    """
+    The enterprise group that owns this project
+    """
+    enterpriseGroup: EnterpriseGroup!
+
+    """
+    The status of the project.
+    """
+    status: ProjectStatus!
+
+    """
+    The workspace of the project
+    """
+    workspace: FirstStreetWorkspace!
+
+    """
+    Module data for the project.
+    """
+    moduleData: ProjectModuleData!
+
+    """
+    The date when the project was created.
+    """
+    createdOn: Date
+
+    """
+    The user who created the project.
+    """
+    createdBy: User
+
+    """
+    The user who last edited the project.
+    """
+    updatedBy: User
+
+    """
+    Indicates the number of project assets that have been updated since the last refresh. Max 100.
+    """
+    dirtyCount: Int!
+
+    """
+    The list of assets in the project.
+    """
+    projectAssetConnection(
+        """
+        Number of records(edges) to return. A number between 0 and 100.
+        """
+        first: Int
+
+        """
+        Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.
+        """
+        after: String
+
+        """
+        Number of prevous records(edges) to return. A number between 0 and 100.
+        """
+        last: Int
+
+        """
+        Cursor value of a record(edge) before which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.
+        """
+        before: String
+
+        """
+        Filter the connection.
+        """
+        filter: ProjectAssetFilter
+
+        """
+        Sort order for the connection.
+        """
+        sort: AssetSort
+    ): ProjectAssetConnection
+    projectType: ProjectType!
+    company: Company
+}
+
+"""
+A asset in a project.
+"""
+type ProjectAsset {
+    """
+    The asset's place ID
+    """
+    placeId: String!
+
+    """
+    The asset's climate exposure data
+    """
+    climateExposure: AssetClimateExposure
+
+    """
+    The asset's scenario analysis data
+    """
+    scenarioAnalysis: AssetScenarioAnalysis
+
+    """
+    The project that this asset belongs to.
+    """
+    project: Project!
+    building: EnterpriseBuilding
+}
+
+"""
+A list of project assets.
+"""
+type ProjectAssetConnection {
+    """
+    Return a list of type that wraps edge type.
+    """
+    edges: [ProjectAssetEdge!]!
+
+    """
+    Pagination information in relation to current page.
+    """
+    pageInfo: PageInfo!
+
+    """
+    Total number of records for the connection.
+    """
+    totalCount: Int64
+}
+
+"""
+Represents an asset edge of the current project.
+"""
+type ProjectAssetEdge {
+    """
+    Cursor is a string that can be used in subsequent request as value of a connection "after" argument, to request page starting after this item.
+
+    Example: *Y3Vyc29yOjEyNTI0MA==*
+    """
+    cursor: String
+
+    """
+    Contains one page record data.
+    """
+    node: ProjectAsset!
+}
+
+"""
+The input to filter project assets.
+"""
+input ProjectAssetFilter {
+    """
+    Return the project asset that contains the given value in the address, alias or customer ID.
+    """
+    searchValue: String
+
+    """
+    filters for enterprise asset data, required for sorting. Sorting will not work if this filter is missing.
+    """
+    assetSortingFilter: AssetSortFilter
+}
+
+type ProjectEffects {
+    """
+    Peril the data appies to. 2 = inland flood, 3 = hurricane, 4 = wildfire, 5 = overall.
+    """
+    perilId: Int!
+
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP!
+
+    """
+    The relative year with current year being year 0.
+    """
+    relativeYear: Int64!
+
+    """
+    The return period (500, 100 years).
+    """
+    returnPeriod: ReturnPeriod!
+
+    """
+    Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean. At this moment, only 50th percentile is available for this node.
+    """
+    percentile: Int64!
+
+    """
+    Gross direct damage (pre-insurance)
+    """
+    directGross: Int64!
+
+    """
+    Gross direct damage (% of Total Prop Val)
+    """
+    directGrossPercent: Float!
+
+    """
+    Net direct damage (post-insurance)
+    """
+    directNet: Int64!
+
+    """
+    Net direct damage (% of Total Prop Val)
+    """
+    directNetPercent: Float!
+
+    """
+    Event specific gross business interruption for a peril ($)
+    """
+    businessInterruptionGross: Int64!
+
+    """
+    Event specific gross business interruption (% of Total Prop Val)
+    """
+    businessInterruptionGrossPercent: Float!
+
+    """
+    Event specific net business interruption for a peril ($)
+    """
+    businessInterruptionNet: Int64!
+
+    """
+    Event specific net business interruption (% of Total Prop Val)
+    """
+    businessInterruptionNetPercent: Float!
+
+    """
+    Event specific total cash gross direct damage and gross business interruption loss
+    """
+    cashGross: Int64!
+
+    """
+    Event specific total cash gross direct damage and gross business interruption loss (% of Total Prop Val)
+    """
+    cashGrossPercent: Float!
+
+    """
+    Event specific total cash net direct damage and net business interruption loss
+    """
+    cashNet: Int64!
+
+    """
+    Event specific total cash net direct damage and net business interruption loss (% of Total Prop Val)
+    """
+    cashNetPercent: Float!
+}
+
+"""
+Project export file format.
+"""
+enum ProjectExportFileFormat {
+    """
+    Export the project in CSV format.
+    """
+    CSV
+}
+
+"""
+The iput parameter to export a project
+"""
+input ProjectExportInput {
+    """
+    The ID of the project to export.
+    """
+    projectId: Int64!
+
+    """
+    The file format to export the project in. (Default: CSV)
+    """
+    fileFormat: ProjectExportFileFormat
+
+    """
+    Export job type. Export all modules by default.
+    """
+    exportJobType: ProjectExportJobType
+}
+
+"""
+Project export job type.
+"""
+enum ProjectExportJobType {
+    """
+    Property Report Export
+    """
+    PROPERTY_REPORT
+
+    """
+    Climate Exposure Export
+    """
+    CLIMATE_EXPOSURE
+
+    """
+    Scenario Analysis Export
+    """
+    SCENARIO_ANALYSIS
+
+    """
+    All Modules Export
+    """
+    ALL_MODULES
+}
+
+"""
+A project job is a job that interacts with the assets of a project.
+"""
+interface ProjectJob {
+    """
+    The ID of the project job. Note this ID as you'll need it when importing assets from project job to project.
+    """
+    projectJobId: Int64!
+
+    """
+    The name of the project job.
+    """
+    projectJobName: String!
+
+    """
+    Project Job type.
+    """
+    projectJobType: ProjectJobType!
+
+    """
+    The status of the project job.
+    """
+    projectJobStatus: ProjectJobStatus!
+
+    """
+    The error code of the project job.
+    """
+    errorCode: String
+
+    """
+    The error message of the project job.
+    """
+    errorMessage: String
+
+    """
+    The date when the job was created.
+    """
+    createdOn: Date!
+
+    """
+    The date when the job was updated.
+    """
+    updatedOn: Date!
+
+    """
+    The user who started the job.
+    """
+    createdBy: User
+}
+
+type ProjectJobEdge {
+    """
+    The project job node of the edge.
+    """
+    node: ProjectJob!
+
+    """
+    The cursor of the project job edge.
+    """
+    cursor: String!
+}
+
+"""
+The input to a project job.
+"""
+input ProjectJobFilter {
+    """
+    Filter on specific project job statuses.
+    """
+    status: [ProjectJobStatusEnum]
+
+    """
+    Filter on specific project job types.
+    """
+    jobType: [ProjectJobType]
+
+    """
+    Filter on the user who created the project job by user ID.
+    """
+    createdBy: Int64
+
+    """
+    For Upload Jobs: Filter on whether there are pending staged assets to be imported into the project.
+    """
+    pendingImport: Boolean
+
+    """
+    Filter on specific export job types.
+    """
+    exportJobType: ProjectExportJobType
+}
+
+"""
+Project job status type.
+"""
+type ProjectJobStatus {
+    """
+    The name of the project job status.
+    """
+    name: ProjectJobStatusEnum!
+}
+
+"""
+Status enum of a project job.
+"""
+enum ProjectJobStatusEnum {
+    """
+    The job is submitted to the Enterprise service.
+    """
+    SUBMITTED
+
+    """
+    The job is running in the Enterprise service.
+    """
+    RUNNING
+
+    """
+    The job is completed. Assets are staged and ready to be imported into a project.
+    """
+    COMPLETED
+
+    """
+    The job has failed.
+    """
+    FAILED
+
+    """
+    The job is canceled.
+    """
+    CANCELED
+}
+
+"""
+The category of the project
+"""
+enum ProjectJobType {
+    PROJECT_UPLOAD
+    MODULES_REFRESH
+    PROJECT_EXPORT
+}
+
+type ProjectJobsConnection {
+    """
+    The total number of project jobs in the connection.
+    """
+    totalCount: Int64!
+
+    """
+    The edges of the project jobs connection.
+    """
+    edges: [ProjectJobEdge!]!
+
+    """
+    The page info of the project jobs connection.
+    """
+    pageInfo: PageInfo!
+}
+
+enum ProjectJobsSort {
+    LAST_UPDATED_ASC
+    LAST_UPDATED_DESC
+}
+
+"""
+Data to support module reports for a project.
+"""
+type ProjectModuleData {
+    """
+    The ID of the project.
+    """
+    projectId: Int64!
+
+    """
+    Project overview data.
+    """
+    overview: ModuleOverview
+
+    """
+    Data to support the Climate Exposure report.
+    """
+    climateExposure: ModuleClimateExposure
+
+    """
+    Data to support the Scenario Analysis report.
+    """
+    scenarioAnalysis: ModuleScenarioAnalysis
+}
+
+"""
+Project Module Name.
+"""
+enum ProjectModuleName {
+    CLIMATE_EXPOSURE
+    SCENARIO_ANALYSIS
+}
+
+"""
+Status enum of a project.
+"""
+enum ProjectStatus {
+    """
+    The project is active.
+    """
+    ACTIVE
+
+    """
+    The project is archived.
+    """
+    ARCHIVED
+
+    """
+    The project is locked. No changes can be made to the project.
+    """
+    LOCKED
+}
+
+"""
+Project type indicates the type of project.
+CUSTOMER should be used for most use cases.
+"""
+enum ProjectType {
+    CUSTOMER
+    EQUITY
+}
+
+"""
+Project upload file format.
+"""
+enum ProjectUploadFileFormat {
+    """
+    Upload the project in CSV format.
+    """
+    CSV
+
+    """
+    Upload the project in XLSX format.
+    """
+    XLSX
+}
+
+type ProjectUploadHeaders {
+    key: String!
+    value: String!
+}
+
+input ProjectUploadHeadersInput {
+    key: String!
+    value: String!
+}
+
+type Query {
+    """
+    Get project by id
+    """
+    project(projectId: Int64!): Project
+
+    """
+    Get all the projects.
+    """
+    projects: [Project!]!
+
+    """
+    Get project job by id
+    """
+    projectJob(projectJobId: Int64!): ProjectJob
+
+    """
+    Get all the project jobs the session user has access to.
+    """
+    projectJobs(filter: ProjectJobFilter): [ProjectJob!]!
+
+    """
+    Get all the project jobs the session user has access to, with pagination.
+    """
+    projectJobsConnection(
+        """
+        Number of records(edges) to return. A number between 0 and 100.
+        """
+        first: Int
+
+        """
+        Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.
+        """
+        after: String
+
+        """
+        Sort the project jobs
+        """
+        sort: ProjectJobsSort
+
+        """
+        Filter the project jobs
+        """
+        filter: ProjectJobFilter
+    ): ProjectJobsConnection
+
+    """
+    Get user's groups custom building details for a specific place
+    """
+    userGroupCustomBuildingValues(placeId: String!): EnterpriseBuilding
+
+    """
+    Get list of places viewed by the user
+    """
+    viewedPlacesConnection(
+        """
+        Number of records(edges) to return. A number between 0 and 100.
+        """
+        first: Int
+
+        """
+        Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.
+        """
+        after: String
+
+        """
+        Sort the viewed places
+        """
+        sort: ViewedPlacesSort
+    ): ViewedPlacesConnection
+}
+
+input RefreshProjectModuleInput {
+    """
+    The ID of the project to update.
+    """
+    projectId: Int64!
+
+    """
+    The name of the project job.
+    """
+    projectJobName: String!
+}
+
+"""
+The payload of refreshing a module.
+"""
+type RefreshProjectModulePayload {
+    """
+    The created project job.
+    """
+    projectJob: ProjectJob
+}
+
+"""
+Generic request status object
+"""
+type RequestStatus {
+    """
+    Indicates if the request was successful.
+    """
+    success: Boolean!
+}
+
+enum ReturnPeriod {
+    """
+    2-year return period (50% chance)
+    """
+    RP2
+
+    """
+    5-year return period (20% chance)
+    """
+    RP5
+
+    """
+    20-year return period (5% chance)
+    """
+    RP20
+
+    """
+    100-year return period (1% chance)
+    """
+    RP100
+
+    """
+    200-year return period (0.5% chance)
+    """
+    RP200
+
+    """
+    300-year return period (0.33% chance)
+    """
+    RP300
+
+    """
+    500-year return period (0.2% chance)
+    """
+    RP500
+}
+
+enum RoofCombustibilityLevel {
+    LOW
+    MEDIUM
+    HIGH
+}
+
+enum RoofType {
+    ASBESTOS
+    BUILT_UP
+    COMPOSITION_SHINGLE
+    CONCRETE
+    METAL
+    SLATE
+    GRAVEL_OR_ROCK
+    TAR_AND_GRAVEL
+    BERMUDA
+    MASONITE_OR_CEMENT_SHAKE
+    FIBERGLASS
+    ALUMINUM
+    WOOD_SHAKE_OR_SHINGLES
+    OTHER
+    ASPHALT
+    ROLL_COMPOSITION
+    STEEL
+    TILE
+    URETHANE
+    NON_WOODEN_SHINGLES
+    WOOD
+    GYPSUM
+    SOLAR
+    CERAMIC_TILE
+    CLAY_TILE
+    CONCRETE_TILE
+    COPPER
+    TIN
+}
+
+"""
+Supported Shared Socio-economic Pathways.
+"""
+enum SSP {
+    """
+    The most optimistic climate scenario, projecting the lowest temperature increase.
+    Assumes strong climate action leading to warming limited to about 2°C by 2100.
+    """
+    SSP_1_26
+
+    """
+    A middle-ground climate scenario with moderate emissions reductions.
+    Projects medium levels of climate change and warming by 2100.
+    """
+    SSP_2_45
+
+    """
+    The most pessimistic climate scenario with highest emissions.
+    Projects the most severe climate impacts and warming by 2100.
+    """
+    SSP_5_85
+}
+
+type ScenarioAnalysisAAL {
+    """
+    Peril the data appies to. 2 = inland flood, 3 = hurricane, 4 = wildfire, 5 = overall.
+    """
+    perilId: Int!
+
+    """
+    Socio-economic pathway of the prediction model.
+    """
+    ssp: SSP!
+
+    """
+    The relative year with current year being year 0.
+    """
+    relativeYear: Int64!
+
+    """
+    Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean. At this moment, only 50th percentile is available for this node.
+    """
+    percentile: Int64!
+
+    """
+    Total project level direct gross Average Annual Loss from cat events
+    """
+    directGrossAAL: Int64!
+
+    """
+    Total project direct gross Average Annual Loss as a % of Total asset value
+    """
+    directGrossAALPercent: Float!
+
+    """
+    Total project level direct net Average Annual Loss from cat events
+    """
+    directNetAAL: Int64!
+
+    """
+    Total project direct net Average Annual Loss as a % of Total asset value
+    """
+    directNetAALPercent: Float!
+
+    """
+    Total project level BI gross Average Annual Loss from cat events
+    """
+    businessInterruptionGrossAAL: Int64!
+
+    """
+    Total project BI gross Average Annual Loss as a % of Total asset value
+    """
+    businessInterruptionGrossAALPercent: Float!
+
+    """
+    Total project level BI net Average Annual Loss from cat events
+    """
+    businessInterruptionNetAAL: Int64!
+
+    """
+    Total project BI net Average Annual Loss as a % of Total asset value
+    """
+    businessInterruptionNetAALPercent: Float!
+
+    """
+    Total portfolio level cash gross Average Annual Loss from cat events
+    """
+    cashGrossAAL: Int64!
+
+    """
+    Total portfolio cash gross Average Annual Loss as a % of Total Property Value
+    """
+    cashGrossAALPercent: Float!
+
+    """
+    Total portfolio level cash net Average Annual Loss from cat events
+    """
+    cashNetAAL: Int64!
+
+    """
+    Total portfolio cash net Average Annual Loss as a % of Total asset value
+    """
+    cashNetAALPercent: Float!
+}
+
+type ScenarioAnalysisData {
+    projectEffects: [ProjectEffects]
+    aal: [ScenarioAnalysisAAL]
+}
+
+"""
+Severity
+"""
+enum Severity {
+    ERROR
+    WARNING
+}
+
+"""
+A staged asset is an initial asset imported from a project job. It is meant to be reviewed and committed to a project.
+"""
+type StagedAsset {
+    """
+    The ID of the staged asset.
+    """
+    stagedAssetId: String!
+
+    """
+    The project job that created this staged asset.
+    """
+    projectJob: ProjectJob
+
+    """
+    The place ID of the asset.
+    """
+    placeID: String
+
+    """
+    The original CSV input of the asset. For informational purposes only. Will be discarded when the staged asset is imported into a project.
+    """
+    rawInputs: String
+
+    """
+    The customer source ID of the asset.
+    """
+    customId: String
+
+    """
+    The alias of the asset.
+    """
+    alias: String
+
+    """
+    The corresponding asset type ID for the asset.
+    """
+    assetTypeId: AssetTypeId
+
+    """
+    The latitude of the asset.
+    """
+    lat: Float
+
+    """
+    The longitude of the asset.
+    """
+    lng: Float
+
+    """
+    The address of the asset.
+    """
+    address: String
+
+    """
+    The country of the asset, Iso-3166-a3 country code.
+    """
+    country: String
+
+    """
+    Most recent valuation in US dollars. Required for some financial impact metrics.
+    """
+    placeValuation: Int64
+
+    """
+    Date of most recent valuation assessment. YYYY-MM-DD format.
+    """
+    placeValueDate: Date
+
+    """
+    Outstanding balance in US dollars.
+    """
+    placeOutstandingBalance: Int64
+
+    """
+    Annual Net Operating Income. Required for some financial impact metrics.
+    """
+    placeNOI: Int
+
+    """
+    Land use type. See documentation for accepted values.
+    """
+    placeType: LandUseType
+
+    """
+    The rebuild price per square foot for a structure (if it exists). Used to compute building damages.
+    """
+    rebuildCostPerSf: Int64
+
+    """
+    Total square footage for the structure.
+    """
+    buildingSf: Int
+
+    """
+    Orientation of building. Options are N (default), NE, E, SE, S, SW, W, NW.
+    """
+    buildingDirection: CompassDirection
+
+    """
+    The presence of defensible space around this property.
+    true = adequate defensible space exists, defined as a five foot buffer zone of cleared space around house AND <15% tree canopy within 50 ft. false (default) = defensible space does not exist.
+    """
+    defensibleSpace: Boolean
+
+    """
+    Number of units in structure. Default = 1.
+    """
+    units: Int
+
+    """
+    Number of stories. Default = 1.
+    """
+    stories: Int
+
+    """
+    Foundation height (or first floor elevation) in feet.
+    """
+    foundationHeightFt: Float
+
+    """
+    The type of foundation. Used when exact foundation height isn't available.
+    """
+    foundationType: FoundationType
+
+    """
+    Whether or not the property has a basement.
+    """
+    basement: Basement
+
+    """
+    The predominant construction material of the building.
+    """
+    constructionType: ConstructionType
+
+    """
+    The type of roofing material.
+    """
+    roofType: RoofType
+
+    """
+    Year of construction.
+    """
+    yearBuilt: Int
+
+    """
+    Whether or not the property abides by the Fireproofing building code.
+    true = fire proofing measures exist for the home (such as fire-proofed windows, flame resistant exterior walls and ignition-resistant exterior doors). false (default) = does not exist.
+    """
+    fireProofing: Boolean
+
+    """
+    Likelihood of damaging airborne missile in this vicinity. Based on built-up density at the Census tract level.
+    """
+    denseUrbanEnvironment: MissileEnvironment
+
+    """
+    The expected design standard of structures, based on ASCE 7-22 wind risk zones
+    """
+    windDesignStandard: WindDesignStandard
+
+    """
+    Dollar value of wildfire insurance coverage sublimit (default: place valuation)
+    """
+    wildfireInsuredValue: Int64
+
+    """
+    Wildfire insurance deductible amount in dollars (default: $100,000)
+    """
+    wildfireDeductible: Int64
+
+    """
+    Wildfire insurance deductible as percentage of insured value (if dollar value unavailable). 1.0 = 100%
+    """
+    wildfireDeductiblePerc: Float
+
+    """
+    true (default) = business interruption losses are covered under total wildfire insurance sublimit. false = business interruption losses are not covered
+    """
+    wildfireBICoverageIncluded: Boolean
+
+    """
+    Dollar value of wind insurance coverage sublimit (default: place valuation)
+    """
+    windInsuredValue: Int64
+
+    """
+    Wind insurance deductible amount in dollars (default: $100,000)
+    """
+    windDeductible: Int64
+
+    """
+    Wind insurance deductible as percentage of insured value (if dollar value unavailable). 1.0 = 100%
+    """
+    windDeductiblePerc: Float
+
+    """
+    true (default) = business interruption losses are covered under total wind insurance sublimit. false = business interruption losses are not covered
+    """
+    windBICoverageIncluded: Boolean
+
+    """
+    Dollar value of flood insurance coverage sublimit (default: $0)
+    """
+    floodInsuredValue: Int64
+
+    """
+    Flood insurance deductible amount in dollars (default: $0)
+    """
+    floodDeductible: Int64
+
+    """
+    Flood insurance deductible as percentage of insured value (if dollar value unavailable). 1.0 = 100%
+    """
+    floodDeductiblePerc: Float
+
+    """
+    true (default) = business interruption losses are covered under total flood insurance sublimit. false = business interruption losses are not covered
+    """
+    floodBICoverageIncluded: Boolean
+
+    """
+    Validation information about the staged asset.
+    """
+    issues: [Issue!]!
+}
+
+"""
+A list of staged assets.
+"""
+type StagedAssetConnection {
+    """
+    Return a list of type that wraps edge type.
+    """
+    edges: [StagedAssetEdge!]!
+
+    """
+    Pagination information in relation to current page.
+    """
+    pageInfo: PageInfo!
+
+    """
+    Total number of records for the connection.
+    """
+    totalCount: Int64
+}
+
+"""
+Represents a staged asset edge of the current project job.
+"""
+type StagedAssetEdge {
+    """
+    Cursor is a string that can be used in subsequent request as value of a connection "after" argument, to request page starting after this item.
+    Example: *Y3Vyc29yOjEyNTI0MA==*
+    """
+    cursor: String
+
+    """
+    Contains one page record data.
+    """
+    node: StagedAsset!
+}
+
+"""
+The input to filter staged assets.
+"""
+input StagedAssetFilter {
+    """
+    Return staged assets that have errors.
+    """
+    hasErrors: Boolean
+
+    """
+    Return staged assets that have warnings.
+    """
+    hasWarnings: Boolean
+
+    """
+    Return the staged asset that contains the given value in the address, alias or customer ID.
+    """
+    searchValue: String
+
+    """
+    Return staged assets that are duplicates.
+    """
+    isDuplicate: Boolean
+}
+
+"""
+Sort order for the staged asset connection.
+"""
+enum StagedAssetSort {
+    DEFAULT
+    CUSTOM_ID_ASC
+    CUSTOM_ID_DESC
+    PLACE_ID_ASC
+    PLACE_ID_DESC
+    ERROR_ASC
+    ERROR_DESC
+}
+
+"""
+The payload of updating an existing building customization.
+"""
+type UpdateCustomBuildingValuesPayload {
+    """
+    Indicates if the building customization was updated successfully.
+    """
+    success: Boolean!
+
+    """
+    The updated building customization.
+    """
+    building: EnterpriseBuilding
+}
+
+"""
+The input to update an existing building customization.
+"""
+input UpdateCustomEnterpriseBuildingValuesInput {
+    """
+    The new building customization details.
+    """
+    building: EnterpriseBuildingInput!
+}
+
+"""
+The input to update a project.
+"""
+input UpdateProjectInput {
+    """
+    The ID of the project to update.
+    """
+    projectId: Int64!
+
+    """
+    The new name of the project.
+    """
+    name: String!
+
+    """
+    The new description of the project.
+    """
+    description: String
+}
+
+"""
+An upload job is a project job that creates staged assets from an uploaded file.
+"""
+type UploadJob implements ProjectJob {
+    """
+    The ID of the project job. Note this ID as you'll need it when importing assets from project job to project.
+    """
+    projectJobId: Int64!
+
+    """
+    The name of the project job.
+    """
+    projectJobName: String!
+
+    """
+    Project Job type.
+    """
+    projectJobType: ProjectJobType!
+
+    """
+    The status of the project job.
+    """
+    projectJobStatus: ProjectJobStatus!
+
+    """
+    Input line count of the upload job.
+    """
+    inputLineCount: Int64
+
+    """
+    Flag on whether or not there are pending staged assets to be imported into the project.
+    """
+    pendingImport: Boolean!
+
+    """
+    The error code of the project job.
+    """
+    errorCode: String
+
+    """
+    The error message of the project job.
+    """
+    errorMessage: String
+
+    """
+    The date when the job was created.
+    """
+    createdOn: Date!
+
+    """
+    The date when the job was updated.
+    """
+    updatedOn: Date!
+
+    """
+    The user who started the job.
+    """
+    createdBy: User
+
+    """
+    The list of staged assets created by this job.
+    """
+    stagedAssetConnection(
+        """
+        Number of records(edges) to return. A number between 0 and 100.
+        """
+        first: Int
+
+        """
+        Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.
+        """
+        after: String
+
+        """
+        Number of prevous records(edges) to return. A number between 0 and 100.
+        """
+        last: Int
+
+        """
+        Cursor value of a record(edge) before which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.
+        """
+        before: String
+
+        """
+        Filter the connection.
+        """
+        filter: StagedAssetFilter
+
+        """
+        Sort order for the connection.
+        """
+        sort: StagedAssetSort
+    ): StagedAssetConnection
+}
+
+"""
+A user of an enterprise group.
+"""
+type User {
+    """
+    The user's ID.
+    """
+    id: Int64!
+
+    """
+    The user's first name.
+    """
+    firstName: String!
+
+    """
+    The user's last name.
+    """
+    lastName: String!
+
+    """
+    The user's email address.
+    """
+    email: String!
+}
+
+type ViewedPlace implements Node {
+    id: ID!
+
+    """
+    The description of the place.
+    """
+    descriptor: String
+
+    """
+    The place's building details.
+    """
+    building: EnterpriseBuilding
+
+    """
+    The place's ID.
+    """
+    placeId: String!
+
+    """
+    The date and time when the place was last viewed.
+    """
+    lastViewed: Date!
+}
+
+type ViewedPlacesConnection {
+    """
+    Returns a list of ViewedPlacesEdge. Each edge contains a cursor and the node.
+    """
+    edges: [ViewedPlacesEdge!]!
+
+    """
+    Contains pagination information in relation to the current page.
+    """
+    pageInfo: PageInfo!
+
+    """
+    Total number of records for the connection.
+    """
+    totalCount: Int64
+}
+
+type ViewedPlacesEdge {
+    """
+    Cursor is a string that can be used in subsequent request as value of a connection "after" argument, to request page starting after this item.
+
+    Example: *Y3Vyc29yOjEyNTI0MA==*
+    """
+    cursor: String
+
+    """
+    Contains one page record data.
+    """
+    node: ViewedPlace!
+}
+
+enum ViewedPlacesSort {
+    TIMESTAMP_ASC
+    TIMESTAMP_DESC
+}
+
+enum WindDesignStandard {
+    LOW
+    MEDIUM
+    HIGH
+}
