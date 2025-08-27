@@ -5,8 +5,8 @@ First Street provides comprehensive services to assess and visualize physical cl
 | API                          | Scope             | Primary Interface           | Features                                                                 |
 |------------------------------|------------------|-----------------------------|-------------------------------------------------------------------------------|
 | **Climate Risk API**  | Worldwide         | GraphQL                    | Per-peril risk modeling with arbitrary location support    |
-| **Raster Map API **  | Worldwide         | REST map tiles             | Map overlays (PNG) for risk perils, legend support, integration examples      |
-| **Enterprise API**           | Portfolio-based, Worldwide   | GraphQL| Aggregated risk insights, suite of analytical modules                         |
+| **Raster Map API**  | Worldwide         | REST map tiles             | Map overlays (PNG) for risk perils      |
+| **Enterprise API**           | Portfolio-based, Worldwide   | GraphQL| Aggregated climate risk insights for portfolios                         |
 | **Domestic (US-only) API**   | United States     | GraphQL + REST tiles        | Detailed hazard data per peril for US-only locations by building with map overlays |
 
 
@@ -27,7 +27,7 @@ First Street Raster Map API assists with visualizing climate risk.
 
 
 #### [Domestic, US-only GraphQL API](https://docs.firststreet.org/domestic-api)
-First Street provides a GraphQL API for domestic, US-only data. This API is considered under maintaince and its offerings are limited to existing users. [Schema](https://github.com/firststreet/api/us-domestic-api/schema.graphql)
+First Street provides a GraphQL API for domestic, US-only data. This API is considered under maintenance and its offerings are limited to existing users. [Schema](https://github.com/firststreet/api/us-domestic-api/schema.graphql)
 
 
 ## Contact
