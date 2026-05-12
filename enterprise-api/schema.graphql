@@ -1460,9 +1460,19 @@ enum AssetTypeId {
 	N9
 
 	"""
+	INFRASTRUCTURE – Energy – Battery Storage
+	"""
+	NB
+
+	"""
 	INFRASTRUCTURE – Utilities – Fiber-Optic Networks
 	"""
 	NF
+
+	"""
+	INFRASTRUCTURE – Energy – Pipelines (Oil, Gas) - Gate Station
+	"""
+	NG
 
 	"""
 	INFRASTRUCTURE – Transportation – Roads & Highways
@@ -1475,7 +1485,17 @@ enum AssetTypeId {
 	NI
 
 	"""
-	INFRASTRUCTURE – Transportation – Pipelines (Oil, Gas, Water)
+	INFRASTRUCTURE – Transportation – Light Rail
+	"""
+	NL
+
+	"""
+	INFRASTRUCTURE – Transportation – Tunnel
+	"""
+	NN
+
+	"""
+	INFRASTRUCTURE – Energy – Pipelines (Oil, Gas, Water)
 	"""
 	NP
 
@@ -1495,9 +1515,29 @@ enum AssetTypeId {
 	NS
 
 	"""
+	INFRASTRUCTURE – Energy – Substation
+	"""
+	NT
+
+	"""
 	INFRASTRUCTURE – Transportation – Urban Transit
 	"""
 	NU
+
+	"""
+	INFRASTRUCTURE – Transportation – Container & Cargo Ports
+	"""
+	NV
+
+	"""
+	INFRASTRUCTURE – Energy – Transmission Tower
+	"""
+	NW
+
+	"""
+	INFRASTRUCTURE – Transportation – Airport Runways
+	"""
+	NY
 
 	"""
 	OFFICE - Urban / Low-Rise (1-4 stories)
@@ -2415,19 +2455,23 @@ type Coordinate {
 	locality: AssetLocality
 }
 
+"""
+Input type for portfolio copy.
+"""
 input CopyPortfolioToNewParentInput {
 	"""
-	New parent portfolio ID of the portfolio to be cloned.
+	The new parent portfolio ID.
 	"""
 	targetParentPortfolioId: Int64!
 
 	"""
-	ID of the portfolio to be cloned
+	ID of the portfolio to be copied.
 	"""
 	portfolioId: Int64!
 
 	"""
-	The new project name. If omitted the cloned project name will be based off the original portfolio name.
+	An optional name to be assigned to the new portfolio, if a new portfolio is created in this operation.
+	The system will use a random-generated unique name if omitted.
 	"""
 	projectName: String
 }
@@ -2517,6 +2561,11 @@ input CreateProjectJobUploadLinkInput {
 	Custom headers to add to the uploaded file metadata. For internal use only.
 	"""
 	customHeaders: [ProjectUploadHeadersInput]
+
+	"""
+	Optional payload-type discriminator. When COMPANY, GEOJSON is not accepted. Default REA.
+	"""
+	uploadType: ProjectUploadType
 }
 
 """
@@ -2633,6 +2682,9 @@ type DeleteCustomBuildingValuesPayload {
 	success: Boolean!
 }
 
+"""
+Input type for portfolio deletion.
+"""
 input DeletePortfolioFromParentInput {
 	"""
 	ID of the portfolio to be removed
@@ -2744,16 +2796,16 @@ input DeleteUserGroupStagedAdaptationsInput {
 }
 
 """
-A sub-portfolio in the subtree that has a dirty status, with its depth level.
+A subportfolio in the portfolio hierarchy that has a dirty status, with its depth level.
 """
 type DirtySubportfolio {
 	"""
-	The project ID of the dirty sub-portfolio.
+	The project ID of the dirty subportfolio.
 	"""
 	projectId: Int64!
 
 	"""
-	The depth level in the tree rooted at the queried portfolio.
+	The depth level in the hierarchy rooted from the queried portfolio.
 	Level 1 = direct child, level 2 = grandchild, etc.
 	"""
 	level: Int!
@@ -4993,7 +5045,7 @@ type Mutation {
 	updateProject(input: UpdateProjectInput!): Project!
 
 	"""
-	Update asset details for a project within a portfolio. Only valid for asset-type projects.
+	Update asset details for a LINEAR/AREA/COMPANY asset.
 	"""
 	updatePortfolioAssetDetails(
 		input: UpdatePortfolioAssetDetailsInput!
@@ -5046,6 +5098,13 @@ type Mutation {
 		projectJobId: Int64!
 		pendingImport: Boolean!
 	): UploadJob!
+
+	"""
+	Set the value chain revenue overrides for a company upload job. Idempotent: replaces the previous map for this projectJobId.
+	"""
+	setValueChainRevenue(
+		input: SetValueChainRevenueInput!
+	): SetValueChainRevenuePayload!
 
 	"""
 	Set user's portfolio custom building details for a specific place.
@@ -5147,7 +5206,6 @@ type Mutation {
 	Generate a link share for a place on ePDP, an entire project, or a place in a project.
 	"""
 	generateLinkShare(input: GenerateLinkShareInput!): GenerateLinkSharePayload!
-	linkShare(linkId: String!): LinkShare
 	updateLinkShare(input: UpdateLinkShareInput!): UpdateLinkSharePayload!
 
 	"""
@@ -5156,68 +5214,74 @@ type Mutation {
 	deleteViewedHistoryItem(input: EntDeleteViewedHistoryInput!): RequestStatus!
 
 	"""
-	Save a place or portfolio to the recently viewed items list for the current user.
+	Save a visited asset, portfolio, place with no portfolio, or publicly available company to the recently viewed history for the current user.
 	"""
 	saveViewedHistoryItem(input: SaveViewHistoryInput!): SaveViewHistoryPayload!
 
 	"""
-	Assign a portfolio to a new parent portfolio.
+	Move a portfolio to a new parent portfolio.
 	"""
 	movePortfolio(input: UpdatePortfolioParentInput!): RequestStatus!
 
 	"""
-	Delete a portfolio that is the child of another portfolio.
+	Remove a portfolio including its entire hierarchy from the parent portfolio.
+	The data for the entire hierarchy will be deleted.
 	"""
 	removePortfolioFromParent(
 		input: DeletePortfolioFromParentInput!
 	): RequestStatus!
 
 	"""
-	Assign a new parent to an REA.
+	Move a REAL_ESTATE asset to a new parent portfolio.
 	"""
-	moveREAToNewParent(input: UpdateREAParentInput!): CreateProjectAssetPayload!
+	moveRealEstateAssetToNewParent(
+		input: UpdateRealEstateAssetParentInput!
+	): CreateProjectAssetPayload!
 
 	"""
-	Create a copy of an REA and assign it to a new parent.
+	Copy of a REAL_ESTATE asset and assign it to a new parent.
 	"""
-	copyREAToNewParent(input: UpdateREAParentInput!): CreateProjectAssetPayload!
+	copyRealEstateAssetToNewParent(
+		input: UpdateRealEstateAssetParentInput!
+	): CreateProjectAssetPayload!
 
 	"""
-	Delete an REA that is the child of a portfolio.
+	Delete a REAL_ESTATE asset from its parent portfolio.
 	"""
-	deleteREAFromParent(input: DeleteProjectAssetInput!): RequestStatus
+	deleteRealEstateAssetFromParent(
+		input: DeleteProjectAssetInput!
+	): RequestStatus
 
 	"""
-	Create a copy of a portfolio and assign it to a new parent.
+	Copy a portfolio with its entire hierarchy and assign it to a new parent.
 	"""
 	copyPortfolioToNewParent(
 		input: CopyPortfolioToNewParentInput!
 	): CopyPortfolioToNewParentPayload!
 
 	"""
-	Move a portfolio asset to a new parent.
+	Move a non-real-estate asset (LINEAR/AREA/COMPANY asset) to a new parent.
 	"""
-	movePortfolioAssetToNewParent(
+	moveNonRealEstateAssetToNewParent(
 		input: UpdatePortfolioParentInput!
 	): RequestStatus!
 
 	"""
-	Creat a copy of a portfolio asset and assign it to a new parent.
+	Copy a non-real-estate asset (LINEAR/AREA/COMPANY asset) and assign it to a new parent.
 	"""
-	copyPortfolioAssetToNewParent(
+	copyNonRealEstateAssetToNewParent(
 		input: UpdatePortfolioParentInput!
 	): ProjectClonePayload!
 
 	"""
-	Delete a portfolio asset from its portfolio.
+	Remove a non-real-estate asset (LINEAR/AREA/COMPANY asset) from its parent portfolio. The data for this asset will be deleted.
 	"""
-	removePortfolioAssetFromParent(
+	removeNonRealEstateAssetFromParent(
 		input: DeletePortfolioFromParentInput!
 	): RequestStatus!
 
 	"""
-	Refresh a portfolio's data by triggering a refresh job.
-	The portfolio will appear in PROCESSING status while there is an unfinished PORTFOLIO_REFRESH job
+	Run portfolio refresh to update report data for all portfolios in the hierarchy including itself.
 	"""
 	refreshPortfolio(input: RefreshPortfolioInput!): RequestStatus!
 }
@@ -5305,83 +5369,86 @@ type PerilBucketDistribution {
 }
 
 """
-A portfolio view combining the portfolio's own info with its paginated children.
+A portfolio view combining the portfolio metadata with its children in the hierarchy.
 """
 type Portfolio {
 	"""
-	Portfolio Id, which is also known as project id
+	Portfolio Id, also known as project id.
 	"""
 	projectId: Int64
 
 	"""
-	Name of the portfolio
+	Name of the portfolio.
 	"""
 	name: String
 
 	"""
-	Portfolio type, can be either Mixed or Real Estate
+	Portfolio type, can be either MIXED or REAL_ESTATE.
 	"""
 	portfolioType: PortfolioType
 
 	"""
-	Parent portfolio Id
+	Parent portfolio Id.
 	"""
 	parentProjectId: Int64
 
 	"""
-	Portfolio investment stage, either holding or acquisition
+	Portfolio investment stage, either HOLDING or ACQUISITION.
 	"""
 	investmentStage: InvestmentStage
 
 	"""
-	Current status of the portfolio, indicating whether the data is updated, in processing, or dirty
+	Current status of the portfolio, indicating whether the data is UPDATED, in PROCESSING, or DIRTY.
+	A DIRTY portfolio means there are changes in the hierarchy rooted at the portfolio and that it needs a portfolio refresh.
 	"""
 	portfolioStatus: PortfolioStatus
 
 	"""
-	Portfolio creation date
+	Portfolio creation date.
 	"""
 	createdAt: Date
 
 	"""
-	Number of assets including RealEstate, company, linear, or area assets
+	Number of assets including REAL_ESTATE/LINEAR/AREA/COMPANY assets.
 	"""
 	assetCount: Int64
 
 	"""
-	Number of sub portfolios in the hierarchy
+	Number of subportfolios in the hierarchy.
 	"""
 	portfolioCount: Int64
 
 	"""
-	Portfolio's subgroup id
+	Portfolio's subgroup id.
 	"""
 	subGroupId: Int
 
 	"""
-	Filter contents available in the portfolio hierarchy
+	The values that can be applied to a portfolio report.
+	The values are extracted from the entire portfolio hierarchy.
 	"""
 	portfolioFilterContent: PortfolioFilterContent
 
 	"""
-	The direct children of this portfolio (REAs, non-REA assets, and sub-portfolios).
+	The direct children of the portfolio, can be REAL_ESTATE/LINEAR/AREA/COMPANY assets and subportfolios.
 	"""
 	descendants(input: PortfolioContentsInput): PortfolioContentConnection!
 
 	"""
-	Dashboard scores for this portfolio, with optional filtering.
+	Portfolio report peril aggregated scores for this portfolio with filters.
+	The aggregation covers all assets and subportfolios from the hierarchy.
 	"""
 	portfolioDashboardScores(
 		filter: DashboardScoreFilter
 	): [PortfolioDashboardScore]
 
 	"""
-	Maps for the portfolio.
+	The map for the entire portfolio hierarchy.
 	"""
 	map: PortfolioMap
 
 	"""
-	All sub-portfolios in the subtree that have a dirty status, with their tree level.
+	All DIRTY subportfolios' metadata in the entire hierarchy.
 	"""
 	dirtySubportfolios: [DirtySubportfolio!]
 }
@@ -5396,31 +5463,38 @@ type PortfolioAssetDetails {
 }
 
 """
-Represents a content item within a portfolio - can be an REA, non-REA asset, or sub-portfolio.
+A portfolio contents represents a descendant item within a portfolio hierarchy - can be a REAL_ESTATE/LINEAR/AREA/COMPANY asset or subportfolios.
 """
 type PortfolioContent {
 	"""
-	The project ID. For REAs, this is the parent project ID. For non-REA assets and sub-portfolios, this is their own project ID.
+	The project ID.
+	For REAL_ESTATE assets, this is the parent project ID.
+	For LINEAR/AREA assets and subportfolios, this is their own project ID.
 	"""
 	projectId: Int64!
 
 	"""
-	The place ID. Only set for REAs (real estate assets).
+	The place ID. Only set for REAL_ESTATE assets.
 	"""
 	placeId: String
 
 	"""
-	The name of the content item. For REAs, this is building.customid. For projects, this is company.name.
+	The name of the portfolio descendant item.
+	For REAL_ESTATE assets, this is building.customid.
+	For LINEAR/AREA assets, this is the name of the project.
+	For company this is either the project name or fallback to company name.
 	"""
 	name: String!
 
 	"""
-	The asset class. Values: "company", "linear", "area". Null for REPs and sub-portfolios.
+	The asset class. Values: REAL_ESTATE, COMPANY, LINEAR, AREA.
+	Only assets will have assetClass, Real estate portfolios and sub-portfolios will have null for this field.
 	"""
 	assetClass: ProjectAssetClass
 
 	"""
-	The portfolio type. Values: "Mixed", "RealEstate". Null for assets including REAs and company / linear / area assets.
+	The portfolio type. Values: MIXED, REAL_ESTATE.
+	Only portfolios will have portfolioType, assets will have this field null.
 	"""
 	portfolioType: PortfolioType
 
@@ -5450,7 +5524,7 @@ type PortfolioContent {
 	createdAt: Date!
 
 	"""
-	Total number of assets in the subtree (including self). For portfolios: REAs + company/linear/area in entire subtree. For leaf items: 1.
+	Total number of assets in the entire portfolio hierarchy, including REAL_ESTATE/LINEAR/AREA/COMPANY assets.
 	"""
 	assetCount: Int64
 
@@ -6152,7 +6226,7 @@ Project asset class - categorizes the class of assets in a project.
 """
 enum ProjectAssetClass {
 	"""
-	Real estate assets (properties).
+	Real estate assets, properties that can be residential rentals, Commercial property, industrial real estate, etc.
 	"""
 	REAL_ESTATE
 
@@ -6162,7 +6236,7 @@ enum ProjectAssetClass {
 	COMPANY
 
 	"""
-	Linear assets (pipelines, roads, etc.).
+	Linear assets, can be pipelines, roads, etc.
 	"""
 	LINEAR
 
@@ -7179,6 +7253,26 @@ input ProjectUploadHeadersInput {
 	value: String!
 }
 
+"""
+The kind of payload an upload contains.
+"""
+enum ProjectUploadType {
+	"""
+	Real-estate asset upload (default).
+	"""
+	REA
+
+	"""
+	Company Portfolio Creator (CPC) upload — equity portfolio with FS-managed company assets.
+	"""
+	CPC
+
+	"""
+	Customer-company upload.
+	"""
+	COMPANY
+}
+
 type ProjectsConnection {
 	"""
 	The total number of edges in the connection.
@@ -7264,6 +7358,13 @@ type Query {
 	Get project job by id
 	"""
 	projectJob(projectJobId: Int64!): ProjectJob
+
+	"""
+	Get the staged value chain revenue overrides for a company upload job.
+	Returns the list previously persisted via setValueChainRevenue, or an
+	empty list if none has been set.
+	"""
+	valueChainRevenue(projectJobId: Int64!): [ValueChainRevenue!]!
 
 	"""
 	Get all the project jobs the session user has access to.
@@ -7395,7 +7496,7 @@ type Query {
 	): LinkSharesConnection
 
 	"""
-	Get the full ancestor path from root to the given project, ordered root-to-leaf.
+	Get the full ancestor portfolio path from root to the given project, ordered root-to-leaf.
 	"""
 	portfolioPath(projectId: Int64!): [PortfolioPathNode!]!
 
@@ -7405,12 +7506,28 @@ type Query {
 	userGroup: UserGroup
 
 	"""
-	Get a portfolio with its own info and paginated descendants in a single call.
+	Get portfolio metadata with descendants
 	"""
 	portfolio(input: PortfolioInput): Portfolio!
+
+	"""
+	List all available industries.
+	"""
+	lookupIndustries: [Industry!]!
+
+	"""
+	List all available sectors.
+	"""
+	lookupSectors: [Sector!]!
 }
 
+"""
+Input type for portfolio refresh.
+"""
 input RefreshPortfolioInput {
+	"""
+	ID of the portfolio to be refreshed
+	"""
 	portfolioId: Int64!
 }
 
@@ -7798,6 +7915,21 @@ type Sector {
 }
 
 """
+Input for setValueChainRevenue. The full revenue map for an upload job is replaced on each call.
+"""
+input SetValueChainRevenueInput {
+	projectJobId: Int64!
+	valueChainRevenue: [ValueChainRevenueEntry!]!
+}
+
+"""
+Result of setValueChainRevenue.
+"""
+type SetValueChainRevenuePayload {
+	success: Boolean!
+}
+
+"""
 Severity
 """
 enum Severity {
@@ -8089,6 +8221,21 @@ type StagedAsset {
 	The geocode quality score of the asset from company data or geocoder
 	"""
 	geocodeQualityScore: Int
+
+	"""
+	Customer-supplied location revenue in US dollars. Populates the asset's NOI on import.
+	"""
+	locationRevenue: Int64
+
+	"""
+	Value chain positions declared for this asset. This field may be null when not applicable, including for non-customer-company uploads.
+	"""
+	valueChainPositions: [ValueChainPosition!]
+
+	"""
+	True when this asset is the company's headquarters. Exactly one asset per customer company upload must have this set.
+	"""
+	isHeadquarters: Boolean
 }
 
 """
@@ -8229,19 +8376,23 @@ input UpdatePortfolioAssetDetailsInput {
 	bookValue: Int64
 }
 
+"""
+Input type for portfolio related move or copy.
+"""
 input UpdatePortfolioParentInput {
 	"""
-	New parent portfolio ID of the portfolio to be moved.
+	The new parent portfolio ID.
 	"""
 	targetParentPortfolioId: Int64!
 
 	"""
-	ID of the portfolio to be moved
+	ID of the portfolio to be processed.
 	"""
 	portfolioId: Int64!
 
 	"""
-	Optional new project name to use when this input is used for copy/clone operations.
+	An optional name to be assigned to the new portfolio, if a new portfolio is created in this operation.
+	The system will use a random-generated unique name if omitted.
 	"""
 	projectName: String
 }
@@ -8352,19 +8503,22 @@ type UpdateProjectStagedCustomBuildingValuesPayload {
 	stagedBuilding: EnterpriseBuilding
 }
 
-input UpdateREAParentInput {
+"""
+Input type for REAL_ESTATE asset move or copy.
+"""
+input UpdateRealEstateAssetParentInput {
 	"""
-	Target parent portfolio ID of the portfolio to be moved.
+	The new parent portfolio ID.
 	"""
 	targetParentPortfolioId: Int64!
 
 	"""
-	Current portfolio ID of the asset
+	The current parent portfolio ID.
 	"""
 	currentParentPortfolioId: Int64!
 
 	"""
-	Place ID of the projectAsset to be moved
+	Place ID of the REAL_ESTATE asset to be moved or copied.
 	"""
 	placeId: String!
 }
@@ -8474,6 +8628,11 @@ type UploadJob implements ProjectJob {
 		"""
 		sort: StagedAssetSort
 	): StagedAssetConnection
+
+	"""
+	The kind of payload this upload job carries (set when the upload was created with an explicit uploadType).
+	"""
+	uploadType: ProjectUploadType
 }
 
 """
@@ -8580,6 +8739,16 @@ enum ValueChainPosition {
 }
 
 """
+A persisted value chain position with its assigned revenue (in USD whole
+dollars). Output mirror of ValueChainRevenueEntry, returned by the
+valueChainRevenue query.
+"""
+type ValueChainRevenue {
+	valueChainPosition: ValueChainPosition!
+	revenue: Int64!
+}
+
+"""
 Fraction of the company's revenue exposed to climate risk by value chain level
 """
 type ValueChainRevenueAtRisk {
@@ -8592,6 +8761,14 @@ type ValueChainRevenueAtRisk {
 	Value of revenue at risk
 	"""
 	revenueAtRisk: Float!
+}
+
+"""
+A single value chain position with its assigned revenue (in USD whole dollars).
+"""
+input ValueChainRevenueEntry {
+	valueChainPosition: ValueChainPosition!
+	revenue: Int64!
 }
 
 """
@@ -8644,8 +8821,9 @@ type ViewedHistoryItem {
 }
 
 """
-Classifies a ViewedHistoryItem. Combines PortfolioType and ProjectAssetClass,
-plus PLACE for a bare place and REAL_ESTATE_ASSET for an REA (a place inside a portfolio).
+Classifies a ViewedHistoryItem.
+A ViewedHistoryItem can be created from recently viewed portfolios, assets,
+places having no portfolios, and public-facing companies.
 """
 enum ViewedHistoryItemType {
 	"""
@@ -8659,7 +8837,7 @@ enum ViewedHistoryItemType {
 	REAL_ESTATE_ASSET
 
 	"""
-	A real estate portfolio (REP).
+	A real estate portfolio.
 	"""
 	REAL_ESTATE_PORTFOLIO
 
@@ -8674,17 +8852,17 @@ enum ViewedHistoryItemType {
 	COMPANY
 
 	"""
-	A NonREA company project.
+	A company asset project.
 	"""
 	COMPANY_ASSET
 
 	"""
-	A NonREA linear project.
+	A linear asset project.
 	"""
 	LINEAR_ASSET
 
 	"""
-	A NonREA area project.
+	An area asset project.
 	"""
 	AREA_ASSET
 }
