@@ -419,9 +419,19 @@ enum AssetTypeId {
 	N9
 
 	"""
+	INFRASTRUCTURE – Energy – Battery Storage
+	"""
+	NB
+
+	"""
 	INFRASTRUCTURE – Utilities – Fiber-Optic Networks
 	"""
 	NF
+
+	"""
+	INFRASTRUCTURE – Energy – Pipelines (Oil, Gas) - Gate Station
+	"""
+	NG
 
 	"""
 	INFRASTRUCTURE – Transportation – Roads & Highways
@@ -429,7 +439,22 @@ enum AssetTypeId {
 	NH
 
 	"""
-	INFRASTRUCTURE – Transportation – Pipelines (Oil, Gas, Water)
+	INFRASTRUCTURE – Energy – Transmission Line
+	"""
+	NI
+
+	"""
+	INFRASTRUCTURE – Transportation – Light Rail
+	"""
+	NL
+
+	"""
+	INFRASTRUCTURE – Transportation – Tunnel
+	"""
+	NN
+
+	"""
+	INFRASTRUCTURE – Energy – Pipelines (Oil, Gas, Water)
 	"""
 	NP
 
@@ -449,9 +474,29 @@ enum AssetTypeId {
 	NS
 
 	"""
+	INFRASTRUCTURE – Energy – Substation
+	"""
+	NT
+
+	"""
 	INFRASTRUCTURE – Transportation – Urban Transit
 	"""
 	NU
+
+	"""
+	INFRASTRUCTURE – Transportation – Container & Cargo Ports
+	"""
+	NV
+
+	"""
+	INFRASTRUCTURE – Energy – Transmission Tower
+	"""
+	NW
+
+	"""
+	INFRASTRUCTURE – Transportation – Airport Runways
+	"""
+	NY
 
 	"""
 	OFFICE - Urban / Low-Rise (1-4 stories)
@@ -722,6 +767,16 @@ type Building {
 	windDesignStandard: WindDesignStandard
 
 	"""
+	The replacement costs of the contents within the building.
+	"""
+	contentsCost: Int64
+
+	"""
+	The replacement costs of the inventory within the building.
+	"""
+	inventoryCost: Int64
+
+	"""
 	[DEPRECATED] The estimated replacement cost of the building (today's dollars) based on standard regional replacement cost per square foot and square footage of existing building.
 	"""
 	rebuildCost: Int64 @deprecated(reason: "Use rebuildCostPerSf instead.")
@@ -750,17 +805,23 @@ input BuildingInput {
 	assetTypeId: AssetTypeId
 
 	"""
-	Annual Net Operating Income. Required for some financial impact metrics
+	Annual Net Operating Income. Required for some financial impact metrics.
 	"""
 	placeNOI: Int
 
 	"""
-	The rebuild price dollars per square foot for a structure (if it exists). Used to compute building damages
+	The rebuild price dollars per square foot for a structure (if it exists). Used to compute building damages.
 	"""
 	rebuildCostSf: Int64
 
 	"""
-	Floor size in square feet
+	Total rebuild cost of the asset, in dollars. Only used for infrastructure asset types (N6, NB, NT, NW, NC, NG), which are
+	priced as a whole rather than per square foot (see rebuildCostSf). The rebuildCostSf will be ignored if the asset is an infrastructure type.
+	"""
+	rebuildCost: Int64
+
+	"""
+	Floor size in square feet.
 	"""
 	buildingSf: Int
 
@@ -770,7 +831,7 @@ input BuildingInput {
 	roofType: RoofType
 
 	"""
-	The predominant construction material of the building
+	The predominant construction material of the building.
 	"""
 	constructionType: ConstructionType
 
@@ -785,17 +846,17 @@ input BuildingInput {
 	units: Int
 
 	"""
-	Year of construction
+	Year of construction.
 	"""
 	yearBuilt: Int
 
 	"""
-	Orientation of building. options are N (default), NE, E, SE, S, SW, W, NW
+	Orientation of building. options are N (default), NE, E, SE, S, SW, W, NW.
 	"""
 	buildingDirection: CompassDirection
 
 	"""
-	The expected design standard of structures, based on ASCE 7-22 wind risk zones
+	The expected design standard of structures, based on ASCE 7-22 wind risk zones.
 	"""
 	windDesignStandard: WindDesignStandard
 
@@ -835,6 +896,16 @@ input BuildingInput {
 	Height of the flood barrier wall (in cm). Only used in adaptations.
 	"""
 	wallHeightCm: Int
+
+	"""
+	The replacement costs of the contents within the building.
+	"""
+	contentsCost: Int64
+
+	"""
+	The replacement costs of the inventory within the building.
+	"""
+	inventoryCost: Int64
 }
 
 interface ByRelativeYear {
@@ -1162,8 +1233,9 @@ type Locality {
 
 	"""
 	The locality's map tile file URL. This is a pre-signed S3 URL that will expire after one hour.
+	Defaults to macroeconomic map tiles if no mapType is specified.
 	"""
-	mapUrl: String
+	mapUrl(mapType: LocalityMapType): String
 
 	"""
 	The bounding box enclosing the geometric shape of the locality.
@@ -1178,7 +1250,7 @@ type Locality {
 	"""
 	Insurance-related data for the locality
 	"""
-	insurance: [LocalityInsuranceData!]!
+	insurance: LocalityInsuranceData
 
 	"""
 	List of parent localities with their names and administrative levels.
@@ -1209,13 +1281,128 @@ type LocalityEdge implements Edge {
 }
 
 """
-Placeholder for locality insurance data
+Insurance cost statistics for a locality, by SSP, year, and percentile.
+"""
+type LocalityInsuranceCost implements ByRelativeYearBySSP {
+	"""
+	Holding Period.
+	Years available: 0, 5, 10, 15, 20, 25, 30, 45, 60, 75.
+	"""
+	relativeYear: Int!
+
+	"""
+	Socioeconomic scenario (SSP)
+	"""
+	ssp: SSP!
+
+	"""
+	Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+	"""
+	percentile: Int!
+
+	"""
+	Cost volatility.
+	"""
+	costVolatility: Float
+
+	"""
+	Cost growth rate.
+	"""
+	costGrowthRate: Float
+
+	"""
+	Cumulative cost growth rate from year 0 through the current year (compounded).
+	"""
+	costGrowthRateCumulative: Float
+}
+
+"""
+Insurance-related data for a locality.
 """
 type LocalityInsuranceData {
 	"""
-	Placeholder field to avoid gqlgen errors
+	Insurance factor scores for the locality.
 	"""
-	foobar: String
+	insuranceFactor: [LocalityInsuranceFactor!]
+
+	"""
+	Insurance cost statistics for the locality.
+	"""
+	insuranceCost: [LocalityInsuranceCost!]
+}
+
+"""
+Insurance factor score for a locality, by SSP and year.
+"""
+type LocalityInsuranceFactor implements ByRelativeYearBySSP {
+	"""
+	Holding Period.
+	Years available: 0, 5, 10, 15, 20, 25, 30, 45, 60, 75.
+	"""
+	relativeYear: Int!
+
+	"""
+	Socioeconomic scenario (SSP)
+	"""
+	ssp: SSP!
+
+	"""
+	Insurance factor score.
+	"""
+	insuranceFactor: Int
+}
+
+"""
+Filter for the insurance localities connection.
+"""
+input LocalityInsuranceFilter {
+	"""
+	Socioeconomic scenario (SSP)
+	"""
+	ssp: SSP = SSP_2_45
+
+	"""
+	Holding Period
+	Years available: 0, 5, 10, 15, 20, 25, 30, 45, 60, 75
+	"""
+	relativeYear: Int = 30
+
+	"""
+	The locality administrative level
+	"""
+	adminLevel: AdministrativeLevel!
+
+	"""
+	Locality name search
+	"""
+	searchValue: String
+
+	"""
+	Filter by admin level 0 locality Ids (countries)
+	"""
+	locality0Ids: [Int64!]
+
+	"""
+	Filter by admin level 1 locality Ids (e.g. States or Provinces)
+	"""
+	locality1Ids: [Int64!]
+
+	"""
+	Filter by admin level 2 locality Ids (e.g. Counties)
+	"""
+	locality2Ids: [Int64!]
+}
+
+"""
+Sort order for the insurance localities connection.
+"""
+enum LocalityInsuranceSort {
+	NAME_ASC
+	NAME_DESC
+	INSURANCE_FACTOR_ASC
+	INSURANCE_FACTOR_DESC
+	INSURANCE_COST_GROWTH_RATE_ASC
+	INSURANCE_COST_GROWTH_RATE_DESC
 }
 
 type LocalityMacroeconomicData implements ByRelativeYearBySSP {
@@ -1678,6 +1865,14 @@ enum LocalityMacroeconomicSort {
 	AVERAGE_GROSS_INCOME_CHANGE_FACTOR_CLIMATE_MARKET_DESC
 }
 
+"""
+Map tile type for choropleth overlays.
+"""
+enum LocalityMapType {
+	MACROECONOMIC
+	INSURANCE
+}
+
 enum MeasurementSystem {
 	"""
 	Convert return values to imperial. This is the default MeasurementSystem.
@@ -1716,6 +1911,12 @@ enum MissileEnvironment {
 A union to encompass all possible Node types for pagination
 """
 union Node = Locality
+
+enum OccupancyType {
+	OWNER
+	OPERATOR
+	OWNER_OPERATOR
+}
 
 """
 PageInfo is returned for a connection. It contains pagination-related info, as well as connection edges (page entries).
@@ -1842,6 +2043,11 @@ type PlaceAdaptations {
 	Possible adaptations for the building and their potential costs and savings.
 	"""
 	possibleAdaptations: [Adaptation!]
+
+	"""
+	Recommended adaptations for the building based on potential savings.
+	"""
+	recommendedAdaptations: [RecommendedAdaptation!]
 }
 
 input PlaceAdaptationsInput {
@@ -2251,6 +2457,16 @@ type PlaceFloodDamagesAAL implements ByRelativeYearBySSP {
 	Sum of cumulative AAL and cumulative average annual interruption loss.
 	"""
 	cashLossCumulative: Int64
+
+	"""
+	Annualized cost from lost inventory, lost contents, and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
+	"""
+	operatorLoss: Int64
+
+	"""
+	Cumulative annualized cost from lost inventory, lost contents, and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
+	"""
+	operatorLossCumulative: Int64
 }
 
 input PlaceFloodDamagesAALInput {
@@ -2305,6 +2521,11 @@ type PlaceFloodDamagesBuilding implements ByRelativeYearBySSPByRP {
 	Sum of repair cost and interruption loss due to flood.
 	"""
 	cashLoss: Int64
+
+	"""
+	Annualized cost from lost inventory, lost contents, and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
+	"""
+	operatorLoss: Int64
 }
 
 input PlaceFloodDamagesBuildingInput {
@@ -2729,6 +2950,16 @@ type PlacePrimaryPerilDamagesAAL implements ByRelativeYearBySSP {
 	Sum of cumulative AAL and cumulative average annual interruption loss.
 	"""
 	cashLossCumulative: Int64
+
+	"""
+	Annualized cost from lost inventory, lost contents, and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
+	"""
+	operatorLoss: Int64
+
+	"""
+	Cumulative annualized cost from lost inventory, lost contents, and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
+	"""
+	operatorLossCumulative: Int64
 }
 
 input PlacePrimaryPerilDamagesAALInput {
@@ -2863,6 +3094,16 @@ type PlaceWildfireDamagesAAL implements ByRelativeYearBySSP {
 	Sum of cumulative AAL and cumulative average annual interruption loss.
 	"""
 	cashLossCumulative: Int64
+
+	"""
+	Annualized cost from lost inventory, lost contents and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
+	"""
+	operatorLoss: Int64
+
+	"""
+	Cumulative annualized cost from lost inventory, lost contents and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
+	"""
+	operatorLossCumulative: Int64
 }
 
 input PlaceWildfireDamagesAALInput {
@@ -2922,6 +3163,41 @@ type PlaceWildfireDamagesBuilding implements ByRelativeYearBySSP {
 	Sum of repair cost and interruption loss due to wildfire.
 	"""
 	cashLoss: Int64
+
+	"""
+	Annualized cost from lost inventory, lost contents, and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
+	"""
+	operatorLoss: Int64
+
+	"""
+	Probability of building combustion by direct flame contact given a modeled wildfire and based on building characteristics.
+	"""
+	combustionProbabilityFlame: Float
+
+	"""
+	Probability of direct flame contact destroying building in given year.
+	"""
+	destructionProbabilityFlame: Float
+
+	"""
+	Estimated number of days to rebuild or repair damage due to direct flame contact.
+	"""
+	repairDaysFlame: Int
+
+	"""
+	Probability of building combustion by wind-borne embers given a modeled wildfire and based on building characteristics.
+	"""
+	combustionProbabilityEmber: Float
+
+	"""
+	Probability of wind-borne embers destroying building in given year.
+	"""
+	destructionProbabilityEmber: Float
+
+	"""
+	Estimated number of days to rebuild or repair damage due to wind-borne embers.
+	"""
+	repairDaysEmber: Int
 }
 
 input PlaceWildfireDamagesBuildingInput {
@@ -3149,6 +3425,16 @@ type PlaceWindDamagesAAL implements ByRelativeYearBySSP {
 	Sum of cumulative AAL and cumulative average annual interruption loss.
 	"""
 	cashLossCumulative: Int64
+
+	"""
+	Annualized cost from lost inventory, lost contents, and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
+	"""
+	operatorLoss: Int64
+
+	"""
+	Cumulative annualized cost from lost inventory, lost contents, and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
+	"""
+	operatorLossCumulative: Int64
 }
 
 input PlaceWindDamagesAALInput {
@@ -3203,6 +3489,11 @@ type PlaceWindDamagesBuilding implements ByRelativeYearBySSPByRP {
 	Sum of repair cost and interruption loss due to wind.
 	"""
 	cashLoss: Int64
+
+	"""
+	Annualized cost from lost inventory, lost contents, and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
+	"""
+	operatorLoss: Int64
 }
 
 input PlaceWindDamagesBuildingInput {
@@ -3448,6 +3739,32 @@ type Query {
 		"""
 		options: InputOptions
 	): LocalitiesConnection
+	localitiesByInsuranceConnection(
+		"""
+		Number of records(edges) to return. A number between 0 and 50.
+		"""
+		first: Int
+
+		"""
+		Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.
+		"""
+		after: String
+
+		"""
+		Sort the localities
+		"""
+		sort: LocalityInsuranceSort
+
+		"""
+		Filter the localities
+		"""
+		filter: LocalityInsuranceFilter!
+
+		"""
+		Input options.
+		"""
+		options: InputOptions
+	): LocalitiesConnection
 
 	"""
 	Place lookup by placeId.
@@ -3568,6 +3885,28 @@ type Query {
 		"""
 		options: InputOptions
 	): AdaptationsResponse
+}
+
+type RecommendedAdaptation {
+	"""
+	The type of adaptation.
+	"""
+	type: AdaptationType!
+
+	"""
+	The display name of the adaptation.
+	"""
+	name: String!
+
+	"""
+	The savings on investment due to the recommended adaptation.
+	"""
+	adaptationSOI: Int64
+
+	"""
+	Payback period information.
+	"""
+	paybackYear: PaybackYears
 }
 
 input RefreshStatisticsInput {
