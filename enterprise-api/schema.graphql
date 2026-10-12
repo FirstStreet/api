@@ -44,6 +44,132 @@ enum AIInsightsStatus {
 	DIRTY
 }
 
+"""
+User-facing adaptation measure group. Parameter variants of the same measure
+(e.g. flood-barrier heights) share a group. Distinct from AdaptationMechanism.
+"""
+enum AdaptationGroup {
+	"""
+	Flood Barriers (1–8 ft variants)
+	"""
+	FLOOD_BARRIER
+
+	"""
+	Dry Floodproofing (1–10 ft variants)
+	"""
+	DRY_FLOODPROOFING
+
+	"""
+	Wet Floodproofing (finished/unfinished-basement variants)
+	"""
+	WET_FLOODPROOFING
+
+	"""
+	Raised Foundation (1–10 ft variants)
+	"""
+	RAISED_FOUNDATION
+
+	"""
+	Retaining Walls (1–4 ft variants)
+	"""
+	RETAINING_WALLS
+
+	"""
+	Drainage Improvements (1–6 ft variants)
+	"""
+	DRAINAGE_IMPROVEMENTS
+
+	"""
+	Elevation of Critical Equipment & Utilities
+	"""
+	ELEVATION_OF_CRITICAL_EQUIPMENT
+
+	"""
+	Wind Design Standard upgrades
+	"""
+	WIND_DESIGN_STANDARD
+
+	"""
+	Replace with Metal Roof
+	"""
+	ROOF_TYPE_TO_METAL
+
+	"""
+	Fire Proofing
+	"""
+	FIRE_PROOFING
+
+	"""
+	Defensible Space
+	"""
+	DEFENSIBLE_SPACE
+
+	"""
+	Onsite Fire Suppression
+	"""
+	ONSITE_FIRE_SUPPRESSION
+
+	"""
+	Fire-Resistant Exterior Materials (roof / wall / eaves & openings components)
+	"""
+	FIRE_RESISTANT_EXTERIOR
+}
+
+"""
+Adaptation mechanism. Each mechanism should only have one adaptation applied.
+"""
+enum AdaptationMechanism {
+	"""
+	Perimeter barriers / dry floodproofing / retaining walls / drainage — block water at the structure boundary
+	"""
+	FLOOD_PERIMETER_BARRIER
+
+	"""
+	Raised foundations — elevate the building above water
+	"""
+	FLOOD_FOUNDATION
+
+	"""
+	Wet floodproofing — interior/structural waterproofing
+	"""
+	FLOOD_STRUCTURE_WATERPROOF
+
+	"""
+	Equipment elevation — raise critical equipment above flood level
+	"""
+	FLOOD_EQUIPMENT
+
+	"""
+	Building envelope design standard upgrades for wind resistance
+	"""
+	WIND_DESIGN_STANDARD
+
+	"""
+	Fire-resistant envelope materials
+	"""
+	FIRE_PROOFING
+
+	"""
+	Non-combustible roof cover materials
+	"""
+	FIRE_ROOF_COVER
+
+	"""
+	Defensible space landscaping
+	"""
+	FIRE_DEFENSIBLE_SPACE
+
+	"""
+	Non-combustible construction materials
+	"""
+	FIRE_CONSTRUCTION
+
+	"""
+	Onsite fire suppression systems
+	"""
+	FIRE_SUPPRESSION
+}
+
 type AdaptationSummaryData {
 	"""
 	Socio-economic pathway of the prediction model.
@@ -106,6 +232,43 @@ enum AdaptationType {
 	WIND_DESIGN_STANDARD_MEDIUM_TO_HIGH
 	WIND_DESIGN_STANDARD_LOW_TO_HIGH
 	ROOF_TYPE_TO_METAL
+	DRY_FLOODPROOFING_TO_1_FOOT
+	DRY_FLOODPROOFING_TO_2_FEET
+	DRY_FLOODPROOFING_TO_3_FEET
+	DRY_FLOODPROOFING_TO_4_FEET
+	DRY_FLOODPROOFING_TO_5_FEET
+	DRY_FLOODPROOFING_TO_6_FEET
+	DRY_FLOODPROOFING_TO_7_FEET
+	DRY_FLOODPROOFING_TO_8_FEET
+	DRY_FLOODPROOFING_TO_9_FEET
+	DRY_FLOODPROOFING_TO_10_FEET
+	WET_FLOODPROOFING
+	RAISED_FOUNDATION_TO_1_FOOT
+	RAISED_FOUNDATION_TO_2_FEET
+	RAISED_FOUNDATION_TO_3_FEET
+	RAISED_FOUNDATION_TO_4_FEET
+	RAISED_FOUNDATION_TO_5_FEET
+	RAISED_FOUNDATION_TO_6_FEET
+	RAISED_FOUNDATION_TO_7_FEET
+	RAISED_FOUNDATION_TO_8_FEET
+	RAISED_FOUNDATION_TO_9_FEET
+	RAISED_FOUNDATION_TO_10_FEET
+	RETAINING_WALLS_TO_1_FOOT
+	RETAINING_WALLS_TO_2_FEET
+	RETAINING_WALLS_TO_3_FEET
+	RETAINING_WALLS_TO_4_FEET
+	DRAINAGE_IMPROVEMENTS_TO_1_FOOT
+	DRAINAGE_IMPROVEMENTS_TO_2_FEET
+	DRAINAGE_IMPROVEMENTS_TO_3_FEET
+	DRAINAGE_IMPROVEMENTS_TO_4_FEET
+	DRAINAGE_IMPROVEMENTS_TO_5_FEET
+	DRAINAGE_IMPROVEMENTS_TO_6_FEET
+	WET_FLOODPROOFING_UNFINISHED_BASEMENT
+	ELEVATION_OF_CRITICAL_EQUIPMENT
+	ONSITE_FIRE_SUPPRESSION
+	FIRE_RESISTANT_EXTERIOR_ROOF
+	FIRE_RESISTANT_EXTERIOR_WALL
+	FIRE_RESISTANT_EXTERIOR_EAVES_AND_OPENINGS
 }
 
 input AddProjectAssetInput {
@@ -146,6 +309,7 @@ enum AggregatedProjectModuleStatus {
 	LOCKED
 	DIRTY
 	FAILED
+	NODATA
 }
 
 """
@@ -174,6 +338,11 @@ type AssetBuildingMetadata {
 	contentsCost: Int64
 	inventoryCost: Int64
 	placeNOI: Int64
+
+	"""
+	The estimated cost of replacing a roof (in USD) is calculated based on building metadata, including the rebuild cost per square foot, the size of the building, the number of stories, and the type of roof cover. This cost is used to multiply by the probability of a roof replacement due to a specific peril, such as hail. The resulting value represents the expected dollar loss associated with the roof replacement.
+	"""
+	roofReplacementCost: Int64
 }
 
 type AssetClimateExposure {
@@ -184,6 +353,7 @@ type AssetClimateExposure {
 	wind: AssetClimateExposureWind
 	drought: AssetClimateExposureDrought
 	hazard: AssetClimateExposureHazard
+	hail: AssetClimateExposureHail
 }
 
 type AssetClimateExposureCold {
@@ -290,6 +460,37 @@ type AssetClimateExposureFlood {
 	Details for asset flood losses.
 	"""
 	damages: AssetFloodDamages
+
+	"""
+	Flood hazard-zone designation for the asset. In the US, this is the FEMA flood hazard zone.
+	"""
+	hazardZone: String
+}
+
+"""
+Access is gated at AssetClimateExposure.hail; anything else returning this type
+directly would bypass that gate.
+"""
+type AssetClimateExposureHail {
+	"""
+	Hail factor score and scale by SSP and Year.
+	"""
+	factorScore(
+		"""
+		Filter the array of data based on filterBy, this is a further filtering based on result of projectAssetConnection level filter / sorting.
+		"""
+		filterBy: AssetSortFilter
+	): [FactorScore]
+
+	"""
+	Forecast probability.
+	"""
+	probability: AssetHailProbability
+
+	"""
+	Details of damages caused by hail.
+	"""
+	damages: AssetHailDamages
 }
 
 type AssetClimateExposureHazard {
@@ -694,10 +895,194 @@ type AssetFloodProbabilityDepth {
 }
 
 """
+Details for asset hail damages.
+"""
+type AssetHailDamages {
+	"""
+	Annualized damage cost to the asset in the current year due to hail.
+	"""
+	asset(filterBy: AssetSortFilter): [AssetHailDamagesAsset!]
+
+	"""
+	Annualized damage cost to the asset in the current year due to hail.
+	"""
+	aal(filterBy: AssetSortFilter): [AssetHailDamagesAAL!]
+}
+
+"""
+Annualized damage cost to the asset due to hail.
+"""
+type AssetHailDamagesAAL {
+	"""
+	Socio-economic pathway of the prediction model.
+	"""
+	ssp: SSP!
+
+	"""
+	Year, as relative to the current year.
+	"""
+	relativeYear: Int!
+
+	"""
+	Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+	"""
+	percentile: Int!
+
+	"""
+	Annualized damage cost to the asset due to hail.
+	"""
+	aal: Float
+
+	"""
+	Average annual downtime in days due to hail, populated for infrastructure assets only.
+	"""
+	repairDays: Int
+
+	"""
+	Average annual downtime in forgone revenue due to hail. Assumes that every day of the year has the same revenue (1/365.25 share of the annual revenue). Populated for infrastructure assets only.
+	"""
+	interruptionLoss: Int64
+
+	"""
+	Sum of AAL and average annual interruption loss due to hail, populated for infrastructure assets only.
+	"""
+	cashLoss: Int64
+
+	"""
+	Annualized cost from lost inventory, lost contents, and business interruption in the given modeled event due to hail, populated for infrastructure assets only. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
+	"""
+	operatorLoss: Int64
+}
+
+type AssetHailDamagesAsset {
+	"""
+	Socio-economic pathway of the prediction model.
+	"""
+	ssp: SSP!
+
+	"""
+	Year, as relative to the current year.
+	"""
+	relativeYear: Int!
+
+	"""
+	Return period for the hail probability.
+	"""
+	returnPeriod: ReturnPeriod!
+
+	"""
+	Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+	"""
+	percentile: Int!
+
+	"""
+	Probability (0-1) that hail requires roof replacement, populated for real-estate buildings. The annualized dollar loss is available on the AAL section.
+	"""
+	probabilityRoofReplacement: Float
+
+	"""
+	Expected dollar loss from hail damage, populated for infrastructure assets (e.g. solar farms). Null for buildings, since hail causes no building downtime.
+	"""
+	expectedLoss: Int64
+
+	"""
+	Estimated number of days of downtime due to hail damage, populated for infrastructure assets only.
+	"""
+	repairDays: Int
+
+	"""
+	Estimated downtime loss of revenue due to hail, populated for infrastructure assets only.
+	"""
+	interruptionLoss: Int64
+
+	"""
+	Sum of expected loss, interruption loss and losses to contents and inventory due to hail, populated for infrastructure assets only.
+	"""
+	cashLoss: Int64
+
+	"""
+	Cost from lost inventory, lost contents, and business interruption in the given modeled event, populated for infrastructure assets only. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
+	"""
+	operatorLoss: Int64
+}
+
+"""
+Forecast probability
+"""
+type AssetHailProbability {
+	"""
+	Probability for hail sizes.
+	"""
+	size(
+		"""
+		Filter the array of data based on filterBy, this is a further filtering based on result of projectAssetConnection level filter / sorting.
+		"""
+		filterBy: AssetSortFilter
+	): [AssetHailProbabilitySize!]
+
+	"""
+	Cumulative probability of hail of a given size (threshold) reaching the building.
+	"""
+	cumulative(filterBy: AssetSortFilter): [AssetHailProbabilityCumulative]
+}
+
+type AssetHailProbabilityCumulative {
+	"""
+	Socio-economic pathway of the prediction model.
+	"""
+	ssp: SSP!
+
+	"""
+	Year, as relative to the current year.
+	"""
+	relativeYear: Int!
+
+	"""
+	Hail size threshold for the probability, inches.
+	"""
+	threshold: Float
+
+	"""
+	Cumulative probability of hail of a given size reaching the building.
+	"""
+	probability: Float
+}
+
+"""
+Probability for hail sizes
+"""
+type AssetHailProbabilitySize {
+	"""
+	Socio-economic pathway of the prediction model.
+	"""
+	ssp: SSP!
+
+	"""
+	Year, as relative to the current year.
+	"""
+	relativeYear: Int!
+
+	"""
+	Return period for the hail probability.
+	"""
+	returnPeriod: ReturnPeriod!
+
+	"""
+	Maximum hail size for a given return period, inches.
+	"""
+	size: Float
+}
+
+"""
 Details for asset hazard losses.
 """
 type AssetHazardDamages {
 	aal(filterBy: AssetSortFilter): [AssetHazardDamagesAAL!]
+
+	"""
+	Points on the All Hazards Exceedance Curve, one per return period. NULL if the data vintage for this project does not model the All Hazards Exceedance Curve; empty if it does and the asset has no modeled damage.
+	"""
+	exceedance(filterBy: AssetSortFilter): [AssetHazardDamagesExceedance!]
 }
 
 """
@@ -748,6 +1133,56 @@ type AssetHazardDamagesAAL {
 	Cumulative annualized cost from lost inventory, lost contents, and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
 	"""
 	operatorLossCumulative: Int64
+}
+
+"""
+A point on the All Hazards Exceedance Curve: loss to the structure at a given return period from all hazards combined, accounting for the likelihood that more than one hazard affects the asset in the same event.
+"""
+type AssetHazardDamagesExceedance {
+	"""
+	Socio-economic pathway of the prediction model.
+	"""
+	ssp: SSP!
+
+	"""
+	Year, as relative to the current year.
+	"""
+	relativeYear: Int!
+
+	"""
+	Return period of the combined-hazard exceedance estimate.
+	"""
+	returnPeriod: ReturnPeriod!
+
+	"""
+	Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+	"""
+	percentile: Int!
+
+	"""
+	Sum of repair cost, interruption loss and losses to contents and inventory due to all hazards. NULL when the asset's modeled hazards do not include a cash-loss estimate.
+	"""
+	cashLoss: Int64
+
+	"""
+	Estimated cost to repair damage due to all hazards.
+	"""
+	repairCost: Int64
+
+	"""
+	Cost from lost inventory, lost contents, and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
+	"""
+	operatorLoss: Int64
+
+	"""
+	Estimated downtime loss of revenue due to all hazards.
+	"""
+	interruptionLoss: Int64
+
+	"""
+	Estimated number of days to rebuild or repair damage due to all hazards.
+	"""
+	repairDays: Int
 }
 
 type AssetHeatProbability {
@@ -1041,6 +1476,16 @@ enum AssetSort {
 	CLIMATE_EXPOSURE_FIRE_DAMAGE_AAL_INTERRUPTION_DESC
 	CLIMATE_EXPOSURE_FIRE_DAMAGE_AAL_CASH_LOSS_ASC
 	CLIMATE_EXPOSURE_FIRE_DAMAGE_AAL_CASH_LOSS_DESC
+	CLIMATE_EXPOSURE_HAZARD_EXCEEDANCE_CASH_LOSS_ASC
+	CLIMATE_EXPOSURE_HAZARD_EXCEEDANCE_CASH_LOSS_DESC
+	CLIMATE_EXPOSURE_HAZARD_EXCEEDANCE_REPAIR_COST_ASC
+	CLIMATE_EXPOSURE_HAZARD_EXCEEDANCE_REPAIR_COST_DESC
+	CLIMATE_EXPOSURE_HAZARD_EXCEEDANCE_OPERATOR_LOSS_ASC
+	CLIMATE_EXPOSURE_HAZARD_EXCEEDANCE_OPERATOR_LOSS_DESC
+	CLIMATE_EXPOSURE_HAZARD_EXCEEDANCE_REPAIR_DAYS_ASC
+	CLIMATE_EXPOSURE_HAZARD_EXCEEDANCE_REPAIR_DAYS_DESC
+	CLIMATE_EXPOSURE_HAZARD_EXCEEDANCE_INTERRUPTION_LOSS_ASC
+	CLIMATE_EXPOSURE_HAZARD_EXCEEDANCE_INTERRUPTION_LOSS_DESC
 	CLIMATE_EXPOSURE_HAZARD_DAMAGE_AAL_ASC
 	CLIMATE_EXPOSURE_HAZARD_DAMAGE_AAL_DESC
 	CLIMATE_EXPOSURE_HAZARD_DAMAGE_AAL_REPAIR_DAYS_ASC
@@ -1067,6 +1512,18 @@ enum AssetSort {
 	CLIMATE_EXPOSURE_DROUGHT_FACTOR_SCORE_DESC
 	CLIMATE_EXPOSURE_HAIL_FACTOR_SCORE_ASC
 	CLIMATE_EXPOSURE_HAIL_FACTOR_SCORE_DESC
+	CLIMATE_EXPOSURE_HAIL_SIZE_ASC
+	CLIMATE_EXPOSURE_HAIL_SIZE_DESC
+	CLIMATE_EXPOSURE_HAIL_ROOF_REPLACEMENT_PROB_ASC
+	CLIMATE_EXPOSURE_HAIL_ROOF_REPLACEMENT_PROB_DESC
+	CLIMATE_EXPOSURE_HAIL_DAMAGE_AAL_ASC
+	CLIMATE_EXPOSURE_HAIL_DAMAGE_AAL_DESC
+	CLIMATE_EXPOSURE_HAIL_DAMAGE_AAL_REPAIR_DAYS_ASC
+	CLIMATE_EXPOSURE_HAIL_DAMAGE_AAL_REPAIR_DAYS_DESC
+	CLIMATE_EXPOSURE_HAIL_DAMAGE_AAL_INTERRUPTION_ASC
+	CLIMATE_EXPOSURE_HAIL_DAMAGE_AAL_INTERRUPTION_DESC
+	CLIMATE_EXPOSURE_HAIL_DAMAGE_AAL_CASH_LOSS_ASC
+	CLIMATE_EXPOSURE_HAIL_DAMAGE_AAL_CASH_LOSS_DESC
 	CLIMATE_EXPOSURE_AIR_FACTOR_SCORE_ASC
 	CLIMATE_EXPOSURE_AIR_FACTOR_SCORE_DESC
 	CLIMATE_EXPOSURE_HAZARD_FACTOR_SCORE_ASC
@@ -1174,6 +1631,30 @@ enum AssetSort {
 	ADMIN_2_MACROECONOMIC_PRICE_OF_LIVING_CHANGE_FACTOR_CLIMATE_DESC
 	ADMIN_2_MACROECONOMIC_PRICE_OF_LIVING_CHANGE_FACTOR_CLIMATE_MARKET_ASC
 	ADMIN_2_MACROECONOMIC_PRICE_OF_LIVING_CHANGE_FACTOR_CLIMATE_MARKET_DESC
+
+	"""
+	Sort by the admin2 locality's insurance factor.
+	"""
+	ADMIN_2_INSURANCE_FACTOR_ASC
+	ADMIN_2_INSURANCE_FACTOR_DESC
+
+	"""
+	Sort by the admin2 locality's insurance cost growth rate at the p50 percentile.
+	"""
+	ADMIN_2_INSURANCE_COST_GROWTH_RATE_ASC
+	ADMIN_2_INSURANCE_COST_GROWTH_RATE_DESC
+
+	"""
+	Sort by the admin2 locality's cumulative insurance cost growth rate at the p50 percentile.
+	"""
+	ADMIN_2_INSURANCE_COST_GROWTH_RATE_CUMULATIVE_ASC
+	ADMIN_2_INSURANCE_COST_GROWTH_RATE_CUMULATIVE_DESC
+
+	"""
+	Sort by the admin2 locality's insurance cost volatility at the p50 percentile.
+	"""
+	ADMIN_2_INSURANCE_COST_VOLATILITY_ASC
+	ADMIN_2_INSURANCE_COST_VOLATILITY_DESC
 	METRO_MACROECONOMIC_ECON_FACTOR_CLIMATE_ASC
 	METRO_MACROECONOMIC_ECON_FACTOR_CLIMATE_DESC
 	METRO_MACROECONOMIC_ECON_FACTOR_CLIMATE_MARKET_ASC
@@ -1221,10 +1702,11 @@ input AssetSortFilter {
 	perilId: Int
 	threshold: Int
 	adminLevel: AdministrativeLevel
+	windSource: WindSource
 }
 
 """
-Asset status, resolved at query time from job records.
+Asset status, resolved at query time from job records and pending-edit signals.
 """
 enum AssetStatus {
 	"""
@@ -1241,6 +1723,15 @@ enum AssetStatus {
 	The latest job for this asset has failed.
 	"""
 	FAILED
+
+	"""
+	The asset has pending edits (dirty project assets) that have not yet been
+	processed by a module refresh. Surfaces the same signal that drives
+	inclusion in `Portfolio.dirtyNonRealEstateAssets`. Reported for non-REA
+	assets (COMPANY / LINEAR / AREA); REA dirty state surfaces via the
+	containing portfolio's `portfolioStatus`.
+	"""
+	DIRTY
 }
 
 type AssetType {
@@ -1463,6 +1954,11 @@ enum AssetTypeId {
 	INFRASTRUCTURE – Energy – Battery Storage
 	"""
 	NB
+
+	"""
+	INFRASTRUCTURE – Energy – Pipelines (Oil, Gas) - Compressor Station
+	"""
+	NC
 
 	"""
 	INFRASTRUCTURE – Utilities – Fiber-Optic Networks
@@ -1794,6 +2290,36 @@ type AssetWildfireDamagesAsset {
 	Cost from lost inventory, lost contents, and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
 	"""
 	operatorLoss: Int64
+
+	"""
+	Probability of asset combustion by direct flame contact given a modeled wildfire and based on asset characteristics.
+	"""
+	combustionProbabilityFlame: Float
+
+	"""
+	Probability of direct flame contact destroying asset in given year.
+	"""
+	destructionProbabilityFlame: Float
+
+	"""
+	Estimated number of days to rebuild or repair damage due to direct flame contact.
+	"""
+	repairDaysFlame: Int
+
+	"""
+	Probability of asset combustion by wind-borne embers given a modeled wildfire and based on asset characteristics.
+	"""
+	combustionProbabilityEmber: Float
+
+	"""
+	Probability of wind-borne embers destroying asset in given year.
+	"""
+	destructionProbabilityEmber: Float
+
+	"""
+	Estimated number of days to rebuild or repair damage due to wind-borne embers.
+	"""
+	repairDaysEmber: Int
 }
 
 """
@@ -1875,9 +2401,21 @@ type AssetWindDamages {
 	asset(filterBy: AssetSortFilter): [AssetWindDamagesAsset!]
 
 	"""
+	Damage to the structure, broken out by source. Populated from vintage 6 on; null on older
+	vintages.
+	"""
+	assetBySource(filterBy: AssetSortFilter): [AssetWindDamagesAssetBySource!]
+
+	"""
 	Annualized damage cost to the structure in the current year due to wind.
 	"""
 	aal(filterBy: AssetSortFilter): [AssetWindDamagesAAL!]
+
+	"""
+	Annualized damage cost to the structure in the current year due to wind, broken out by
+	source. Populated from vintage 6 on; null on older vintages.
+	"""
+	aalBySource(filterBy: AssetSortFilter): [AssetWindDamagesAALBySource]
 }
 
 """
@@ -1898,6 +2436,61 @@ type AssetWindDamagesAAL {
 	Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
 	"""
 	percentile: Int!
+
+	"""
+	Annualized damage cost to the structure due to wind.
+	"""
+	aal: Float
+
+	"""
+	Average annual downtime in days.
+	"""
+	repairDays: Int
+
+	"""
+	Average annual downtime in forgone revenue. Assumes that every day of the year has the same revenue (1/365.25 share of the annual revenue)
+	"""
+	interruptionLoss: Int64
+
+	"""
+	Sum of AAL and average annual interruption loss.
+	"""
+	cashLoss: Int64
+
+	"""
+	Annualized cost from lost inventory, lost contents, and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
+	"""
+	operatorLoss: Int64
+
+	"""
+	Cumulative annualized cost from lost inventory, lost contents, and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
+	"""
+	operatorLossCumulative: Int64
+}
+
+"""
+Annualized damage cost to the structure in the current year due to wind, by source.
+"""
+type AssetWindDamagesAALBySource {
+	"""
+	Socio-economic pathway of the prediction model.
+	"""
+	ssp: SSP!
+
+	"""
+	Year, as relative to the current year.
+	"""
+	relativeYear: Int!
+
+	"""
+	Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+	"""
+	percentile: Int!
+
+	"""
+	Source of the wind event.
+	"""
+	source: WindSource!
 
 	"""
 	Annualized damage cost to the structure due to wind.
@@ -1977,6 +2570,58 @@ type AssetWindDamagesAsset {
 	operatorLoss: Int64
 }
 
+type AssetWindDamagesAssetBySource {
+	"""
+	Socio-economic pathway of the prediction model.
+	"""
+	ssp: SSP!
+
+	"""
+	Year, as relative to the current year.
+	"""
+	relativeYear: Int!
+
+	"""
+	Return period for the wind probability.
+	"""
+	returnPeriod: ReturnPeriod!
+
+	"""
+	Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+	"""
+	percentile: Int!
+
+	"""
+	Source of the wind event.
+	"""
+	source: WindSource!
+
+	"""
+	Estimated number of days to rebuild or repair damage due to wind.
+	"""
+	repairDays: Float
+
+	"""
+	Estimated cost to repair damage due to wind.
+	"""
+	repairCost: Float
+
+	"""
+	Estimated downtime loss of revenue due to wind.
+	"""
+	interruptionLoss: Int64
+
+	"""
+	Sum of repair cost, interruption loss and losses to contents and inventory due to wind.
+	"""
+	cashLoss: Int64
+
+	"""
+	Cost from lost inventory, lost contents, and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
+	"""
+	operatorLoss: Int64
+}
+
 """
 Forecast probability
 """
@@ -1992,9 +2637,23 @@ type AssetWindProbability {
 	): [AssetWindProbabilitySpeed!]
 
 	"""
+	Probability for wind speeds, broken out by source (tropical cyclone, extratropical cyclone,
+	severe convective). Populated from vintage 6 on; null on older vintages.
+	"""
+	speedBySource(filterBy: AssetSortFilter): [AssetWindProbabilitySpeedBySource!]
+
+	"""
 	Cumulative probability of 3-sec wind gusts of a given speed (threshold) reaching the building.
 	"""
 	cumulative(filterBy: AssetSortFilter): [AssetWindProbabilityCumulative]
+
+	"""
+	Cumulative probability of a given wind speed (threshold), broken out by source. Populated
+	from vintage 6 on; null on older vintages.
+	"""
+	cumulativeBySource(
+		filterBy: AssetSortFilter
+	): [AssetWindProbabilityCumulativeBySource]
 }
 
 type AssetWindProbabilityCumulative {
@@ -2007,6 +2666,33 @@ type AssetWindProbabilityCumulative {
 	Year, as relative to the current year.
 	"""
 	relativeYear: Int!
+
+	"""
+	Wind 3-sec speed threshold for the probability.
+	"""
+	threshold: Float
+
+	"""
+	Cumulative probability of winds of a given speed (3-sec) reaching the building.
+	"""
+	probability: Float
+}
+
+type AssetWindProbabilityCumulativeBySource {
+	"""
+	Socio-economic pathway of the prediction model.
+	"""
+	ssp: SSP!
+
+	"""
+	Year, as relative to the current year.
+	"""
+	relativeYear: Int!
+
+	"""
+	Source of the wind event.
+	"""
+	source: WindSource!
 
 	"""
 	Wind 3-sec speed threshold for the probability.
@@ -2037,6 +2723,36 @@ type AssetWindProbabilitySpeed {
 	Return period for the wind probability.
 	"""
 	returnPeriod: ReturnPeriod!
+
+	"""
+	The maximum 3-second gust speed for a given return period.
+	"""
+	speed3Sec: Float
+}
+
+"""
+Probability for wind speeds, by source
+"""
+type AssetWindProbabilitySpeedBySource {
+	"""
+	Socio-economic pathway of the prediction model.
+	"""
+	ssp: SSP!
+
+	"""
+	Year, as relative to the current year.
+	"""
+	relativeYear: Int!
+
+	"""
+	Return period for the wind probability.
+	"""
+	returnPeriod: ReturnPeriod!
+
+	"""
+	Source of the wind event.
+	"""
+	source: WindSource!
 
 	"""
 	The maximum 3-second gust speed for a given return period.
@@ -2079,6 +2795,7 @@ type BoundingBox {
 type BucketStat {
 	count: Int
 	percent: Float
+	valuePercent: Float
 }
 
 type ClimateExposureData {
@@ -2210,9 +2927,16 @@ type Company {
 	sectorId: String @deprecated(reason: "replaced by company.sector.id")
 
 	"""
-	Where a company stands relative to its peers given the given
+	Where a company stands relative to its peers within its sector, using
+	competition ranking with ties (matches companiesConnection + SECTOR_RANK
+	ordering). The rank is computed over the FULL sector and then read for this
+	company.
+
+	When `filter` is omitted, returns the stored default-scenario value, which may
+	be null. When `filter` is provided, returns the rank computed on the fly for
+	that scenario (perilId / ssp / relativeYear / percentile).
 	"""
-	peerRanking: Int64
+	peerRanking(filter: CompanyPeerRankingFilter): Int64
 
 	"""
 	The company's sector.
@@ -2263,6 +2987,51 @@ type Company {
 	Fractions of the company's revenue exposed to climate risk by value chain level
 	"""
 	valueChainRevenueAtRisk: [ValueChainRevenueAtRisk!]
+
+	"""
+	Absolute revenue attributed to each value chain position.
+	"""
+	valueChainRevenueAbsolute: [ValueChainRevenueAbsolute!]
+
+	"""
+	Whether any asset in this company project has a customer-entered per-location
+	net operating income (placeNOI). Null when the company is not loaded through a
+	project (e.g. the public catalog), where the value cannot be determined.
+	"""
+	hasAssetLevelRevenue: Boolean
+
+	"""
+	SEC / regulatory filings associated with this company. One entry per
+	extracted snippet, so a filing appears once per snippet it yielded.
+
+	Null for customer-uploaded companies, which have no filings, and when
+	queried from a connection. Select it through project(projectId:) instead.
+	"""
+	filingConnection(
+		first: Int
+		after: String
+		last: Int
+		before: String
+		sort: CompanyFilingSort
+		filter: CompanyFilingFilter
+	): CompanyFilingConnection
+
+	"""
+	Distinct filing types across all of this company's filings, independent of
+	the current filingConnection page. Empty for customer-uploaded companies
+	and when not queried through project(projectId:), same as filingConnection.
+	"""
+	filingTypes: [CompanyFilingType!]!
+
+	"""
+	Total number of filings for this company, as reported by the source data drop.
+	"""
+	filingsTotal: Int64
+
+	"""
+	Earliest filing date for this company, as reported by the source data drop.
+	"""
+	filingsMinDate: Date
 }
 
 """
@@ -2271,6 +3040,119 @@ Where the company data was provided by.
 enum CompanyDataSource {
 	DUNS
 	MSCI
+	CUSTOMER
+}
+
+"""
+A single SEC / regulatory filing snippet for a company.
+"""
+type CompanyFiling {
+	"""
+	FS-generated ID unique to the filing. Repeats across entries because one
+	filing yields a row per snippet, sometimes several for the same peril.
+	"""
+	filingId: Int64!
+
+	"""
+	Usually December 31, since most filings report on a calendar year.
+	"""
+	reportingPeriodEnd: Date!
+
+	"""
+	The kind of filing.
+	"""
+	type: CompanyFilingType!
+
+	"""
+	Link to the filing document.
+	"""
+	link: String!
+
+	"""
+	Peril this snippet was associated with. 1 = flood, 2 = wildfire, 3 = wind,
+	4 = heat/cold, 5 = air quality, 6 = drought, 7 = hail, 8 = macroeconomic
+	implications, 9 = insurance. Null when the snippet is not tied to a specific peril.
+	"""
+	perilId: Int64
+
+	"""
+	Key phrase extracted from the filing.
+	"""
+	snippet: String!
+}
+
+"""
+A page of a company's SEC / regulatory filings.
+"""
+type CompanyFilingConnection {
+	"""
+	Return a list of type that wraps edge type.
+	"""
+	edges: [CompanyFilingEdge!]!
+
+	"""
+	Pagination information in relation to current page.
+	"""
+	pageInfo: PageInfo!
+
+	"""
+	Total number of records for the connection.
+	"""
+	totalCount: Int64
+}
+
+"""
+Represents a filing edge of the current connection.
+"""
+type CompanyFilingEdge {
+	"""
+	Cursor is a string that can be used in subsequent request as value of a connection "after" argument, to request page starting after this item.
+	"""
+	cursor: String
+
+	"""
+	Contains one page record data.
+	"""
+	node: CompanyFiling!
+}
+
+input CompanyFilingFilter {
+	"""
+	Filter to filings of this type.
+	"""
+	type: CompanyFilingType
+
+	"""
+	Filter to filings tied to this peril.
+	"""
+	perilId: Int64
+}
+
+"""
+Sort order for a company's filings connection.
+"""
+enum CompanyFilingSort {
+	FILING_DATE_ASC
+	FILING_DATE_DESC
+}
+
+"""
+The kind of a company's SEC / regulatory filing.
+"""
+enum CompanyFilingType {
+	FORM_10K
+	FORM_8K
+	EARNINGS_CALL
+	SUSTAINABILITY_REPORT
+	CSRD
+	AR2
+	IR
+	CDP
+	TCFD
+	FORM_20F
+	FORM_6K
+	FORM_40F
+	OTHER
 }
 
 input CompanyFilter {
@@ -2315,12 +3197,43 @@ enum CompanyNameType {
 	DUNS_NUMBER
 	MSCI_CODE
 	MSCI_NAME
+	CUSTOMER_NAME
 }
 
 type CompanyOverviewData {
 	valueChain: [ValueChainData]
 	risksByValueChain: [RisksByValueChainData!]
 	equityScore: [EquityScoreData]
+}
+
+"""
+The scenario inputs for a single company's peer ranking (Company.peerRanking).
+Mirrors the peer-ranking dimensions of CompanySortFilter, but scoped to the
+single-company rank lookup rather than connection sorting.
+"""
+input CompanyPeerRankingFilter {
+	"""
+	The peril ID for the peer ranking. Default: 5 (overall).
+	Valid values: 2 (flood), 3 (hurricane), 4 (wildfire), 5 (overall).
+	"""
+	perilId: Int
+
+	"""
+	The SSP scenario for the peer ranking. Default: SSP_2_45.
+	"""
+	ssp: SSP
+
+	"""
+	The relative year for the peer ranking. Default: 0.
+	Valid values: 0 (current year), 30 (30 years out).
+	"""
+	relativeYear: Int
+
+	"""
+	The percentile for the peer ranking. Default: 50.
+	Valid values: 10, 50, 90.
+	"""
+	percentile: Int
 }
 
 """
@@ -2484,6 +3397,46 @@ type CopyPortfolioToNewParentPayload {
 }
 
 """
+The input to create a customer-uploaded company project.
+"""
+input CreateCustomerCompanyInput {
+	"""
+	The name of the company project.
+	"""
+	name: String!
+
+	"""
+	Optional description.
+	"""
+	description: String
+
+	"""
+	FS industry ID for the company. Must exist in the company.industry lookup table.
+	"""
+	industryId: Int64!
+
+	"""
+	FS sector ID for the company. Must exist in the company.sector lookup table.
+	"""
+	sectorId: Int64!
+
+	"""
+	Parent portfolio (Holdings or Acquisitions) the new company project will be attached under.
+	"""
+	parentProjectId: Int64!
+}
+
+"""
+The payload returned from createCustomerCompany.
+"""
+type CreateCustomerCompanyPayload {
+	"""
+	The ID of the newly created company project.
+	"""
+	projectId: Int64!
+}
+
+"""
 The payload of creating a project asset.
 """
 type CreateProjectAssetPayload {
@@ -2508,7 +3461,7 @@ input CreateProjectInput {
 	description: String
 
 	"""
-	Type of the project. Default value: CUSTOMER. Only service user is allowed to create a project with type EQUITY.
+	Type of the project. Default value: CUSTOMER. EQUITY projects cannot be created through this mutation and are rejected.
 	"""
 	projectType: ProjectType
 
@@ -2621,6 +3574,7 @@ input DeleteCustomBuildingValuesFieldsInput {
 	placeNOI: Boolean
 	placeType: Boolean
 	rebuildCostPerSf: Boolean
+	rebuildCost: Boolean
 	buildingSf: Boolean
 	buildingDirection: Boolean
 	defensibleSpace: Boolean
@@ -2796,6 +3750,33 @@ input DeleteUserGroupStagedAdaptationsInput {
 }
 
 """
+A Non REAL ESTATE Asset (COMPANY / LINEAR / AREA) in the portfolio hierarchy that is dirty,
+with its depth level and asset class.
+"""
+type DirtyNonRealEstateAsset {
+	"""
+	The project ID of the dirty asset.
+	"""
+	projectId: Int64!
+
+	"""
+	The depth level in the hierarchy rooted from the queried portfolio.
+	Level 1 = direct child, level 2 = grandchild, etc.
+	"""
+	level: Int!
+
+	"""
+	The asset class of the dirty asset.
+	"""
+	assetClass: ProjectAssetClass!
+
+	"""
+	The asset class of the dirty asset.
+	"""
+	assetType: ProjectAssetClass! @deprecated(reason: "Use assetClass instead.")
+}
+
+"""
 A subportfolio in the portfolio hierarchy that has a dirty status, with its depth level.
 """
 type DirtySubportfolio {
@@ -2814,6 +3795,12 @@ type DirtySubportfolio {
 	The portfolio type of the dirty sub-portfolio.
 	"""
 	portfolioType: PortfolioType
+
+	"""
+	Display name of the dirty sub-portfolio, for banner text: the project name,
+	else the company name.
+	"""
+	name: String
 }
 
 type DroughtExposureStatistics {
@@ -2986,6 +3973,11 @@ type EnterpriseBuilding {
 	rebuildCostPerSf: Int64
 
 	"""
+	Total rebuild cost of the asset, in dollars. Only used for infrastructure asset types (N6, NB, NT, NW, NC, NG), which are priced as a whole rather than per square foot (see rebuildCostPerSf).
+	"""
+	rebuildCost: Int64
+
+	"""
 	Total square footage for the structure
 	"""
 	buildingSf: Int
@@ -2994,6 +3986,7 @@ type EnterpriseBuilding {
 	Orientation of building. Options are N (default), NE, E, SE, S, SW, W, NW.
 	"""
 	buildingDirection: CompassDirection
+		@deprecated(reason: "Not used by the wind model for vintage 6 and above.")
 
 	"""
 	The presence of defensible space around this property.
@@ -3191,6 +4184,12 @@ input EnterpriseBuildingInput {
 	The rebuild price per square foot for a structure (if it exists). Used to compute building damages
 	"""
 	rebuildCostPerSf: Int64
+
+	"""
+	Total rebuild cost of the asset, in dollars. Only used for infrastructure asset types (N6, NB, NT, NW, NC, NG), which are priced as a whole rather than per square foot (see rebuildCostPerSf).
+	rebuildCostPerSf will not be used for infrastructure asset types related calulations.
+	"""
+	rebuildCost: Int64
 
 	"""
 	Total square footage for the structure
@@ -3455,6 +4454,32 @@ type EquityScoreData {
 }
 
 """
+A family of impact columns in the export. Each maps to a group of config sections:
+raw hazard measures, loss in dollars, days out of service, and the annualised averages.
+"""
+enum ExportImpactMetric {
+	"""
+	Raw hazard measures: flood depth, wind speed, wildfire probability, hail size, heat and cold days, drought weeks.
+	"""
+	EXPOSURE
+
+	"""
+	Loss in dollars: repair cost, operator loss, interruption loss, cash loss, expected loss.
+	"""
+	DAMAGE
+
+	"""
+	Days out of service: repair days.
+	"""
+	DOWNTIME
+
+	"""
+	Annualised averages: AAL, AAI, AABI, AACL, AAOL, AAOLC.
+	"""
+	AAL
+}
+
+"""
 An export job is a job that exports the assets of a project.
 """
 type ExportJob implements ProjectJob {
@@ -3512,6 +4537,21 @@ type ExportJob implements ProjectJob {
 	The user who started the job.
 	"""
 	createdBy: User
+}
+
+"""
+Non-hazard column families in the export. Both require the macroeconomic module.
+"""
+enum ExportOtherSignal {
+	"""
+	Insurance factor, cost growth rate, and cost volatility.
+	"""
+	INSURANCE
+
+	"""
+	Locality macroeconomic columns.
+	"""
+	MACROECONOMIC
 }
 
 """
@@ -3722,6 +4762,48 @@ type GenerateProjectExportDownloadLinkPayload {
 	expiryDate: Date!
 }
 
+type HailExposureStatistics {
+	"""
+	Socio-economic pathway of the prediction model.
+	"""
+	ssp: SSP!
+
+	"""
+	The relative year with current year being year 0.
+	"""
+	relativeYear: Int64!
+
+	"""
+	The return period.
+	"""
+	returnPeriod: ReturnPeriod
+
+	"""
+	The hail size threshold in inches.
+	"""
+	hailSizeThresholdIn: Float!
+
+	"""
+	Maximum hail size in a portfolio at the given probability / SSP / Year, in inches.
+	"""
+	maxSizeIn: Float
+
+	"""
+	Average hail size in a portfolio at the given probability / SSP / Year, in inches.
+	"""
+	avgSizeIn: Float
+
+	"""
+	Number of assets exposed to hail at or above [hailSizeThresholdIn] in the given scenario.
+	"""
+	countHail: Int64
+
+	"""
+	Percentage of assets exposed to hail at or above [hailSizeThresholdIn] in the given scenario. 100% is 1.0.
+	"""
+	pctHail: Float
+}
+
 type HazardDamage {
 	"""
 	The peril exposed.
@@ -3752,6 +4834,56 @@ type HazardDamage {
 	The percentage of assets with potential damages. 100% is 1.0.
 	"""
 	damagesPercent: Float!
+
+	"""
+	The maximum potential damage, in dollars, for any single asset exposed to this peril.
+	"""
+	damagesMax: Int64
+
+	"""
+	The number of assets with potential downtime (one or more repair days).
+	"""
+	downtimeCount: Int64
+
+	"""
+	The percentage of assets with potential downtime (one or more repair days). 100% is 1.0.
+	"""
+	downtimePercent: Float
+
+	"""
+	The maximum potential downtime, in days, for any single asset.
+	"""
+	downtimeMax: Int
+
+	"""
+	The number of assets with potential business interruption loss (lost revenue from downtime).
+	"""
+	interruptionCount: Int64
+
+	"""
+	The percentage of assets with potential business interruption loss. 100% is 1.0.
+	"""
+	interruptionPercent: Float
+
+	"""
+	The maximum potential business interruption loss, in dollars, for any single asset.
+	"""
+	interruptionMax: Int64
+
+	"""
+	The number of assets with potential cash loss (repair cost plus business interruption).
+	"""
+	cashLossCount: Int64
+
+	"""
+	The percentage of assets with potential cash loss. 100% is 1.0.
+	"""
+	cashLossPercent: Float
+
+	"""
+	The maximum potential cash loss, in dollars, for any single asset.
+	"""
+	cashLossMax: Int64
 }
 
 type HazardExposure {
@@ -3793,6 +4925,7 @@ type HazardExposureStatistics {
 	heat: [HeatExposureStatistics]
 	cold: [ColdExposureStatistics]
 	drought: [DroughtExposureStatistics]
+	hail: [HailExposureStatistics]
 }
 
 type HeatExposureStatistics {
@@ -3865,6 +4998,72 @@ type Industry {
 	The name of the industry.
 	"""
 	name: String!
+}
+
+"""
+Default revenue weight for a given (industry, value chain position) pair. 100% is 1.0.
+"""
+type IndustryRevenueWeight {
+	"""
+	The ID of the industry.
+	"""
+	industryId: Int64!
+
+	"""
+	The value chain position the weight applies to.
+	"""
+	valueChainPosition: ValueChainPosition!
+
+	"""
+	Share of company revenue (0..1) to assign to assets in this value chain
+	position for the given industry.
+	"""
+	weight: Float!
+}
+
+type InsuranceData {
+	insuranceFactorDistribution(
+		filterBy: InsuranceFactorDistributionFilter
+	): [InsuranceFactorDistribution!]!
+}
+
+"""
+Distribution of asset counts across insurance factor score bands.
+Always at admin level 2 (insurance is admin2-only).
+"""
+type InsuranceFactorDistribution {
+	"""
+	Socio-economic pathway of the prediction model.
+	"""
+	ssp: SSP!
+
+	"""
+	Holding Period.
+	"""
+	relativeYear: Int!
+
+	"""
+	Lower bound of the Insurance Factor score band.
+	"""
+	lowerbound: Int!
+
+	"""
+	Count of assets within the Insurance Factor band.
+	"""
+	insuranceFactorCount: Int
+
+	"""
+	Percentage of assets within the Insurance Factor band.
+	"""
+	insuranceFactorPct: Float
+}
+
+"""
+Filter for the insurance factor distribution.
+"""
+input InsuranceFactorDistributionFilter {
+	ssp: SSP
+	relativeYear: Int
 }
 
 scalar Int64
@@ -4078,6 +5277,48 @@ type LinearFloodExposureStatistics {
 	pctFlood: Float!
 }
 
+type LinearHailExposureStatistics {
+	"""
+	Socio-economic pathway of the prediction model.
+	"""
+	ssp: SSP!
+
+	"""
+	The relative year with current year being year 0.
+	"""
+	relativeYear: Int64!
+
+	"""
+	The return period.
+	"""
+	returnPeriod: ReturnPeriod
+
+	"""
+	The hail size threshold in inches.
+	"""
+	hailSizeThresholdIn: Float!
+
+	"""
+	Length in meters of linear assets in portfolio that are exposed to hail at or above [hailSizeThresholdIn] in the given scenario
+	"""
+	hailLengthM: Float!
+
+	"""
+	Percent of total length (among linear assets) in portfolio that are exposed to hail at or above [hailSizeThresholdIn] in the given scenario
+	"""
+	pctHailLengthM: Float!
+
+	"""
+	Count of segments that are exposed to hail at or above [hailSizeThresholdIn] in the given scenario
+	"""
+	countHail: Int64!
+
+	"""
+	Percent of segments that are exposed to hail at or above [hailSizeThresholdIn] in the given scenario
+	"""
+	pctHail: Float!
+}
+
 type LinearHazardExposureStatistics {
 	flood: [LinearFloodExposureStatistics]
 	wind: [LinearWindExposureStatistics]
@@ -4085,6 +5326,7 @@ type LinearHazardExposureStatistics {
 	heat: [LinearHeatExposureStatistics]
 	cold: [LinearColdExposureStatistics]
 	drought: [LinearDroughtExposureStatistics]
+	hail: [LinearHailExposureStatistics]
 }
 
 type LinearHeatExposureStatistics {
@@ -4315,11 +5557,20 @@ type Locality {
 	macroeconomic(filterBy: AssetSortFilter): [LocalityMacroeconomicData!]!
 
 	"""
+	Insurance-related data for the locality. Populated only for admin2 localities; null otherwise.
+	The optional filter narrows insuranceFactor and insuranceCost arrays by ssp / relativeYear / percentile (cost only).
+	"""
+	insurance(filterBy: AssetSortFilter): LocalityInsuranceData
+
+	"""
 	List of parent localities with their names and administrative levels.
 	"""
 	parentLocalities: [ParentLocality!]
 }
 
+"""
+The input parameter to filter by admin level and locality IDs.
+"""
 input LocalityExportAssetsFilter {
 	"""
 	Cascading admin level to filter for
@@ -4348,7 +5599,7 @@ input LocalityExportAssetsFilter {
 }
 
 """
-The iput parameter to a number of assets by contry code/admin level
+The input parameter for the locality export job.
 """
 input LocalityExportInput {
 	"""
@@ -4368,6 +5619,81 @@ input LocalityFilter {
 	The locality type id to filter by.
 	"""
 	adminLevel: AdministrativeLevel!
+}
+
+"""
+Insurance cost statistics for a locality at a given SSP/year/percentile.
+"""
+type LocalityInsuranceCost {
+	"""
+	Holding Period. Years available: 0, 5, 10, 15, 20, 25, 30, 45, 60, 75.
+	"""
+	relativeYear: Int!
+
+	"""
+	Socioeconomic scenario (SSP)
+	"""
+	ssp: SSP!
+
+	"""
+	Percentile value for estimates: 10 (low), 50 (mean), or 90 (high).
+	"""
+	percentile: Int!
+
+	"""
+	Cost growth rate.
+	"""
+	costGrowthRate: Float
+
+	"""
+	Cumulative cost growth rate from year 0 through the current year (compounded).
+	"""
+	costGrowthRateCumulative: Float
+
+	"""
+	Cost volatility.
+	"""
+	costVolatility: Float
+}
+
+"""
+Insurance-related data for the locality. Currently only populated for admin2 localities.
+"""
+type LocalityInsuranceData {
+	"""
+	Insurance factor scores for the locality, by SSP and relative year.
+	"""
+	insuranceFactor: [LocalityInsuranceFactor!]
+
+	"""
+	Insurance cost statistics for the locality, by SSP, relative year, and percentile.
+	"""
+	insuranceCost: [LocalityInsuranceCost!]
+}
+
+"""
+Insurance factor score for a locality at a given SSP/year.
+"""
+type LocalityInsuranceFactor {
+	"""
+	Holding Period. Years available: 0, 5, 10, 15, 20, 25, 30, 45, 60, 75.
+	"""
+	relativeYear: Int!
+
+	"""
+	Socioeconomic scenario (SSP)
+	"""
+	ssp: SSP!
+
+	"""
+	Insurance factor score on a 1-100 scale, where higher values indicate greater insurance risk.
+	"""
+	insuranceFactor: Int
+
+	"""
+	Text descriptor for insurance factor. eg: Minimal, Minor, Moderate, Major, Severe, Extreme
+	"""
+	factorScale: FactorScale
 }
 
 type LocalityMacroeconomicData {
@@ -4850,6 +6176,7 @@ enum MapStatus {
 	CREATING
 	ACTIVE
 	FAILED
+	EMPTY
 }
 
 enum MissileEnvironment {
@@ -4897,6 +6224,15 @@ type ModuleCompanyOverview {
 	status: AggregatedProjectModuleStatus
 	lastUpdated: Date
 	data: CompanyOverviewData
+}
+
+"""
+Data to support the Insurance report.
+"""
+type ModuleInsurance {
+	status: AggregatedProjectModuleStatus
+	lastUpdated: Date
+	data: InsuranceData
 }
 
 """
@@ -5040,6 +6376,13 @@ type Mutation {
 	createProject(input: CreateProjectInput!): CreateProjectPayload!
 
 	"""
+	Create a new customer-uploaded company project under a parent portfolio.
+	"""
+	createCustomerCompany(
+		input: CreateCustomerCompanyInput!
+	): CreateCustomerCompanyPayload!
+
+	"""
 	Update project
 	"""
 	updateProject(input: UpdateProjectInput!): Project!
@@ -5105,6 +6448,16 @@ type Mutation {
 	setValueChainRevenue(
 		input: SetValueChainRevenueInput!
 	): SetValueChainRevenuePayload!
+
+	"""
+	Update the value-chain revenue for an existing customer-uploaded company project.
+	Full replacement: positions omitted from the list are treated as zero. Marks the
+	project's module/sections dirty. Rejected if any asset already has a customer-entered
+	per-location net operating income (placeNOI), since refresh would then skip value-chain allocation.
+	"""
+	updateCompanyValueChainRevenue(
+		input: UpdateCompanyValueChainRevenueInput!
+	): UpdateCompanyValueChainRevenuePayload!
 
 	"""
 	Set user's portfolio custom building details for a specific place.
@@ -5182,6 +6535,14 @@ type Mutation {
 	Export ALL locality econ data for a set of admin_levels(cascading) within a country code
 	"""
 	createLocalityMacroeconomicExport(input: LocalityExportInput!): ExportJob!
+
+	"""
+	Export locality insurance data for a set of localities.
+
+	Currently, only adminLevel ADMIN_2, and filtering by admin1Ids/admin2Ids are supported.
+	Other valid filtering/combinations will result in no data being exported.
+	"""
+	createLocalityInsuranceExport(input: LocalityExportInput!): ExportJob!
 
 	"""
 	Set a portfolio staged custom building details for a specific place.
@@ -5356,6 +6717,19 @@ type ParentLocality {
 	countryId: String!
 }
 
+"""
+A climate peril (hazard).
+"""
+enum Peril {
+	FLOOD
+	WIND
+	WILDFIRE
+	HEAT
+	COLD
+	DROUGHT
+	HAIL
+}
+
 type PerilBucketDistribution {
 	assetCount: Int
 	Minimal: BucketStat
@@ -5366,6 +6740,7 @@ type PerilBucketDistribution {
 	Extreme: BucketStat
 	unweightedScore: Float
 	weightedScore: Float
+	weightedScoreExcludedAssetCount: Int
 }
 
 """
@@ -5419,6 +6794,11 @@ type Portfolio {
 	portfolioCount: Int64
 
 	"""
+	Sum of asset values across this portfolio and its full subtree, per the Mixed Portfolio spec. Real-estate assets (REA) contribute their building.placevaluation; non-REA assets (Linear/Area/Company) contribute their portfolioAssetDetails.bookValue. For an asset-class project, this equals that asset's own value (placevaluation for REA, bookValue for non-REA). For a portfolio-type project, this is the subtree rollup. Returns 0 only when no asset of either kind in the subtree has a recorded value.
+	"""
+	bookValueAggregate: Int64
+
+	"""
 	Portfolio's subgroup id.
 	"""
 	subGroupId: Int
@@ -5451,15 +6831,36 @@ type Portfolio {
 	All DIRTY subportfolios' metadata in the entire hierarchy.
 	"""
 	dirtySubportfolios: [DirtySubportfolio!]
+
+	"""
+	All dirty Non Real Estate Assets (COMPANY / LINEAR / AREA) in the entire hierarchy.
+	"""
+	dirtyNonRealEstateAssets: [DirtyNonRealEstateAsset!]
 }
 
 """
 User-defined metadata for an asset-type project within a portfolio.
 """
 type PortfolioAssetDetails {
+	"""
+	Asset type ID for the whole asset. For complex assets, this type id will be applied to all segments / sub-assets in module refresh.
+	"""
 	typeId: AssetTypeId
+
+	"""
+	Total Operating income for the whole asset.
+	"""
 	operatingIncome: Int64
+
+	"""
+	Total Book value for the whole asset.
+	"""
 	bookValue: Int64
+
+	"""
+	Total rebuild cost for the whole asset.
+	"""
+	rebuildCost: Int64
 }
 
 """
@@ -5480,11 +6881,11 @@ type PortfolioContent {
 
 	"""
 	The name of the portfolio descendant item.
-	For REAL_ESTATE assets, this is building.customid.
+	For REAL_ESTATE assets, prefers building.customid, then building.address, then building.geocodedaddress; null when none are set.
 	For LINEAR/AREA assets, this is the name of the project.
 	For company this is either the project name or fallback to company name.
 	"""
-	name: String!
+	name: String
 
 	"""
 	The asset class. Values: REAL_ESTATE, COMPANY, LINEAR, AREA.
@@ -5539,10 +6940,22 @@ type PortfolioContent {
 	portfolioAssetDetails: PortfolioAssetDetails
 
 	"""
+	Sum of asset values across this project and its full subtree, per the Mixed Portfolio spec. Real-estate assets (REA) contribute their building.placevaluation; non-REA assets (Linear/Area/Company) contribute their portfolioAssetDetails.bookValue. For an asset-class project, this equals that asset's own value (placevaluation for REA, bookValue for non-REA). For a portfolio-type project, this is the subtree rollup. Returns 0 only when no asset of either kind in the subtree has a recorded value.
+	"""
+	bookValueAggregate: Int64
+
+	"""
 	Hazard peril scores for this item and its descendants.
-	Currently only `hazardFactorAggregate` and `hazardFactorAggregateWeighted` are implemented; other perils return null.
+	On this field only `hazardFactorAggregate` and `hazardFactorAggregateWeighted` are populated; other perils return null.
+	The same `PortfolioPerilScore` type returned from `ClimateExposureData.portfolioPerilScore` does populate every peril.
 	"""
 	perilScore: [PortfolioPerilScore!]
+
+	"""
+	Project IDs from the queried portfolio (exclusive) down to this row's parent (inclusive), ordered root-to-leaf.
+	Only populated when `searchValue` is set. Empty for a direct child of the queried portfolio, including every row when `searchScope: DIRECT_CHILDREN`.
+	"""
+	ancestorProjectIds: [Int64!]
 }
 
 """
@@ -5581,7 +6994,31 @@ type PortfolioContentEdge {
 }
 
 """
+How far a `searchValue` name filter searches.
+"""
+enum PortfolioContentSearchScope {
+	"""
+	Match anywhere in the portfolio's subtree. Each match's
+	`ancestorProjectIds` locates it under its top-level row.
+	"""
+	SUBTREE
+
+	"""
+	Match only the queried portfolio's direct children, the same set of rows
+	an unfiltered request would return.
+	"""
+	DIRECT_CHILDREN
+}
+
+"""
 Sort order for portfolio contents.
+
+NAME sorts on the display name, case- and accent-insensitively, with embedded
+numbers ordered numerically ("Tower 2" before "Tower 10").
+
+CLASS groups rows by the class shown in the UI, ordered A to Z by that label:
+Area Asset, Company, Linear Asset, Mixed Portfolio, Real Estate Asset,
+Real Estate Portfolio.
 """
 enum PortfolioContentSort {
 	CREATED_AT_ASC
@@ -5590,6 +7027,10 @@ enum PortfolioContentSort {
 	ASSET_COUNT_DESC
 	PORTFOLIO_COUNT_ASC
 	PORTFOLIO_COUNT_DESC
+	NAME_ASC
+	NAME_DESC
+	CLASS_ASC
+	CLASS_DESC
 }
 
 """
@@ -5626,6 +7067,18 @@ input PortfolioContentsInput {
 	Sort order for the results.
 	"""
 	sort: PortfolioContentSort
+
+	"""
+	Case-insensitive substring match on the content name. Omitted: returns the
+	queried portfolio's direct children, unfiltered. Set: filters by name,
+	scoped by `searchScope`.
+	"""
+	searchValue: String
+
+	"""
+	How far `searchValue` searches. Ignored when `searchValue` is omitted.
+	"""
+	searchScope: PortfolioContentSearchScope = SUBTREE
 }
 
 type PortfolioDashboardScore {
@@ -5638,6 +7091,7 @@ type PortfolioDashboardScore {
 	heatfactor: PerilBucketDistribution
 	coldfactor: PerilBucketDistribution
 	droughtfactor: PerilBucketDistribution
+	hailfactor: PerilBucketDistribution
 	econfactor: PerilBucketDistribution
 }
 
@@ -5726,6 +7180,14 @@ type PortfolioPathNode {
 	The portfolio type.
 	"""
 	portfolioType: PortfolioType
+
+	"""
+	True if this node itself has a SUBMITTED or RUNNING PORTFOLIO_REFRESH. A fact about this
+	node only, never a subtree roll-up, so a sibling refreshing elsewhere does not set it.
+	Callers asking whether a refresh here would be rejected should check the other nodes in
+	the path, which are all ancestors of this one.
+	"""
+	refreshJobInFlight: Boolean!
 }
 
 """
@@ -5937,6 +7399,12 @@ type Project {
 	portfolioStatus: PortfolioStatus
 
 	"""
+	The asset status of the project. Only set for assets, and mutually exclusive
+	with portfolioStatus.
+	"""
+	assetStatus: AssetStatus
+
+	"""
 	The asset class of the project such as COMPANY, LINEAR, AREA, or REAL_ESTATE.
 	"""
 	assetClass: ProjectAssetClass
@@ -5960,6 +7428,11 @@ type Project {
 	User-defined asset metadata. Only populated for asset-class projects (assetClass != null).
 	"""
 	portfolioAssetDetails: PortfolioAssetDetails
+
+	"""
+	Sum of asset values across this project and its full subtree, per the Mixed Portfolio spec. Real-estate assets (REA) contribute their building.placevaluation; non-REA assets (Linear/Area/Company) contribute their portfolioAssetDetails.bookValue. For an asset-class project, this equals that asset's own value (placevaluation for REA, bookValue for non-REA). For a portfolio-type project, this is the subtree rollup. Returns 0 only when no asset of either kind in the subtree has a recorded value.
+	"""
+	bookValueAggregate: Int64
 }
 
 type ProjectAdaptationData {
@@ -6542,6 +8015,16 @@ type ProjectEffects {
 	businessInterruptionNetPercent: Float!
 
 	"""
+	Event specific gross business interruption (% of net operating income)
+	"""
+	businessInterruptionNOIGrossPercent: Float!
+
+	"""
+	Event specific net business interruption (% of net operating income)
+	"""
+	businessInterruptionNOINetPercent: Float!
+
+	"""
 	Event specific total cash gross direct damage and gross business interruption loss
 	"""
 	cashGross: Int64!
@@ -6595,6 +8078,12 @@ input ProjectExportInput {
 	Filters for what should be returned on the job.
 	"""
 	projectExportJobFilters: ProjectExportJobAssetFilters
+
+	"""
+	Which columns to export. Omit for the full export. Rejected on EQUITY_OVERVIEW, FULL_PORTFOLIO
+	and PROPERTY_REPORT, which cannot honour one. Validated but not yet applied by the exporter.
+	"""
+	selection: ProjectExportSelection
 }
 
 """
@@ -6643,9 +8132,55 @@ enum ProjectExportJobType {
 	LOCALITY_MACROECONOMIC
 
 	"""
+	Locality Insurance export
+	"""
+	LOCALITY_INSURANCE
+
+	"""
 	Full Portfolio Export
 	"""
 	FULL_PORTFOLIO
+}
+
+"""
+Which columns an export should contain. Every field is optional, and a list left empty or naming
+every value means all of them. Carries no project, so a single asset can be exported with it too.
+"""
+input ProjectExportSelection {
+	"""
+	Perils to include.
+	"""
+	hazards: [Peril!]
+
+	"""
+	Climate scenarios to include.
+	"""
+	scenarios: [SSP!]
+
+	"""
+	Years from now to include. Supported: 0, 5, 10, 15, 20, 25, 30, 45, 60, 75.
+	"""
+	timelineYears: [Int!]
+
+	"""
+	Percentiles to include. Supported: 10, 50, 90.
+	"""
+	percentiles: [Int!]
+
+	"""
+	Return periods to include. RP300 expands to no column, so the exporter cannot carry it.
+	"""
+	likelihoods: [ReturnPeriod!]
+
+	"""
+	Impact column families to include.
+	"""
+	impactMetrics: [ExportImpactMetric!]
+
+	"""
+	Non-hazard column families to include.
+	"""
+	otherSignals: [ExportOtherSignal!]
 }
 
 input ProjectFilter {
@@ -6973,6 +8508,16 @@ type ProjectLocalityExposure {
 	Percent of properties in the locality at risk for wind. 100% is 1.0.
 	"""
 	windPct: Float
+
+	"""
+	Number of properties in the locality at risk for hail.
+	"""
+	hailCount: Int64
+
+	"""
+	Percent of properties in the locality at risk for hail. 100% is 1.0.
+	"""
+	hailPct: Float
 }
 
 type ProjectLocalityExposureConnection {
@@ -7062,6 +8607,10 @@ enum ProjectLocalityExposureSort {
 	WIND_COUNT_DESC
 	WIND_PCT_ASC
 	WIND_PCT_DESC
+	HAIL_COUNT_ASC
+	HAIL_COUNT_DESC
+	HAIL_PCT_ASC
+	HAIL_PCT_DESC
 }
 
 """
@@ -7117,6 +8666,11 @@ type ProjectModuleData {
 	Data to support the Macroeconomic report.
 	"""
 	macroeconomic: ModuleMacroeconomic
+
+	"""
+	Data to support the Insurance report.
+	"""
+	insurance: ModuleInsurance
 
 	"""
 	Data to support Linear Asset analysis.
@@ -7519,6 +9073,11 @@ type Query {
 	List all available sectors.
 	"""
 	lookupSectors: [Sector!]!
+
+	"""
+	List default revenue weights per (industry, value chain position).
+	"""
+	lookupIndustryRevenueWeights: [IndustryRevenueWeight!]!
 }
 
 """
@@ -7543,7 +9102,7 @@ input RefreshProjectModuleInput {
 	projectJobName: String!
 
 	"""
-	The vintage version to use for the project refresh. Vintage uniquely identifies the place and peril data version. Leave empty to use the latest vintage.
+	The vintage version to use for the project refresh. Vintage uniquely identifies the place and peril data version. When supplied, the vintage must be allowed for the project's user group, otherwise the refresh is rejected. Leave empty to use the user group's active vintage. When the group has no active vintage, the latest vintage is used, or the group's newest allowed vintage when the latest one is not in its allowlist.
 	"""
 	vintageId: Int64
 }
@@ -8074,6 +9633,7 @@ type StagedAsset {
 	Orientation of building. Options are N (default), NE, E, SE, S, SW, W, NW.
 	"""
 	buildingDirection: CompassDirection
+		@deprecated(reason: "Not used by the wind model for vintage 6 and above.")
 
 	"""
 	The presence of defensible space around this property.
@@ -8236,6 +9796,11 @@ type StagedAsset {
 	True when this asset is the company's headquarters. Exactly one asset per customer company upload must have this set.
 	"""
 	isHeadquarters: Boolean
+
+	"""
+	Whether this asset is a material location. Set only when the upload provided the material_location column; absent otherwise.
+	"""
+	materialLocation: Boolean
 }
 
 """
@@ -8297,6 +9862,11 @@ input StagedAssetFilter {
 	Return staged assets that are duplicates.
 	"""
 	isDuplicate: Boolean
+
+	"""
+	Return only staged assets that have (true) or do not have (false) at least one valueChainPosition set.
+	"""
+	hasValueChain: Boolean
 }
 
 """
@@ -8313,6 +9883,21 @@ enum StagedAssetSort {
 }
 
 scalar Time
+
+"""
+Input for updateCompanyValueChainRevenue. Full replacement: positions omitted from the list are treated as zero.
+"""
+input UpdateCompanyValueChainRevenueInput {
+	projectId: Int64!
+	valueChainRevenue: [ValueChainRevenueEntry!]!
+}
+
+"""
+Result of updateCompanyValueChainRevenue.
+"""
+type UpdateCompanyValueChainRevenuePayload {
+	project: Project!
+}
 
 """
 The payload of updating an existing building customization.
@@ -8370,10 +9955,30 @@ type UpdateLinkSharePayload {
 Input for updating portfolio asset details.
 """
 input UpdatePortfolioAssetDetailsInput {
+	"""
+	The ID of the asset project.
+	"""
 	projectId: Int64!
+
+	"""
+	Asset type ID for the whole asset. For complex assets, this type id will be applied to all segments / sub-assets in module refresh.
+	"""
 	typeId: AssetTypeId
+
+	"""
+	Total Operating income for the whole asset.
+	"""
 	operatingIncome: Int64
+
+	"""
+	Total Book value for the whole asset.
+	"""
 	bookValue: Int64
+
+	"""
+	Total rebuild cost for the whole asset.
+	"""
+	rebuildCost: Int64
 }
 
 """
@@ -8633,6 +10238,32 @@ type UploadJob implements ProjectJob {
 	The kind of payload this upload job carries (set when the upload was created with an explicit uploadType).
 	"""
 	uploadType: ProjectUploadType
+
+	"""
+	Headquarters validation status. Only populated for customer-company uploads once the job has reached a terminal state; null otherwise.
+	"""
+	hqStatus: UploadJobHQStatus
+}
+
+"""
+Headquarters validation status for a customer-company upload. Exactly one row
+must be marked as headquarters (is_hq=true).
+"""
+enum UploadJobHQStatus {
+	"""
+	Exactly one row is marked as headquarters.
+	"""
+	OK
+
+	"""
+	No row is marked as headquarters.
+	"""
+	ZERO
+
+	"""
+	More than one row is marked as headquarters.
+	"""
+	TOO_MANY
 }
 
 """
@@ -8674,6 +10305,11 @@ type UserGroup {
 	Features enabled for this user group.
 	"""
 	features: [Feature!]
+
+	"""
+	The data vintage currently active for this user group. Null when the group has no active vintage.
+	"""
+	activeVintage: Vintage
 }
 
 type UserSubgroup {
@@ -8710,12 +10346,12 @@ type ValueChainData {
 	locationPercent: Float!
 
 	"""
-	Number of locations within this value chain with a validated geocode (geocode quality score >= 95).
+	Number of material locations within this value chain.
 	"""
 	materialLocationCount: Int64!
 
 	"""
-	Percentage of this value chain's locations that have a validated geocode (geocode quality score >= 95).
+	Percentage of this value chain's locations that are material.
 	"""
 	materialLocationPercent: Float!
 
@@ -8746,6 +10382,21 @@ valueChainRevenue query.
 type ValueChainRevenue {
 	valueChainPosition: ValueChainPosition!
 	revenue: Int64!
+}
+
+"""
+Absolute revenue attributed to each value chain position.
+"""
+type ValueChainRevenueAbsolute {
+	"""
+	Name of the value chain.
+	"""
+	valueChainPosition: ValueChainPosition!
+
+	"""
+	Absolute revenue attributed to this value chain position.
+	"""
+	revenueAbsolute: Int64!
 }
 
 """
@@ -8939,6 +10590,16 @@ enum ViewedPlacesSort {
 	TIMESTAMP_DESC
 }
 
+"""
+A data vintage. Vintage uniquely identifies the place and peril data version.
+"""
+type Vintage {
+	"""
+	Globally unique vintage identifier.
+	"""
+	vintageId: Int64!
+}
+
 enum WindDesignStandard {
 	LOW
 	MEDIUM
@@ -8985,4 +10646,25 @@ type WindExposureStatistics {
 	Percentage of assets exposed to 3-second wind gust speeds above [windSpeedThresholdMph] in the given scenario
 	"""
 	pctWind: Float!
+}
+
+"""
+Origin of a wind event. No ALL value: the composite figure lives on the existing
+probability/damages fields, never re-derived from this breakdown.
+"""
+enum WindSource {
+	"""
+	Tropical cyclone.
+	"""
+	TC
+
+	"""
+	Extratropical cyclone.
+	"""
+	ETC
+
+	"""
+	Severe convective storm (tornado or thunderstorm).
+	"""
+	SCS
 }

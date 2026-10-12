@@ -2,187 +2,293 @@
 Directs the executor to defer this fragment when the `if` argument is true or undefined.
 """
 directive @defer(
-	"""
-	Deferred when true or undefined.
-	"""
-	if: Boolean = true
+  """Deferred when true or undefined."""
+  if: Boolean = true
 
-	"""
-	Unique name
-	"""
-	label: String
+  """Unique name"""
+  label: String
 ) on FRAGMENT_SPREAD | INLINE_FRAGMENT
 
 directive @fsApplyExclusion on FIELD_DEFINITION
 
-directive @fsHasPolicy(
-	service: Service!
-) on FIELD_DEFINITION | ARGUMENT_DEFINITION
+directive @fsHasPolicy(service: Service!) on FIELD_DEFINITION | ARGUMENT_DEFINITION
 
-directive @fsRecordAPIUsage(
-	service: APIUsageService!
-) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+directive @fsRecordAPIUsage(service: APIUsageService!) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
 
-directive @fsValidation(
-	constraint: String!
-) on INPUT_FIELD_DEFINITION | ARGUMENT_DEFINITION | FIELD_DEFINITION
+directive @fsRequiresVintage(fromVintage: Int64!, toVintage: Int64) on FIELD_DEFINITION
 
-directive @goField(
-	forceResolver: Boolean
-	name: String
-) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+directive @fsValidation(constraint: String!) on INPUT_FIELD_DEFINITION | ARGUMENT_DEFINITION | FIELD_DEFINITION
+
+directive @goField(forceResolver: Boolean, name: String) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
 
 enum APIUsageService {
-	LOCALITY
-	PLACE
-	GEOSPATIAL
-	FLOOD
-	FIRE
-	HEAT
-	COLD
-	WIND
-	AIR
-	DROUGHT
-	HAIL
-	PRIMARY_PERIL
-	MACROECONOMIC
-	ALL_PERIL
+  LOCALITY
+  PLACE
+  GEOSPATIAL
+  FLOOD
+  FIRE
+  HEAT
+  COLD
+  WIND
+  AIR
+  DROUGHT
+  HAIL
+  PRIMARY_PERIL
+  MACROECONOMIC
+  ALL_PERIL
 }
 
 type Adaptation {
-	"""
-	The type of adaptation.
-	"""
-	type: AdaptationType!
+  """The type of adaptation."""
+  type: AdaptationType!
 
-	"""
-	The display name of the adaptation.
-	"""
-	name: String!
+  """The display name of the adaptation."""
+  name: String!
 
-	"""
-	The perils associated with the adaptation.
-	"""
-	peril: [AdaptationPeril!]!
+  """The perils associated with the adaptation."""
+  peril: [AdaptationPeril!]!
 
-	"""
-	The annual cost of the adaptation.
-	"""
-	annualCost: Int64
+  """The annual cost of the adaptation."""
+  annualCost: Int64
 
-	"""
-	The setup cost of the adaptation.
-	"""
-	setupCost: Int64
+  """The setup cost of the adaptation."""
+  setupCost: Int64
 
-	"""
-	The AAL (Average Annual Loss) associated with the adaptation.
-	"""
-	aal: [AdaptationAAL!]
+  """The AAL (Average Annual Loss) associated with the adaptation."""
+  aal: [AdaptationAAL!]
 
-	"""
-	Payback period information for the adaptation.
-	"""
-	paybackYears: [PaybackYears!]
+  """Payback period information for the adaptation."""
+  paybackYears: [PaybackYears!]
+
+  """
+  The mechanism slot this adaptation occupies. Adaptations within a mechanism
+  are mutually exclusive.
+  """
+  mechanism: AdaptationMechanism!
+
+  """
+  The user-facing measure group this adaptation belongs to. Parameter variants
+  of the same measure (e.g. flood-barrier heights) share a group.
+  """
+  group: AdaptationGroup!
 }
 
 type AdaptationAAL {
-	"""
-	Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
-	"""
-	percentile: Int
+  """
+  Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+  """
+  percentile: Int
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: Int
+  """Year, as relative to the current year."""
+  relativeYear: Int
 
-	"""
-	The savings on investment due to the adaptation.
-	"""
-	adaptationSOI: Int64
+  """The savings on investment due to the adaptation."""
+  adaptationSOI: Int64
 
-	"""
-	The savings on investment as a percentage of the adaptation cost.
-	"""
-	adaptationSOIPct: Float
+  """The savings on investment as a percentage of the adaptation cost."""
+  adaptationSOIPct: Float
 
-	"""
-	The cumulative difference in average annual cash loss due to the adaptation.
-	"""
-	cashLossCumulativeDiff: Int64
+  """
+  The cumulative difference in average annual cash loss due to the adaptation.
+  """
+  cashLossCumulativeDiff: Int64
 
-	"""
-	The cumulative difference in average annual cash loss as a percentage of the total rebuild cost.
-	"""
-	cashLossCumulativeDiffPct: Float
+  """
+  The cumulative difference in average annual cash loss as a percentage of the total rebuild cost.
+  """
+  cashLossCumulativeDiffPct: Float
+}
+
+"""
+User-facing adaptation measure group. Parameter variants of the same measure
+(e.g. flood-barrier heights) share a group. Distinct from AdaptationMechanism.
+"""
+enum AdaptationGroup {
+  """Flood Barriers (1–8 ft variants)"""
+  FLOOD_BARRIER
+
+  """Dry Floodproofing (1–10 ft variants)"""
+  DRY_FLOODPROOFING
+
+  """Wet Floodproofing (finished/unfinished-basement variants)"""
+  WET_FLOODPROOFING
+
+  """Raised Foundation (1–10 ft variants)"""
+  RAISED_FOUNDATION
+
+  """Retaining Walls (1–4 ft variants)"""
+  RETAINING_WALLS
+
+  """Drainage Improvements (1–6 ft variants)"""
+  DRAINAGE_IMPROVEMENTS
+
+  """Elevation of Critical Equipment & Utilities"""
+  ELEVATION_OF_CRITICAL_EQUIPMENT
+
+  """Wind Design Standard upgrades"""
+  WIND_DESIGN_STANDARD
+
+  """Replace with Metal Roof"""
+  ROOF_TYPE_TO_METAL
+
+  """Fire Proofing"""
+  FIRE_PROOFING
+
+  """Defensible Space"""
+  DEFENSIBLE_SPACE
+
+  """Onsite Fire Suppression"""
+  ONSITE_FIRE_SUPPRESSION
+
+  """
+  Fire-Resistant Exterior Materials (roof / wall / eaves & openings components)
+  """
+  FIRE_RESISTANT_EXTERIOR
+}
+
+"""
+Adaptation mechanism. Each mechanism should only have one adaptation applied.
+"""
+enum AdaptationMechanism {
+  """
+  Perimeter barriers / dry floodproofing / retaining walls / drainage — block water at the structure boundary
+  """
+  FLOOD_PERIMETER_BARRIER
+
+  """Raised foundations — elevate the building above water"""
+  FLOOD_FOUNDATION
+
+  """Wet floodproofing — interior/structural waterproofing"""
+  FLOOD_STRUCTURE_WATERPROOF
+
+  """Equipment elevation — raise critical equipment above flood level"""
+  FLOOD_EQUIPMENT
+
+  """Building envelope design standard upgrades for wind resistance"""
+  WIND_DESIGN_STANDARD
+
+  """Fire-resistant envelope materials"""
+  FIRE_PROOFING
+
+  """Non-combustible roof cover materials"""
+  FIRE_ROOF_COVER
+
+  """Defensible space landscaping"""
+  FIRE_DEFENSIBLE_SPACE
+
+  """Non-combustible construction materials"""
+  FIRE_CONSTRUCTION
+
+  """Onsite fire suppression systems"""
+  FIRE_SUPPRESSION
 }
 
 enum AdaptationPeril {
-	FLOOD
-	WILDFIRE
-	WIND
+  FLOOD
+  WILDFIRE
+  WIND
+}
+
+"""One adaptation with optional annual/setup cost overrides."""
+input AdaptationSelectionInput {
+  adaptation: AdaptationType!
+
+  """Setup-cost override for this adaptation."""
+  setupCost: Int64
+
+  """Annual-cost override for this adaptation."""
+  annualCost: Int64
 }
 
 enum AdaptationType {
-	FLOOD_BARRIER_TO_1_FOOT
-	FLOOD_BARRIER_TO_2_FEET
-	FLOOD_BARRIER_TO_3_FEET
-	FLOOD_BARRIER_TO_4_FEET
-	FLOOD_BARRIER_TO_5_FEET
-	FLOOD_BARRIER_TO_6_FEET
-	FLOOD_BARRIER_TO_7_FEET
-	FLOOD_BARRIER_TO_8_FEET
-	FIRE_PROOFING
-	DEFENSIBLE_SPACE
-	WIND_DESIGN_STANDARD_LOW_TO_MEDIUM
-	WIND_DESIGN_STANDARD_MEDIUM_TO_HIGH
-	WIND_DESIGN_STANDARD_LOW_TO_HIGH
-	ROOF_TYPE_TO_METAL
+  FLOOD_BARRIER_TO_1_FOOT
+  FLOOD_BARRIER_TO_2_FEET
+  FLOOD_BARRIER_TO_3_FEET
+  FLOOD_BARRIER_TO_4_FEET
+  FLOOD_BARRIER_TO_5_FEET
+  FLOOD_BARRIER_TO_6_FEET
+  FLOOD_BARRIER_TO_7_FEET
+  FLOOD_BARRIER_TO_8_FEET
+  FIRE_PROOFING
+  DEFENSIBLE_SPACE
+  WIND_DESIGN_STANDARD_LOW_TO_MEDIUM
+  WIND_DESIGN_STANDARD_MEDIUM_TO_HIGH
+  WIND_DESIGN_STANDARD_LOW_TO_HIGH
+  ROOF_TYPE_TO_METAL
+  DRY_FLOODPROOFING_TO_1_FOOT
+  DRY_FLOODPROOFING_TO_2_FEET
+  DRY_FLOODPROOFING_TO_3_FEET
+  DRY_FLOODPROOFING_TO_4_FEET
+  DRY_FLOODPROOFING_TO_5_FEET
+  DRY_FLOODPROOFING_TO_6_FEET
+  DRY_FLOODPROOFING_TO_7_FEET
+  DRY_FLOODPROOFING_TO_8_FEET
+  DRY_FLOODPROOFING_TO_9_FEET
+  DRY_FLOODPROOFING_TO_10_FEET
+  WET_FLOODPROOFING
+  RAISED_FOUNDATION_TO_1_FOOT
+  RAISED_FOUNDATION_TO_2_FEET
+  RAISED_FOUNDATION_TO_3_FEET
+  RAISED_FOUNDATION_TO_4_FEET
+  RAISED_FOUNDATION_TO_5_FEET
+  RAISED_FOUNDATION_TO_6_FEET
+  RAISED_FOUNDATION_TO_7_FEET
+  RAISED_FOUNDATION_TO_8_FEET
+  RAISED_FOUNDATION_TO_9_FEET
+  RAISED_FOUNDATION_TO_10_FEET
+  RETAINING_WALLS_TO_1_FOOT
+  RETAINING_WALLS_TO_2_FEET
+  RETAINING_WALLS_TO_3_FEET
+  RETAINING_WALLS_TO_4_FEET
+  DRAINAGE_IMPROVEMENTS_TO_1_FOOT
+  DRAINAGE_IMPROVEMENTS_TO_2_FEET
+  DRAINAGE_IMPROVEMENTS_TO_3_FEET
+  DRAINAGE_IMPROVEMENTS_TO_4_FEET
+  DRAINAGE_IMPROVEMENTS_TO_5_FEET
+  DRAINAGE_IMPROVEMENTS_TO_6_FEET
+  WET_FLOODPROOFING_UNFINISHED_BASEMENT
+  ELEVATION_OF_CRITICAL_EQUIPMENT
+  ONSITE_FIRE_SUPPRESSION
+  FIRE_RESISTANT_EXTERIOR_ROOF
+  FIRE_RESISTANT_EXTERIOR_WALL
+  FIRE_RESISTANT_EXTERIOR_EAVES_AND_OPENINGS
 }
 
 input AdaptationsInput {
-	"""
-	Adaptations options.
-	"""
-	adaptations: [AdaptationType!]
+  """Adaptations options (version 1 input)."""
+  adaptations: [AdaptationType!]
 
-	"""
-	Adaptations setup cost.
-	"""
-	setupCost: Int64
+  """Combined setup cost of the adaptations (version 1 input)."""
+  setupCost: Int64
 
-	"""
-	Adaptations annual cost.
-	"""
-	annualCost: Int64
+  """Combined annual cost of the adaptations (version 1 input)."""
+  annualCost: Int64
 
-	"""
-	Hold Period of the asset in years.
-	"""
-	holdPeriod: Int!
+  """Adaptation selections (version 2 input)."""
+  selections: [AdaptationSelectionInput!]
 
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: SSP!
+  """Hold Period of the asset in years."""
+  holdPeriod: Int!
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: [Int!]
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
+
+  """Year, as relative to the current year."""
+  relativeYear: [Int!]
+
+  """
+  Adaptation version. If 1 (default) specify adaptations + combined setupCost
+  and/or annualCost. If 2 specify selections.
+  """
+  version: Int = 1
 }
 
 type AdaptationsResponse {
-	"""
-	The AAL (Average Annual Loss) associated with the adaptations.
-	"""
-	aal: [AdaptationAAL!]
+  """The AAL (Average Annual Loss) associated with the adaptations."""
+  aal: [AdaptationAAL!]
 
-	"""
-	Payback period information for the adaptations.
-	"""
-	paybackYears: [PaybackYears!]
+  """Payback period information for the adaptations."""
+  paybackYears: [PaybackYears!]
 }
 
 """
@@ -196,455 +302,292 @@ Example:
 * In Norway: ADMIN_0 = Country, ADMIN_1 = County (no intermediate level)
 """
 enum AdministrativeLevel {
-	ADMIN_0
-	ADMIN_1
-	ADMIN_2
-	METRO
+  ADMIN_0
+  ADMIN_1
+  ADMIN_2
+  METRO
 }
 
 type AssetType {
-	id: AssetTypeId!
-	description: String!
+  id: AssetTypeId!
+  description: String!
 }
 
 enum AssetTypeId {
-	"""
-	LAND - Agricultural Land
-	"""
-	A1
-
-	"""
-	LAND - Timber Land
-	"""
-	A2
-
-	"""
-	HOTEL - Motel
-	"""
-	H1
-
-	"""
-	HOTEL - Full Service (Mid-Rise)
-	"""
-	H2
-
-	"""
-	HOTEL - Full Service (Low-Rise)
-	"""
-	H3
-
-	"""
-	HOTEL - Limited Service (Mid-Rise)
-	"""
-	H4
-
-	"""
-	HOTEL - Limited Service (Low-Rise)
-	"""
-	H5
-
-	"""
-	HOTEL - Resort
-	"""
-	H6
-
-	"""
-	INDUSTRIAL - Large Manufacturing
-	"""
-	I1
-
-	"""
-	INDUSTRIAL - Small Manufacturing
-	"""
-	I2
-
-	"""
-	INDUSTRIAL - Flex - General Purpose Flex
-	"""
-	I3
-
-	"""
-	INDUSTRIAL - Flex - Research & Development
-	"""
-	I4
-
-	"""
-	INDUSTRIAL - Flex - Office/Showroom
-	"""
-	I5
-
-	"""
-	INDUSTRIAL - Life Science
-	"""
-	I6
-
-	"""
-	INDUSTRIAL - Specialized Industrial - Mixed Industrial Portfolio
-	"""
-	I7
-
-	"""
-	SPECIALTY - Data Center
-	"""
-	I8
-
-	"""
-	INDUSTRIAL - Laboratory
-	"""
-	I9
-
-	"""
-	SPECIALTY - Educational Facilities
-	"""
-	L1
-
-	"""
-	SPECIALTY - Public Buildings/Government
-	"""
-	L2
-
-	"""
-	SPECIALTY - Sports Facilities (stadiums, arenas)
-	"""
-	L3
-
-	"""
-	SPECIALTY - Entertainment (theaters, golf courses, etc.)
-	"""
-	L4
-
-	"""
-	SPECIALTY - Healthcare (hospitals, clinics beyond medical office)
-	"""
-	L5
-
-	"""
-	SPECIALTY - Parking (structures)
-	"""
-	L6
-
-	"""
-	SPECIALTY - Parking (surface lots)
-	"""
-	L7
-
-	"""
-	RESIDENTIAL - Apartment/Condo - Low-Rise (1-4 stories)
-	"""
-	M1
-
-	"""
-	RESIDENTIAL - Apartment/Condo - Mid-Rise (5-10 stories)
-	"""
-	M2
-
-	"""
-	RESIDENTIAL - Apartment/Condo - High-Rise (11+ stories)
-	"""
-	M3
-
-	"""
-	RESIDENTIAL - Apartment/Condo - Age-Restricted
-	"""
-	M4
-
-	"""
-	RESIDENTIAL - Student Housing - Low-Rise (1-4 stories)
-	"""
-	M5
-
-	"""
-	RESIDENTIAL - Student Housing - Mid-Rise (5-10 stories)
-	"""
-	M6
-
-	"""
-	RESIDENTIAL - Student Housing - High-Rise (11+ stories)
-	"""
-	M7
-
-	"""
-	SENIOR HOUSING - Independent Living
-	"""
-	M8
-
-	"""
-	SENIOR HOUSING - Assisted Living
-	"""
-	M9
-
-	"""
-	INFRASTRUCTURE – Transportation – Airport terminals
-	"""
-	N1
-
-	"""
-	INFRASTRUCTURE – Energy – Power Plants (hydropower, nuclear, gas, oil, coal)
-	"""
-	N2
-
-	"""
-	INFRASTRUCTURE – Energy – Electric Transmission & Distribution
-	"""
-	N3
-
-	"""
-	INFRASTRUCTURE – Utilities – Water & Wastewater Treatment
-	"""
-	N4
-
-	"""
-	INFRASTRUCTURE – Utilities – Waste Management
-	"""
-	N5
-
-	"""
-	INFRASTRUCTURE – Energy – Wind Turbines
-	"""
-	N6
-
-	"""
-	INFRASTRUCTURE – Utilities – Utility Poles
-	"""
-	N7
-
-	"""
-	INFRASTRUCTURE – Energy – Oil Refineries
-	"""
-	N8
-
-	"""
-	INFRASTRUCTURE – Communications – Cell Tower
-	"""
-	N9
-
-	"""
-	INFRASTRUCTURE – Energy – Battery Storage
-	"""
-	NB
-
-	"""
-	INFRASTRUCTURE – Utilities – Fiber-Optic Networks
-	"""
-	NF
-
-	"""
-	INFRASTRUCTURE – Energy – Pipelines (Oil, Gas) - Gate Station
-	"""
-	NG
-
-	"""
-	INFRASTRUCTURE – Transportation – Roads & Highways
-	"""
-	NH
-
-	"""
-	INFRASTRUCTURE – Energy – Transmission Line
-	"""
-	NI
-
-	"""
-	INFRASTRUCTURE – Transportation – Light Rail
-	"""
-	NL
-
-	"""
-	INFRASTRUCTURE – Transportation – Tunnel
-	"""
-	NN
-
-	"""
-	INFRASTRUCTURE – Energy – Pipelines (Oil, Gas, Water)
-	"""
-	NP
-
-	"""
-	INFRASTRUCTURE – Utilities – Irrigation Canals & Aqueducts
-	"""
-	NQ
-
-	"""
-	INFRASTRUCTURE – Transportation – Railroads
-	"""
-	NR
-
-	"""
-	INFRASTRUCTURE – Energy – Solar Power Plants
-	"""
-	NS
-
-	"""
-	INFRASTRUCTURE – Energy – Substation
-	"""
-	NT
-
-	"""
-	INFRASTRUCTURE – Transportation – Urban Transit
-	"""
-	NU
-
-	"""
-	INFRASTRUCTURE – Transportation – Container & Cargo Ports
-	"""
-	NV
-
-	"""
-	INFRASTRUCTURE – Energy – Transmission Tower
-	"""
-	NW
-
-	"""
-	INFRASTRUCTURE – Transportation – Airport Runways
-	"""
-	NY
-
-	"""
-	OFFICE - Urban / Low-Rise (1-4 stories)
-	"""
-	O1
-
-	"""
-	OFFICE - Suburban / Low-Rise (1-4 stories)
-	"""
-	O2
-
-	"""
-	OFFICE - Medical Office
-	"""
-	O3
-
-	"""
-	OFFICE - Life Science Office
-	"""
-	O4
-
-	"""
-	OFFICE - CBD / High-Rise (11+ stories)
-	"""
-	O5
-
-	"""
-	OFFICE - Secondary Business District / Mid-Rise (5-10 stories)
-	"""
-	O6
-
-	"""
-	RETAIL - Mall
-	"""
-	R1
-
-	"""
-	RETAIL - Street Retail
-	"""
-	R2
-
-	"""
-	RETAIL - Strip Center
-	"""
-	R3
-
-	"""
-	RETAIL - Big Box
-	"""
-	R4
-
-	"""
-	SPECIALTY - Gas Station
-	"""
-	R5
-
-	"""
-	RESIDENTIAL - Single-Family
-	"""
-	S1
-
-	"""
-	RESIDENTIAL - Manufactured Housing
-	"""
-	S2
-
-	"""
-	LAND - Development Land (non-income producing)
-	"""
-	V1
-
-	"""
-	LAND - Vacant Land
-	"""
-	V2
-
-	"""
-	LAND - Operating Land
-	"""
-	V3
-
-	"""
-	INDUSTRIAL - General Purpose Warehouse (500,000 sf)
-	"""
-	W1
-
-	"""
-	INDUSTRIAL - General Purpose Warehouse (25,000 sf)
-	"""
-	W2
-
-	"""
-	INDUSTRIAL - Distribution Warehouse
-	"""
-	W3
-
-	"""
-	INDUSTRIAL - Specialized Industrial - Refrigerated Storage
-	"""
-	W4
-
-	"""
-	INDUSTRIAL - Specialized Industrial - Air Cargo
-	"""
-	W5
-
-	"""
-	INDUSTRIAL - Specialized Industrial - Truck Terminal
-	"""
-	W6
-
-	"""
-	SELF-STORAGE
-	"""
-	W7
-
-	"""
-	MIXED USE - Low-Rise (1-4 stories)
-	"""
-	X1
-
-	"""
-	MIXED USE - Mid-Rise (5-10 stories)
-	"""
-	X2
-
-	"""
-	MIXED USE - High-Rise (11+ stories)
-	"""
-	X3
+  """LAND - Agricultural Land"""
+  A1
+
+  """LAND - Timber Land"""
+  A2
+
+  """HOTEL - Motel"""
+  H1
+
+  """HOTEL - Full Service (Mid-Rise)"""
+  H2
+
+  """HOTEL - Full Service (Low-Rise)"""
+  H3
+
+  """HOTEL - Limited Service (Mid-Rise)"""
+  H4
+
+  """HOTEL - Limited Service (Low-Rise)"""
+  H5
+
+  """HOTEL - Resort"""
+  H6
+
+  """INDUSTRIAL - Large Manufacturing"""
+  I1
+
+  """INDUSTRIAL - Small Manufacturing"""
+  I2
+
+  """INDUSTRIAL - Flex - General Purpose Flex"""
+  I3
+
+  """INDUSTRIAL - Flex - Research & Development"""
+  I4
+
+  """INDUSTRIAL - Flex - Office/Showroom"""
+  I5
+
+  """INDUSTRIAL - Life Science"""
+  I6
+
+  """INDUSTRIAL - Specialized Industrial - Mixed Industrial Portfolio"""
+  I7
+
+  """SPECIALTY - Data Center"""
+  I8
+
+  """INDUSTRIAL - Laboratory"""
+  I9
+
+  """SPECIALTY - Educational Facilities"""
+  L1
+
+  """SPECIALTY - Public Buildings/Government"""
+  L2
+
+  """SPECIALTY - Sports Facilities (stadiums, arenas)"""
+  L3
+
+  """SPECIALTY - Entertainment (theaters, golf courses, etc.)"""
+  L4
+
+  """SPECIALTY - Healthcare (hospitals, clinics beyond medical office)"""
+  L5
+
+  """SPECIALTY - Parking (structures)"""
+  L6
+
+  """SPECIALTY - Parking (surface lots)"""
+  L7
+
+  """RESIDENTIAL - Apartment/Condo - Low-Rise (1-4 stories)"""
+  M1
+
+  """RESIDENTIAL - Apartment/Condo - Mid-Rise (5-10 stories)"""
+  M2
+
+  """RESIDENTIAL - Apartment/Condo - High-Rise (11+ stories)"""
+  M3
+
+  """RESIDENTIAL - Apartment/Condo - Age-Restricted"""
+  M4
+
+  """RESIDENTIAL - Student Housing - Low-Rise (1-4 stories)"""
+  M5
+
+  """RESIDENTIAL - Student Housing - Mid-Rise (5-10 stories)"""
+  M6
+
+  """RESIDENTIAL - Student Housing - High-Rise (11+ stories)"""
+  M7
+
+  """SENIOR HOUSING - Independent Living"""
+  M8
+
+  """SENIOR HOUSING - Assisted Living"""
+  M9
+
+  """INFRASTRUCTURE – Transportation – Airport terminals"""
+  N1
+
+  """
+  INFRASTRUCTURE – Energy – Power Plants (hydropower, nuclear, gas, oil, coal)
+  """
+  N2
+
+  """INFRASTRUCTURE – Energy – Electric Transmission & Distribution"""
+  N3
+
+  """INFRASTRUCTURE – Utilities – Water & Wastewater Treatment"""
+  N4
+
+  """INFRASTRUCTURE – Utilities – Waste Management"""
+  N5
+
+  """INFRASTRUCTURE – Energy – Wind Turbines"""
+  N6
+
+  """INFRASTRUCTURE – Utilities – Utility Poles"""
+  N7
+
+  """INFRASTRUCTURE – Energy – Oil Refineries"""
+  N8
+
+  """INFRASTRUCTURE – Communications – Cell Tower"""
+  N9
+
+  """INFRASTRUCTURE – Energy – Battery Storage"""
+  NB
+
+  """INFRASTRUCTURE – Energy – Pipelines (Oil, Gas) - Compressor Station"""
+  NC
+
+  """INFRASTRUCTURE – Utilities – Fiber-Optic Networks"""
+  NF
+
+  """INFRASTRUCTURE – Energy – Pipelines (Oil, Gas) - Gate Station"""
+  NG
+
+  """INFRASTRUCTURE – Transportation – Roads & Highways"""
+  NH
+
+  """INFRASTRUCTURE – Energy – Transmission Line"""
+  NI
+
+  """INFRASTRUCTURE – Transportation – Light Rail"""
+  NL
+
+  """INFRASTRUCTURE – Transportation – Tunnel"""
+  NN
+
+  """INFRASTRUCTURE – Energy – Pipelines (Oil, Gas, Water)"""
+  NP
+
+  """INFRASTRUCTURE – Utilities – Irrigation Canals & Aqueducts"""
+  NQ
+
+  """INFRASTRUCTURE – Transportation – Railroads"""
+  NR
+
+  """INFRASTRUCTURE – Energy – Solar Power Plants"""
+  NS
+
+  """INFRASTRUCTURE – Energy – Substation"""
+  NT
+
+  """INFRASTRUCTURE – Transportation – Urban Transit"""
+  NU
+
+  """INFRASTRUCTURE – Transportation – Container & Cargo Ports"""
+  NV
+
+  """INFRASTRUCTURE – Energy – Transmission Tower"""
+  NW
+
+  """INFRASTRUCTURE – Transportation – Airport Runways"""
+  NY
+
+  """OFFICE - Urban / Low-Rise (1-4 stories)"""
+  O1
+
+  """OFFICE - Suburban / Low-Rise (1-4 stories)"""
+  O2
+
+  """OFFICE - Medical Office"""
+  O3
+
+  """OFFICE - Life Science Office"""
+  O4
+
+  """OFFICE - CBD / High-Rise (11+ stories)"""
+  O5
+
+  """OFFICE - Secondary Business District / Mid-Rise (5-10 stories)"""
+  O6
+
+  """RETAIL - Mall"""
+  R1
+
+  """RETAIL - Street Retail"""
+  R2
+
+  """RETAIL - Strip Center"""
+  R3
+
+  """RETAIL - Big Box"""
+  R4
+
+  """SPECIALTY - Gas Station"""
+  R5
+
+  """RESIDENTIAL - Single-Family"""
+  S1
+
+  """RESIDENTIAL - Manufactured Housing"""
+  S2
+
+  """LAND - Development Land (non-income producing)"""
+  V1
+
+  """LAND - Vacant Land"""
+  V2
+
+  """LAND - Operating Land"""
+  V3
+
+  """INDUSTRIAL - General Purpose Warehouse (500,000 sf)"""
+  W1
+
+  """INDUSTRIAL - General Purpose Warehouse (25,000 sf)"""
+  W2
+
+  """INDUSTRIAL - Distribution Warehouse"""
+  W3
+
+  """INDUSTRIAL - Specialized Industrial - Refrigerated Storage"""
+  W4
+
+  """INDUSTRIAL - Specialized Industrial - Air Cargo"""
+  W5
+
+  """INDUSTRIAL - Specialized Industrial - Truck Terminal"""
+  W6
+
+  """SELF-STORAGE"""
+  W7
+
+  """MIXED USE - Low-Rise (1-4 stories)"""
+  X1
+
+  """MIXED USE - Mid-Rise (5-10 stories)"""
+  X2
+
+  """MIXED USE - High-Rise (11+ stories)"""
+  X3
 }
 
 type AverageAnnualCashLossCumulative {
-	"""
-	Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
-	"""
-	percentile: Int
+  """
+  Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+  """
+  percentile: Int
 
-	"""
-	The estimated cumulative annual average cash loss for the building over the specified hold period.
-	"""
-	averageAnnualCashLossCumulative: Int64
+  """
+  The estimated cumulative annual average cash loss for the building over the specified hold period.
+  """
+  averageAnnualCashLossCumulative: Int64
 }
 
 enum Basement {
-	NONE
-	UNFINISHED
-	FINISHED
+  NONE
+  UNFINISHED
+  FINISHED
 }
 
 """
@@ -652,3457 +595,3559 @@ A bounding box enclosing the geometric shape of a locality.
 The bounding box is defined as a set of 4 coordinates: [{southwest lng}, {southwest lat}, {northeast lng}, {northeast lat}]
 """
 type BoundingBox {
-	"""
-	The longitude of the southwest corner of the bounding box.
-	"""
-	southWestLng: Float!
+  """The longitude of the southwest corner of the bounding box."""
+  southWestLng: Float!
 
-	"""
-	The latitude of the southwest corner of the bounding box.
-	"""
-	southWestLat: Float!
+  """The latitude of the southwest corner of the bounding box."""
+  southWestLat: Float!
 
-	"""
-	The longitude of the northeast corner of the bounding box.
-	"""
-	northEastLng: Float!
+  """The longitude of the northeast corner of the bounding box."""
+  northEastLng: Float!
 
-	"""
-	The latitude of the northeast corner of the bounding box.
-	"""
-	northEastLat: Float!
+  """The latitude of the northeast corner of the bounding box."""
+  northEastLat: Float!
 }
 
 type Building {
-	"""
-	Asset type for the building.
-	"""
-	assetTypeId: AssetTypeId
+  """Asset type for the building."""
+  assetTypeId: AssetTypeId
 
-	"""
-	The rebuild price per square foot for a structure (if it exists). Used to compute building damages
-	"""
-	rebuildCostPerSf: Int64
+  """
+  The rebuild price per square foot for a structure (if it exists). Used to compute building damages
+  """
+  rebuildCostPerSf: Int64
 
-	"""
-	Total square footage for the structure
-	"""
-	buildingSf: Int
+  """Total square footage for the structure"""
+  buildingSf: Int
 
-	"""
-	Orientation of building. Options are N (default), NE, E, SE, S, SW, W, NW.
-	"""
-	buildingDirection: CompassDirection
+  """
+  Orientation of building. Options are N (default), NE, E, SE, S, SW, W, NW.
+  """
+  buildingDirection: CompassDirection @deprecated(reason: "Not used by the wind model for vintage 6 and above.")
 
-	"""
-	The presence of defensible space around this property.
-	true = adequate defensible space exists, defined as a five foot buffer zone of cleared space around house AND <15% tree canopy within 50 ft. false (default) = defensible space does not exist.
-	"""
-	defensibleSpace: Boolean
+  """
+  The presence of defensible space around this property.
+  true = adequate defensible space exists, defined as a five foot buffer zone of cleared space around house AND <15% tree canopy within 50 ft. false (default) = defensible space does not exist.
+  """
+  defensibleSpace: Boolean
 
-	"""
-	Number of units in structure. Default value is 1.
-	"""
-	units: Int
+  """Number of units in structure. Default value is 1."""
+  units: Int
 
-	"""
-	Number of stories. Default value is 1.
-	"""
-	stories: Int
+  """Number of stories. Default value is 1."""
+  stories: Int
 
-	"""
-	Estimated height of first finished floor above grade (in ft).
-	"""
-	foundationHeight: Float
+  """Estimated height of first finished floor above grade (in ft)."""
+  foundationHeight: Float
 
-	"""
-	The type of foundation. Used when exact foundation height isn't available.
-	"""
-	foundationType: FoundationType
+  """
+  The type of foundation. Used when exact foundation height isn't available.
+  """
+  foundationType: FoundationType
 
-	"""
-	Whether or not the property has a basement.
-	"""
-	basement: Basement
+  """Whether or not the property has a basement."""
+  basement: Basement
 
-	"""
-	The predominant construction material of the building
-	"""
-	constructionType: ConstructionType
+  """The predominant construction material of the building"""
+  constructionType: ConstructionType
 
-	"""
-	Level of combustibility of construction materials for this property.
-	"""
-	constructionCombustibilityLevel: ConstructionCombustibilityLevel
+  """Level of combustibility of construction materials for this property."""
+  constructionCombustibilityLevel: ConstructionCombustibilityLevel
 
-	"""
-	The type of roofing material.
-	"""
-	roofType: RoofType
+  """The type of roofing material."""
+  roofType: RoofType
 
-	"""
-	Level of combustibility of construction materials for this property.
-	"""
-	roofCombustibilityLevel: RoofCombustibilityLevel
+  """Level of combustibility of construction materials for this property."""
+  roofCombustibilityLevel: RoofCombustibilityLevel
 
-	"""
-	Year of construction
-	"""
-	yearBuilt: Int
+  """Year of construction"""
+  yearBuilt: Int
 
-	"""
-	Whether or not the property abides by the Fireproofing building code.
-	true = fire proofing measures exist for the home (such as fire-proofed windows, flame resistant exterior walls and ignition-resistant exterior doors). false (default) = does not exist.
-	"""
-	fireProofing: Boolean
+  """
+  Whether or not the property abides by the Fireproofing building code.
+  true = fire proofing measures exist for the home (such as fire-proofed windows, flame resistant exterior walls and ignition-resistant exterior doors). false (default) = does not exist.
+  """
+  fireProofing: Boolean
 
-	"""
-	Likelihood of damaging airborne missile in this vicinity. Based on built-up density at the Census tract level.
-	"""
-	denseUrbanEnvironment: MissileEnvironment
+  """
+  Likelihood of damaging airborne missile in this vicinity. Based on built-up density at the Census tract level.
+  """
+  denseUrbanEnvironment: MissileEnvironment
 
-	"""
-	The expected design standard of structures, based on ASCE 7-22 wind risk zones.
-	"""
-	windDesignStandard: WindDesignStandard
+  """
+  The expected design standard of structures, based on ASCE 7-22 wind risk zones.
+  """
+  windDesignStandard: WindDesignStandard
 
-	"""
-	The replacement costs of the contents within the building.
-	"""
-	contentsCost: Int64
+  """The replacement costs of the contents within the building."""
+  contentsCost: Int64
 
-	"""
-	The replacement costs of the inventory within the building.
-	"""
-	inventoryCost: Int64
+  """The replacement costs of the inventory within the building."""
+  inventoryCost: Int64
 
-	"""
-	[DEPRECATED] The estimated replacement cost of the building (today's dollars) based on standard regional replacement cost per square foot and square footage of existing building.
-	"""
-	rebuildCost: Int64 @deprecated(reason: "Use rebuildCostPerSf instead.")
+  """
+  The estimated cost of replacing a roof (in USD) is calculated based on building metadata, including the rebuild cost per square foot, the size of the building, the number of stories, and the type of roof cover. This cost is used to multiply by the probability of a roof replacement due to a specific peril, such as hail, using a predefined probability (e.g., hailDamages.building.probabilityRoofReplacement). The resulting value represents the expected dollar loss associated with the roof replacement.
+  """
+  roofReplacementCost: Int64
 
-	"""
-	[DEPRECATED] Likelihood of damaging airborne missile in this vicinity. Based on built-up density at the Census tract level.
-	"""
-	missileEnvironment: MissileEnvironment
-		@deprecated(reason: "Use denseUrbanEnvironment instead.")
+  """
+  [DEPRECATED] The estimated replacement cost of the building (today's dollars) based on standard regional replacement cost per square foot and square footage of existing building.
+  """
+  rebuildCost: Int64 @deprecated(reason: "Use rebuildCostPerSf instead.")
 
-	"""
-	Asset valuation. The default value is based on rebuild cost and building area.
-	"""
-	assetValuation: Int64
+  """
+  [DEPRECATED] Likelihood of damaging airborne missile in this vicinity. Based on built-up density at the Census tract level.
+  """
+  missileEnvironment: MissileEnvironment @deprecated(reason: "Use denseUrbanEnvironment instead.")
+
+  """
+  Asset valuation. The default value is based on rebuild cost and building area.
+  """
+  assetValuation: Int64
 }
 
 input BuildingInput {
-	"""
-	The type of building.
-	"""
-	buildingType: LandUseType
+  """The type of building."""
+  buildingType: LandUseType
 
-	"""
-	Asset type for the building.
-	"""
-	assetTypeId: AssetTypeId
+  """Asset type for the building."""
+  assetTypeId: AssetTypeId
 
-	"""
-	Annual Net Operating Income. Required for some financial impact metrics.
-	"""
-	placeNOI: Int
+  """
+  Annual Net Operating Income. Required for some financial impact metrics.
+  """
+  placeNOI: Int
 
-	"""
-	The rebuild price dollars per square foot for a structure (if it exists). Used to compute building damages.
-	"""
-	rebuildCostSf: Int64
+  """
+  The rebuild price dollars per square foot for a structure (if it exists). Used to compute building damages.
+  """
+  rebuildCostSf: Int64
 
-	"""
-	Total rebuild cost of the asset, in dollars. Only used for infrastructure asset types (N6, NB, NT, NW, NC, NG), which are
-	priced as a whole rather than per square foot (see rebuildCostSf). The rebuildCostSf will be ignored if the asset is an infrastructure type.
-	"""
-	rebuildCost: Int64
+  """
+  Total rebuild cost of the asset, in dollars. Only used for infrastructure asset types (N6, NB, NT, NW, NC, NG), which are
+  priced as a whole rather than per square foot (see rebuildCostSf). The rebuildCostSf will be ignored if the asset is an infrastructure type.
+  """
+  rebuildCost: Int64
 
-	"""
-	Floor size in square feet.
-	"""
-	buildingSf: Int
+  """Floor size in square feet."""
+  buildingSf: Int
 
-	"""
-	The type of roofing material.
-	"""
-	roofType: RoofType
+  """The type of roofing material."""
+  roofType: RoofType
 
-	"""
-	The predominant construction material of the building.
-	"""
-	constructionType: ConstructionType
+  """The predominant construction material of the building."""
+  constructionType: ConstructionType
 
-	"""
-	Number of stories. Default value is 1.
-	"""
-	stories: Int
+  """Number of stories. Default value is 1."""
+  stories: Int
 
-	"""
-	Number of units in structure. Default value is 1.
-	"""
-	units: Int
+  """Number of units in structure. Default value is 1."""
+  units: Int
 
-	"""
-	Year of construction.
-	"""
-	yearBuilt: Int
+  """Year of construction."""
+  yearBuilt: Int
 
-	"""
-	Orientation of building. options are N (default), NE, E, SE, S, SW, W, NW.
-	"""
-	buildingDirection: CompassDirection
+  """
+  Orientation of building. options are N (default), NE, E, SE, S, SW, W, NW.
+  """
+  buildingDirection: CompassDirection
 
-	"""
-	The expected design standard of structures, based on ASCE 7-22 wind risk zones.
-	"""
-	windDesignStandard: WindDesignStandard
+  """
+  The expected design standard of structures, based on ASCE 7-22 wind risk zones.
+  """
+  windDesignStandard: WindDesignStandard
 
-	"""
-	Likelihood of damaging airborne missile in this vicinity. Based on built-up density at the Census tract level.
-	"""
-	denseUrbanEnvironment: MissileEnvironment
+  """
+  Likelihood of damaging airborne missile in this vicinity. Based on built-up density at the Census tract level.
+  """
+  denseUrbanEnvironment: MissileEnvironment
 
-	"""
-	The presence of defensible space around this property.
-	true = adequate defensible space exists, defined as a five foot buffer zone of cleared space around house AND <15% tree canopy within 50 ft. false (default) = defensible space does not exist.
-	"""
-	defensibleSpace: Boolean
+  """
+  The presence of defensible space around this property.
+  true = adequate defensible space exists, defined as a five foot buffer zone of cleared space around house AND <15% tree canopy within 50 ft. false (default) = defensible space does not exist.
+  """
+  defensibleSpace: Boolean
 
-	"""
-	Whether or not the property abides by the Fireproofing building code.
-	true = fire proofing measures exist for the home (such as fire-proofed windows, flame resistant exterior walls and ignition-resistant exterior doors). false (default) = does not exist.
-	"""
-	fireProofing: Boolean
+  """
+  Whether or not the property abides by the Fireproofing building code.
+  true = fire proofing measures exist for the home (such as fire-proofed windows, flame resistant exterior walls and ignition-resistant exterior doors). false (default) = does not exist.
+  """
+  fireProofing: Boolean
 
-	"""
-	Whether or not the property has a basement. 0 (default) = no basement, 1 = has basement.
-	"""
-	basement: Basement
+  """
+  Whether or not the property has a basement. 0 (default) = no basement, 1 = has basement.
+  """
+  basement: Basement
 
-	"""
-	The height associated with the first floor elevation for the building (in ft).
-	"""
-	foundationHeight: Float
+  """
+  The height associated with the first floor elevation for the building (in ft).
+  """
+  foundationHeight: Float
 
-	"""
-	The type of foundation. Used when exact foundation height isn't available.
-	"""
-	foundationType: FoundationType
+  """
+  The type of foundation. Used when exact foundation height isn't available.
+  """
+  foundationType: FoundationType
 
-	"""
-	Height of the flood barrier wall (in cm). Only used in adaptations.
-	"""
-	wallHeightCm: Int
+  """Height of the flood barrier wall (in cm). Only used in adaptations."""
+  wallHeightCm: Int
 
-	"""
-	The replacement costs of the contents within the building.
-	"""
-	contentsCost: Int64
+  """The replacement costs of the contents within the building."""
+  contentsCost: Int64
 
-	"""
-	The replacement costs of the inventory within the building.
-	"""
-	inventoryCost: Int64
+  """The replacement costs of the inventory within the building."""
+  inventoryCost: Int64
 }
 
 interface ByRelativeYear {
-	relativeYear: Int!
+  relativeYear: Int!
 }
 
 interface ByRelativeYearBySSP {
-	relativeYear: Int!
-	ssp: SSP!
+  relativeYear: Int!
+  ssp: SSP!
 }
 
 interface ByRelativeYearBySSPByRP {
-	relativeYear: Int!
-	ssp: SSP!
-	returnPeriod: ReturnPeriod!
+  relativeYear: Int!
+  ssp: SSP!
+  returnPeriod: ReturnPeriod!
 }
 
-"""
-The center GeoJSON (Point)
-"""
+interface ByRelativeYearBySSPByRPByWindSource {
+  relativeYear: Int!
+  ssp: SSP!
+  returnPeriod: ReturnPeriod!
+  source: WindSource!
+}
+
+interface ByRelativeYearBySSPByWindSource {
+  relativeYear: Int!
+  ssp: SSP!
+  source: WindSource!
+}
+
+"""The center GeoJSON (Point)"""
 type Center {
-	"""
-	GeoJSON geometry type Point.
-	"""
-	type: String
+  """GeoJSON geometry type Point."""
+  type: String
 
-	"""
-	Coordinates of the Point
+  """
+  Coordinates of the Point
 
-	Example: *[-76.96286,39.40059]*
-	"""
-	coordinates: [Float!]
+  Example: *[-76.96286,39.40059]*
+  """
+  coordinates: [Float!]
 }
 
 enum CompassDirection {
-	N
-	NE
-	E
-	SE
-	S
-	SW
-	W
-	NW
+  N
+  NE
+  E
+  SE
+  S
+  SW
+  W
+  NW
 }
 
 enum ConstructionCombustibilityLevel {
-	LOW
-	MEDIUM
-	HIGH
+  LOW
+  MEDIUM
+  HIGH
 }
 
 enum ConstructionType {
-	ADOBE
-	BRICK
-	CONCRETE
-	CONCRETE_BLOCK
-	DOME
-	FRAME
-	HEAVY
-	LIGHT
-	LOG
-	MANUFACTURED
-	OTHER
-	MASONRY
-	METAL
-	STEEL
-	STONE
-	TILT_UP
-	WOOD
-	MIXED
+  ADOBE
+  BRICK
+  CONCRETE
+  CONCRETE_BLOCK
+  DOME
+  FRAME
+  HEAVY
+  LIGHT
+  LOG
+  MANUFACTURED
+  OTHER
+  MASONRY
+  METAL
+  STEEL
+  STONE
+  TILT_UP
+  WOOD
+  MIXED
 }
 
-"""
-Remap Graphql Types to Go Types
-"""
+"""Remap Graphql Types to Go Types"""
 scalar Date
 
-"""
-A single edge in a paginated list of data nodes
-"""
+"""A single edge in a paginated list of data nodes"""
 interface Edge {
-	"""
-	Represents the sort order for nodes
-	"""
-	rank: Int
+  """Represents the sort order for nodes"""
+  rank: Int
 
-	"""
-	Cursor is a string that can be used in subsequent request as value of a connection "after" argument, to request page starting after this item.
+  """
+  Cursor is a string that can be used in subsequent request as value of a connection "after" argument, to request page starting after this item.
 
-	Example: *Y3Vyc29yOjEyNTI0MA==*
-	"""
-	cursor: ID
+  Example: *Y3Vyc29yOjEyNTI0MA==*
+  """
+  cursor: ID
 
-	"""
-	Contains one page record data.
-	"""
-	node: Node
+  """Contains one page record data."""
+  node: Node
 }
 
 interface Excluding {
-	exclusion: Exclusion
+  exclusion: Exclusion
 }
 
 type Exclusion {
-	description: String
+  description: String
 }
 
-"""
-The status of a First Street Model operation.
-"""
+"""The status of a First Street Model operation."""
 type FSModelResponseStatus {
-	"""
-	The current state of model generation.
-	"""
-	name: FSModelStatusName!
+  """The current state of model generation."""
+  name: FSModelStatusName!
 }
 
-"""
-Descrbies the current status of the data generation operation
-"""
+"""Descrbies the current status of the data generation operation"""
 enum FSModelStatusName {
-	"""
-	The operation is awaiting to be acknolwedged
-	"""
-	PENDING
+  """The operation is awaiting to be acknolwedged"""
+  PENDING
 
-	"""
-	The operation is in progress
-	"""
-	RUNNING
+  """The operation is in progress"""
+  RUNNING
 
-	"""
-	The operation has completed successfully
-	"""
-	SUCCESS
+  """The operation has completed successfully"""
+  SUCCESS
 
-	"""
-	The operation has failed
-	"""
-	FAILED
+  """The operation has failed"""
+  FAILED
 
-	"""
-	The operation has timed out
-	"""
-	TIMEOUT
+  """The operation has timed out"""
+  TIMEOUT
 
-	"""
-	The operation has encountered an error
-	"""
-	ERROR
+  """The operation has encountered an error"""
+  ERROR
 }
 
 """
 The corresponding text description that describes the `factor` score that is associated with the property.
 """
 enum FactorScale {
-	MINIMAL
-	MINOR
-	MODERATE
-	MAJOR
-	SEVERE
-	EXTREME
+  MINIMAL
+  MINOR
+  MODERATE
+  MAJOR
+  SEVERE
+  EXTREME
 }
 
 type FindBuildingsResponse {
-	"""
-	Buildings found within the search area.
-	"""
-	buildings: [FoundBuilding!]!
+  """Buildings found within the search area."""
+  buildings: [FoundBuilding!]!
 }
 
-"""
-The flood source modeled at this location.
-"""
+"""The flood source modeled at this location."""
 enum FloodSource {
-	FLUVIAL
-	PLUVIAL
-	COASTAL
+  FLUVIAL
+  PLUVIAL
+  COASTAL
 }
 
 type FoundBuilding {
-	"""
-	First Street Place ID.
-	"""
-	placeId: String!
+  """First Street Place ID."""
+  placeId: String!
 
-	"""
-	Latitude of building centroid.
-	"""
-	lat: Float!
+  """Latitude of building centroid."""
+  lat: Float!
 
-	"""
-	Longitude of building centroid.
-	"""
-	lng: Float!
+  """Longitude of building centroid."""
+  lng: Float!
 
-	"""
-	Asset type for the building.
-	"""
-	assetTypeId: AssetTypeId!
+  """Asset type for the building."""
+  assetTypeId: AssetTypeId!
 
-	"""
-	Building location (or footprint, when available) as a GeoJSON geometry
-	"""
-	geometry: String!
+  """Building location (or footprint, when available) as a GeoJSON geometry"""
+  geometry: String!
 }
 
 enum FoundationType {
-	CRAWL_OR_RAISED
-	CROSSED_WALLS
-	MASONRY
-	EARTH
-	MUD_SILL
-	STONE
-	CONCRETE_BLOCK
-	PILING
-	OTHER
-	PIERS
-	RETAINING_WALL
-	SLAB
-	FOOTING
-	WOOD
-	CONCRETE
-	BRICK
-	OPEN_PIERS
-	CLOSED_PIERS
+  CRAWL_OR_RAISED
+  CROSSED_WALLS
+  MASONRY
+  EARTH
+  MUD_SILL
+  STONE
+  CONCRETE_BLOCK
+  PILING
+  OTHER
+  PIERS
+  RETAINING_WALL
+  SLAB
+  FOOTING
+  WOOD
+  CONCRETE
+  BRICK
+  OPEN_PIERS
+  CLOSED_PIERS
 }
 
-"""
-Geospatial operations.
-"""
+"""Geospatial operations."""
 type Geospatial {
-	"""
-	Find buildings within a geographic area.
-	"""
-	findBuildings(
-		"""
-		GeoJSON Polygon or MultiPolygon defining the search area. Area must not exceed 9 km².
-		"""
-		area: String!
-	): FindBuildingsResponse
+  """Find buildings within a geographic area."""
+  findBuildings(
+    """
+    GeoJSON Polygon or MultiPolygon defining the search area. Area must not exceed 9 km².
+    """
+    area: String!
+  ): FindBuildingsResponse
 }
 
 """
-Sector classifications for companies
+A past tropical cyclone whose wind swath covered the place. Unlike wildfires this is coverage
+rather than proximity, so a place just outside the weakest swath band returns nothing at all.
+Only about a fifth of storm tracks carry a wind swath, so the rest can never be returned.
 """
-type Industry {
-	"""
-	Unique identifier for the industry.
-	"""
-	industryId: Int!
+type HistoricCyclone {
+  """Identifies the storm within its historic cyclone version."""
+  cycloneId: Int!
 
-	"""
-	The name of the industry.
-	"""
-	name: String!
+  """IBTrACS storm identifier, e.g. 2003239N16309."""
+  ibtracsSid: String!
+
+  """Readable name of the storm, as IBTrACS reports it."""
+  name: String
+
+  """
+  IBTrACS season the storm belongs to, which can differ from the calendar year of individual
+  observations. Cyclones carry no event date.
+  """
+  season: Int!
+
+  """
+  Sustained wind speed band of the swath covering this place, in mph: 39, 58 or 74. Bands do not
+  overlap, so this is the strongest band covering the place rather than a peak gust reading.
+  """
+  windSpeedBandMph: Int!
+
+  """
+  Peak category over the whole life of the storm, which is not necessarily what this place experienced.
+  """
+  categoryId: Int
+
+  """
+  Distance in miles from the place to the storm track, not to the edge of the wind swath.
+  Never 0.
+  """
+  distanceToTrackMi: Float!
+
+  """
+  Areas the storm's winds covered, one per speed band, strongest first. This is the whole
+  storm's wind field, not the part of it over this place. Null when the requested vintage
+  does not carry this storm.
+  """
+  windSwaths: [HistoricCycloneWindSwath!]
+}
+
+"""
+The area a storm's winds covered at one speed band. A storm carries up to three of these,
+nested inside one another, and the bands do not overlap.
+"""
+type HistoricCycloneWindSwath {
+  """
+  Sustained wind speed band this area covers, in mph: 39, 58 or 74. Unlike the same field on
+  HistoricCyclone, this describes the band itself rather than the one covering the place.
+  """
+  windSpeedBandMph: Int!
+
+  """Outline of the area as a GeoJSON MultiPolygon."""
+  geometry: String!
+}
+
+"""A past wildfire whose perimeter fell within range of the place."""
+type HistoricWildfire {
+  """Identifies the fire within its historic wildfire version."""
+  wildfireId: Int!
+
+  """
+  Readable name of the fire, and usually null: only a fraction of a percent of fires carry one.
+  The Global Fire Atlas never names them, and the agency sources name only some.
+  """
+  name: String
+
+  """
+  Date the fire started burning. Where a source reports only a discovery or observation date, that date is used.
+  """
+  date: Date!
+  wildfireType: HistoricWildfireType!
+  dataSource: HistoricWildfireSource!
+
+  """Area enclosed by the fire perimeter, in acres."""
+  areaAcres: Float!
+
+  """
+  Distance in miles from the place to the fire perimeter. 0 when the place is inside the perimeter.
+  """
+  distanceToPerimeterMi: Float!
+
+  """
+  Fire perimeter as a GeoJSON MultiPolygon. Null when the requested vintage does not carry
+  this fire.
+  """
+  geometry: String
+}
+
+"""
+Agency that reported a historic wildfire. This is where the record came from, not how the fire started.
+"""
+enum HistoricWildfireSource {
+  """Monitoring Trends in Burn Severity, US wildfire."""
+  MTBS
+
+  """National Interagency Fire Center, US wildfire."""
+  NIFC
+
+  """Canadian national wildfire reporting."""
+  CANADA
+
+  """Australian national wildfire reporting."""
+  AUSTRALIA
+
+  """Global Fire Atlas, worldwide wildfire. Does not name individual fires."""
+  GLOBAL_FIRE_ATLAS
+}
+
+"""How the reporting agency classified a historic fire."""
+enum HistoricWildfireType {
+  WILDLAND_FIRE
+  PRESCRIBED_BURN
+  WILDLAND_FIRE_USE
+  UNKNOWN
+}
+
+"""Sector classifications for companies"""
+type Industry {
+  """Unique identifier for the industry."""
+  industryId: Int!
+
+  """The name of the industry."""
+  name: String!
 }
 
 input InputOptions {
-	measurementSystem: MeasurementSystem
-	vintageId: Int64
+  measurementSystem: MeasurementSystem
+  vintageId: Int64
 }
 
 scalar Int64
 
 enum LandUseType {
-	SINGLE_FAMILY_RESIDENTIAL
-	MULTIFAMILY
-	RETAIL
-	HOTEL
-	OFFICE
-	INDUSTRIAL
-	WAREHOUSE
-	AGRICULTURAL
-	VACANT
+  SINGLE_FAMILY_RESIDENTIAL
+  MULTIFAMILY
+  RETAIL
+  HOTEL
+  OFFICE
+  INDUSTRIAL
+  WAREHOUSE
+  AGRICULTURAL
+  VACANT
 }
 
-"""
-Paginated list of localities
-"""
+"""Paginated list of localities"""
 type LocalitiesConnection {
-	"""
-	The total number of localities in the connection.
-	"""
-	totalCount: Int64
+  """The total number of localities in the connection."""
+  totalCount: Int64
 
-	"""
-	The edges of the localities connection.
-	"""
-	edges: [LocalityEdge!]!
+  """The edges of the localities connection."""
+  edges: [LocalityEdge!]!
 
-	"""
-	The page info of the localities connection.
-	"""
-	pageInfo: PageInfo!
+  """The page info of the localities connection."""
+  pageInfo: PageInfo!
 }
 
 """
 Locality represents a geographical area such as a country, state, county, or metropolitan area.
 """
 type Locality {
-	"""
-	Unique ID for the Locality
-	"""
-	localityId: Int64!
+  """Unique ID for the Locality"""
+  localityId: Int64!
 
-	"""
-	Two-digit country ISO code for the locality
-	"""
-	countryId: String!
+  """Two-digit country ISO code for the locality"""
+  countryId: String!
 
-	"""
-	Name of the locality
-	"""
-	name: String!
+  """Name of the locality"""
+  name: String!
 
-	"""
-	The administrative level of the locality.
+  """
+  The administrative level of the locality.
 
-	Note: AdministrativeLevels represent hierarchical administrative divisions, but do not necessarily
-	      correspond to specific political or governmental divisions. The same AdministrativeLevel may
-	      represent different types of divisions in different parts of the world.
-	"""
-	adminLevel: AdministrativeLevel!
+  Note: AdministrativeLevels represent hierarchical administrative divisions, but do not necessarily
+        correspond to specific political or governmental divisions. The same AdministrativeLevel may
+        represent different types of divisions in different parts of the world.
+  """
+  adminLevel: AdministrativeLevel!
 
-	"""
-	The locality's map tile file URL. This is a pre-signed S3 URL that will expire after one hour.
-	Defaults to macroeconomic map tiles if no mapType is specified.
-	"""
-	mapUrl(mapType: LocalityMapType): String
+  """
+  The locality's map tile file URL. This is a pre-signed S3 URL that will expire after one hour.
+  Defaults to macroeconomic map tiles if no mapType is specified. peril only applies to the
+  HAZARD mapType, where it defaults to ALL_PERIL.
+  """
+  mapUrl(mapType: LocalityMapType, peril: LocalityHazardPeril): String
 
-	"""
-	The bounding box enclosing the geometric shape of the locality.
-	"""
-	boundingBox: BoundingBox!
+  """The bounding box enclosing the geometric shape of the locality."""
+  boundingBox: BoundingBox!
 
-	"""
-	Macroeconomic indicators for the locality
-	"""
-	macroeconomic: [LocalityMacroeconomicData!]!
+  """Macroeconomic indicators for the locality"""
+  macroeconomic(input: LocalityMacroeconomicInput): [LocalityMacroeconomicData!]!
 
-	"""
-	Insurance-related data for the locality
-	"""
-	insurance: LocalityInsuranceData
+  """Insurance-related data for the locality"""
+  insurance: LocalityInsuranceData
 
-	"""
-	List of parent localities with their names and administrative levels.
-	"""
-	parentLocalities: [ParentLocality!]
+  """Per-peril hazard data for the locality."""
+  hazard(input: LocalityHazardInput): LocalityHazardData
+
+  """List of parent localities with their names and administrative levels."""
+  parentLocalities: [ParentLocality!]
+}
+
+type LocalityAllPeril {
+  allPerilFactors: [LocalityAllPerilFactor!]
 }
 
 """
-A single edge in a paginated list of localities
+Combined hazard score for a locality, a numeric integer from 1-100 (where 1 = minimal and 100 = extreme).
 """
+type LocalityAllPerilFactor implements ByRelativeYearBySSP {
+  relativeYear: Int!
+  ssp: SSP!
+  allPerilFactor: Int
+  factorScale: FactorScale
+  rank: LocalityHazardRank
+}
+
+type LocalityCold {
+  coldFactors: [LocalityColdFactor!]
+  coldDays: [LocalityColdDays!]
+}
+
+"""Days at or below the cold index threshold in the area."""
+type LocalityColdDays implements ByRelativeYearBySSP {
+  relativeYear: Int!
+  ssp: SSP!
+  threshold: Int!
+  days: Int
+}
+
+type LocalityColdFactor implements ByRelativeYearBySSP {
+  relativeYear: Int!
+  ssp: SSP!
+  coldFactor: Int
+  factorScale: FactorScale
+  rank: LocalityHazardRank
+}
+
+type LocalityDrought {
+  droughtFactors: [LocalityDroughtFactor!]
+  duration: [LocalityDroughtDuration!]
+}
+
+"""Maximum drought duration (in weeks) in the area."""
+type LocalityDroughtDuration implements ByRelativeYearBySSPByRP {
+  relativeYear: Int!
+  ssp: SSP!
+  returnPeriod: ReturnPeriod!
+  maxDuration: Float
+}
+
+type LocalityDroughtFactor implements ByRelativeYearBySSP {
+  relativeYear: Int!
+  ssp: SSP!
+  droughtFactor: Int
+  factorScale: FactorScale
+  rank: LocalityHazardRank
+}
+
+"""A single edge in a paginated list of localities"""
 type LocalityEdge implements Edge {
-	"""
-	Represents the sort order for nodes
-	"""
-	rank: Int
+  """Represents the sort order for nodes"""
+  rank: Int
 
-	"""
-	Cursor is a string that can be used in subsequent request as value of a connection "after" argument, to request page starting after this item.
+  """
+  Cursor is a string that can be used in subsequent request as value of a connection "after" argument, to request page starting after this item.
 
-	Example: *Y3Vyc29yOjEyNTI0MA==*
-	"""
-	cursor: ID
+  Example: *Y3Vyc29yOjEyNTI0MA==*
+  """
+  cursor: ID
 
-	"""
-	Contains one page of locality data
-	"""
-	node: Locality
+  """Contains one page of locality data"""
+  node: Locality
+}
+
+type LocalityFire {
+  fireFactors: [LocalityFireFactor!]
+  burnProbability: [LocalityFireBurnProbability!]
+}
+
+"""Fire burn probability for the area."""
+type LocalityFireBurnProbability implements ByRelativeYearBySSP {
+  relativeYear: Int!
+  ssp: SSP!
+  probability: Float
+}
+
+type LocalityFireFactor implements ByRelativeYearBySSP {
+  relativeYear: Int!
+  ssp: SSP!
+  fireFactor: Int
+  factorScale: FactorScale
+  rank: LocalityHazardRank
+}
+
+type LocalityFlood {
+  floodFactors: [LocalityFloodFactor!]
+  exposure: [LocalityFloodExposure!]
+}
+
+"""
+Proportion of the locality inundated, and the proportion of the population exposed in that area.
+"""
+type LocalityFloodExposure implements ByRelativeYearBySSPByRP {
+  relativeYear: Int!
+  ssp: SSP!
+  returnPeriod: ReturnPeriod!
+  proportionInundation: Float
+  populationExposure: Float
+}
+
+type LocalityFloodFactor implements ByRelativeYearBySSP {
+  relativeYear: Int!
+  ssp: SSP!
+  floodFactor: Int
+  factorScale: FactorScale
+  rank: LocalityHazardRank
+}
+
+type LocalityHail {
+  hailFactors: [LocalityHailFactor!]
+  size: [LocalityHailSize!]
+}
+
+type LocalityHailFactor implements ByRelativeYearBySSP {
+  relativeYear: Int!
+  ssp: SSP!
+  hailFactor: Int
+  factorScale: FactorScale
+  rank: LocalityHazardRank
+}
+
+"""Mean hail size (in inches) in the area."""
+type LocalityHailSize implements ByRelativeYearBySSPByRP {
+  relativeYear: Int!
+  ssp: SSP!
+  returnPeriod: ReturnPeriod!
+  meanSize: Float
+}
+
+"""Hazard data for a locality."""
+type LocalityHazardData {
+  allPeril: LocalityAllPeril
+  flood: LocalityFlood
+  wind: LocalityWind
+  fire: LocalityFire
+  hail: LocalityHail
+  heat: LocalityHeat
+  cold: LocalityCold
+  drought: LocalityDrought
+}
+
+"""Filter for the hazard localities connection."""
+input LocalityHazardFilter {
+  """Socioeconomic scenario (SSP)"""
+  ssp: SSP = SSP_2_45
+
+  """
+  Year, as relative to the current year.
+  Years available: 0, 5, 10, 15, 20, 25, 30, 45, 60, 75
+  """
+  relativeYear: Int = 30
+
+  """The locality administrative level"""
+  adminLevel: AdministrativeLevel!
+
+  """Locality name search"""
+  searchValue: String
+
+  """Filter by admin level 0 locality Ids (countries)"""
+  locality0Ids: [Int64!]
+
+  """Filter by admin level 1 locality Ids (e.g. States or Provinces)"""
+  locality1Ids: [Int64!]
+
+  """Filter by admin level 2 locality Ids (e.g. Counties)"""
+  locality2Ids: [Int64!]
+
+  """Filter by admin level metro Ids (e.g. Cities)"""
+  localityMetroIds: [Int64!]
+}
+
+"""
+Specific SSPs or relative years or return periods to return for a single locality.
+Returns every value by default if unspecified.
+"""
+input LocalityHazardInput {
+  """Socioeconomic scenario (SSP)"""
+  ssp: [SSP!]
+
+  """
+  Year, as relative to the current year.
+  Years available: 0, 5, 10, 15, 20, 25, 30, 45, 60, 75
+  """
+  relativeYear: [Int!]
+
+  """
+  Return period. Only applies to the stats that have return periods: flood exposure, wind speed, hail size
+  and drought duration.
+  """
+  returnPeriod: [ReturnPeriod!]
+}
+
+"""Peril for hazard map tiles."""
+enum LocalityHazardPeril {
+  ALL_PERIL
+  FLOOD
+  WIND
+  FIRE
+  HAIL
+  HEAT
+  COLD
+  DROUGHT
+}
+
+"""How a locality's peril factor ranks in its administrative level."""
+type LocalityHazardRank {
+  """
+  How a locality's peril factor ranks against other localities in the same country.
+  """
+  adm0: LocalityRankScope
+
+  """
+  How a locality's peril factor ranks against other localities in the same state or province.
+  """
+  adm1: LocalityRankScope
+
+  """
+  How a locality's peril factor ranks against other localities worldwide.
+  """
+  global: LocalityRankScope
+}
+
+"""Sort order for the hazard localities connection."""
+enum LocalityHazardSort {
+  NAME_ASC
+  NAME_DESC
+  ALL_PERIL_FACTOR_ASC
+  ALL_PERIL_FACTOR_DESC
+  FLOOD_FACTOR_ASC
+  FLOOD_FACTOR_DESC
+  WIND_FACTOR_ASC
+  WIND_FACTOR_DESC
+  FIRE_FACTOR_ASC
+  FIRE_FACTOR_DESC
+  HAIL_FACTOR_ASC
+  HAIL_FACTOR_DESC
+  HEAT_FACTOR_ASC
+  HEAT_FACTOR_DESC
+  COLD_FACTOR_ASC
+  COLD_FACTOR_DESC
+  DROUGHT_FACTOR_ASC
+  DROUGHT_FACTOR_DESC
+}
+
+type LocalityHeat {
+  heatFactors: [LocalityHeatFactor!]
+  heatDays: [LocalityHeatDays!]
+}
+
+"""Days at or above the heat index threshold in the area."""
+type LocalityHeatDays implements ByRelativeYearBySSP {
+  relativeYear: Int!
+  ssp: SSP!
+  threshold: Int!
+  days: Int
+}
+
+type LocalityHeatFactor implements ByRelativeYearBySSP {
+  relativeYear: Int!
+  ssp: SSP!
+  heatFactor: Int
+  factorScale: FactorScale
+  rank: LocalityHazardRank
 }
 
 """
 Insurance cost statistics for a locality, by SSP, year, and percentile.
 """
 type LocalityInsuranceCost implements ByRelativeYearBySSP {
-	"""
-	Holding Period.
-	Years available: 0, 5, 10, 15, 20, 25, 30, 45, 60, 75.
-	"""
-	relativeYear: Int!
+  """
+  Holding Period.
+  Years available: 0, 5, 10, 15, 20, 25, 30, 45, 60, 75.
+  """
+  relativeYear: Int!
 
-	"""
-	Socioeconomic scenario (SSP)
-	"""
-	ssp: SSP!
+  """Socioeconomic scenario (SSP)"""
+  ssp: SSP!
 
-	"""
-	Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
-	"""
-	percentile: Int!
+  """
+  Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+  """
+  percentile: Int!
 
-	"""
-	Cost volatility.
-	"""
-	costVolatility: Float
+  """Cost volatility."""
+  costVolatility: Float
 
-	"""
-	Cost growth rate.
-	"""
-	costGrowthRate: Float
+  """Cost growth rate."""
+  costGrowthRate: Float
 
-	"""
-	Cumulative cost growth rate from year 0 through the current year (compounded).
-	"""
-	costGrowthRateCumulative: Float
+  """
+  Cumulative cost growth rate from year 0 through the current year (compounded).
+  """
+  costGrowthRateCumulative: Float
 }
 
-"""
-Insurance-related data for a locality.
-"""
+"""Insurance-related data for a locality."""
 type LocalityInsuranceData {
-	"""
-	Insurance factor scores for the locality.
-	"""
-	insuranceFactor: [LocalityInsuranceFactor!]
+  """Insurance factor scores for the locality."""
+  insuranceFactor: [LocalityInsuranceFactor!]
 
-	"""
-	Insurance cost statistics for the locality.
-	"""
-	insuranceCost: [LocalityInsuranceCost!]
+  """Insurance cost statistics for the locality."""
+  insuranceCost: [LocalityInsuranceCost!]
 }
 
-"""
-Insurance factor score for a locality, by SSP and year.
-"""
+"""Insurance factor score for a locality, by SSP and year."""
 type LocalityInsuranceFactor implements ByRelativeYearBySSP {
-	"""
-	Holding Period.
-	Years available: 0, 5, 10, 15, 20, 25, 30, 45, 60, 75.
-	"""
-	relativeYear: Int!
+  """
+  Holding Period.
+  Years available: 0, 5, 10, 15, 20, 25, 30, 45, 60, 75.
+  """
+  relativeYear: Int!
 
-	"""
-	Socioeconomic scenario (SSP)
-	"""
-	ssp: SSP!
+  """Socioeconomic scenario (SSP)"""
+  ssp: SSP!
 
-	"""
-	Insurance factor score.
-	"""
-	insuranceFactor: Int
+  """Insurance factor score."""
+  insuranceFactor: Int
 }
 
-"""
-Filter for the insurance localities connection.
-"""
+"""Filter for the insurance localities connection."""
 input LocalityInsuranceFilter {
-	"""
-	Socioeconomic scenario (SSP)
-	"""
-	ssp: SSP = SSP_2_45
+  """Socioeconomic scenario (SSP)"""
+  ssp: SSP = SSP_2_45
 
-	"""
-	Holding Period
-	Years available: 0, 5, 10, 15, 20, 25, 30, 45, 60, 75
-	"""
-	relativeYear: Int = 30
+  """
+  Holding Period
+  Years available: 0, 5, 10, 15, 20, 25, 30, 45, 60, 75
+  """
+  relativeYear: Int = 30
 
-	"""
-	The locality administrative level
-	"""
-	adminLevel: AdministrativeLevel!
+  """The locality administrative level"""
+  adminLevel: AdministrativeLevel!
 
-	"""
-	Locality name search
-	"""
-	searchValue: String
+  """Locality name search"""
+  searchValue: String
 
-	"""
-	Filter by admin level 0 locality Ids (countries)
-	"""
-	locality0Ids: [Int64!]
+  """Filter by admin level 0 locality Ids (countries)"""
+  locality0Ids: [Int64!]
 
-	"""
-	Filter by admin level 1 locality Ids (e.g. States or Provinces)
-	"""
-	locality1Ids: [Int64!]
+  """Filter by admin level 1 locality Ids (e.g. States or Provinces)"""
+  locality1Ids: [Int64!]
 
-	"""
-	Filter by admin level 2 locality Ids (e.g. Counties)
-	"""
-	locality2Ids: [Int64!]
+  """Filter by admin level 2 locality Ids (e.g. Counties)"""
+  locality2Ids: [Int64!]
 }
 
-"""
-Sort order for the insurance localities connection.
-"""
+"""Sort order for the insurance localities connection."""
 enum LocalityInsuranceSort {
-	NAME_ASC
-	NAME_DESC
-	INSURANCE_FACTOR_ASC
-	INSURANCE_FACTOR_DESC
-	INSURANCE_COST_GROWTH_RATE_ASC
-	INSURANCE_COST_GROWTH_RATE_DESC
+  NAME_ASC
+  NAME_DESC
+  INSURANCE_FACTOR_ASC
+  INSURANCE_FACTOR_DESC
+  INSURANCE_COST_GROWTH_RATE_ASC
+  INSURANCE_COST_GROWTH_RATE_DESC
 }
 
 type LocalityMacroeconomicData implements ByRelativeYearBySSP {
-	"""
-	Holding Period.
-	Years available: 0, 5, 10, 15, 20, 25, 30, 45, 60, 75.
-	"""
-	relativeYear: Int!
-
-	"""
-	Socioeconomic scenario (SSP)
-	"""
-	ssp: SSP!
-
-	"""
-	Macroeconomic Factor that includes market trends. Distilling climate-driven economic growth risks into an easy-to-digest score.
-	"""
-	econFactorClimateMarket: Int
-
-	"""
-	Text descriptor for Macroeconomic Factor that includes market trends. eg: Minimal, Minor, Moderate, Major, Severe, Extreme
-	"""
-	econFactorScaleClimateMarket: FactorScale
-
-	"""
-	Price of living: climate and market-driven change factor
-	"""
-	priceOfLivingChangeFactorClimateMarket: Float
-
-	"""
-	Price of living: baseline value.
-	"""
-	priceOfLivingBaseline: Float
-
-	"""
-	Price of living: climate and market-driven change factor (%).
-	"""
-	priceOfLivingClimateMarketPctChange: Float
-
-	"""
-	Price of living: baseline value % change.
-	"""
-	priceOfLivingBaselinePctChange: Float
-
-	"""
-	Price of living: value given the climate and market effects
-	"""
-	priceOfLivingClimateMarket: Float
-
-	"""
-	Price of living: difference between the baseline % change factor and the climate-market % change factor
-	"""
-	priceOfLivingClimateMarketImpact: Float
-
-	"""
-	DTG: climate and market-driven change factor.
-	"""
-	dtgChangeFactorClimateMarket: Float
-
-	"""
-	DTG: baseline value.
-	"""
-	dtgBaseline: Float
-
-	"""
-	DTG: climate and market-driven change factor (%).
-	"""
-	dtgClimateMarketPctChange: Float
-
-	"""
-	DTG: baseline value % change.
-	"""
-	dtgBaselinePctChange: Float
-
-	"""
-	DTG: value given the climate and market effects
-	"""
-	dtgClimateMarket: Float
-
-	"""
-	DTG: difference between the baseline % change factor and the climate-market % change factor
-	"""
-	dtgClimateMarketImpact: Float
-
-	"""
-	GDP: climate and market-driven change factor.
-	"""
-	gdpChangeFactorClimateMarket: Float
-
-	"""
-	GDP: baseline value.
-	"""
-	gdpBaseline: Float
-
-	"""
-	GDP: climate and market-driven change factor (%).
-	"""
-	gdpClimateMarketPctChange: Float
-
-	"""
-	GDP: baseline value % change.
-	"""
-	gdpBaselinePctChange: Float
-
-	"""
-	GDP: value given the climate and market effects
-	"""
-	gdpClimateMarket: Float
-
-	"""
-	GDP: difference between the baseline % change factor and the climate-market % change factor
-	"""
-	gdpClimateMarketImpact: Float
-
-	"""
-	GDP per capita: climate and market-driven change factor.
-	"""
-	gdppcChangeFactorClimateMarket: Float
-
-	"""
-	GDP per capita: baseline value.
-	"""
-	gdppcBaseline: Float
-
-	"""
-	GDP per capita: climate and market-driven change factor (%).
-	"""
-	gdppcClimateMarketPctChange: Float
-
-	"""
-	GDP per capita: baseline value % change.
-	"""
-	gdppcBaselinePctChange: Float
-
-	"""
-	GDP per capita: value given the climate and market effects
-	"""
-	gdppcClimateMarket: Float
-
-	"""
-	GDP per capita: difference between the baseline % change factor and the climate-market % change factor
-	"""
-	gdppcClimateMarketImpact: Float
-
-	"""
-	Median age: climate and market-driven change (years).
-	"""
-	medianAgeChangeFactorClimateMarket: Float
-
-	"""
-	Median age: baseline value.
-	"""
-	medianAgeBaseline: Float
-
-	"""
-	Median age: climate and market-driven change factor.
-	"""
-	medianAgeClimateMarketPctChange: Float
-
-	"""
-	Median age: baseline value % change.
-	"""
-	medianAgeBaselinePctChange: Float
-
-	"""
-	Median age: value given the climate and market effects
-	"""
-	medianAgeClimateMarket: Float
-
-	"""
-	Median age: difference between the baseline % change factor and the climate-market % change factor
-	"""
-	medianAgeClimateMarketImpact: Float
-
-	"""
-	Average Gross income: climate and market-driven change factor.
-	"""
-	averageGrossIncomeChangeFactorClimateMarket: Float
-
-	"""
-	Average Gross income: baseline value.
-	"""
-	averageGrossIncomeBaseline: Float
-
-	"""
-	Average gross income: climate and market-driven change factor (%).
-	"""
-	averageGrossIncomeClimateMarketPctChange: Float
-
-	"""
-	Average gross income: baseline value % change.
-	"""
-	averageGrossIncomeBaselinePctChange: Float
-
-	"""
-	Average gross income: value given the climate and market effects
-	"""
-	averageGrossIncomeClimateMarket: Float
-
-	"""
-	Average gross income: difference between the baseline % change factor and the climate-market % change factor
-	"""
-	averageGrossIncomeClimateMarketImpact: Float
-
-	"""
-	Native-born population percentage: climate and market-driven change (percentage points).
-	"""
-	nativeBornPctChangeFactorClimateMarket: Float
-
-	"""
-	Native-born population percentage: baseline value.
-	"""
-	nativeBornPctBaseline: Float
-
-	"""
-	Native-born: climate and market-driven change factor (%).
-	"""
-	nativeBornPctClimateMarketPctChange: Float
-
-	"""
-	Native-born: baseline value % change.
-	"""
-	nativeBornPctBaselinePctChange: Float
-
-	"""
-	Native-born: value given the climate and market effects
-	"""
-	nativeBornPctClimateMarket: Float
-
-	"""
-	Native-born: difference between the baseline % change factor and the climate-market % change factor
-	"""
-	nativeBornPctClimateMarketImpact: Float
-
-	"""
-	Population: climate and market-driven change factor.
-	"""
-	populationChangeFactorClimateMarket: Float
-
-	"""
-	Population: baseline value.
-	"""
-	populationBaseline: Float
-
-	"""
-	Population: climate and market-driven change factor (%).
-	"""
-	populationClimateMarketPctChange: Float
-
-	"""
-	Population: baseline value % change.
-	"""
-	populationBaselinePctChange: Float
-
-	"""
-	Population: value given the climate and market effects
-	"""
-	populationClimateMarket: Float
-
-	"""
-	Population: difference between the baseline % change factor and the climate-market % change factor
-	"""
-	populationClimateMarketImpact: Float
-
-	"""
-	Deprivation index: climate and market-driven change factor.
-	"""
-	deprivationIndexChangeFactorClimateMarket: Float
-
-	"""
-	Poverty index: baseline value.
-	"""
-	deprivationIndexBaseline: Float
-
-	"""
-	Deprivation index: climate and market-driven change factor (%).
-	"""
-	deprivationIndexClimateMarketPctChange: Float
-
-	"""
-	Deprivation index: baseline value % change.
-	"""
-	deprivationIndexBaselinePctChange: Float
-
-	"""
-	Deprivation index: value given the climate and market effects
-	"""
-	deprivationIndexClimateMarket: Float
-
-	"""
-	Deprivation index: difference between the baseline % change factor and the climate-market % change factor
-	"""
-	deprivationIndexClimateMarketImpact: Float
-
-	"""
-	RPPI: climate and market-driven change factor.
-	"""
-	rppiChangeFactorClimateMarket: Float
-
-	"""
-	RPPI: baseline value.
-	"""
-	rppiBaseline: Float
-
-	"""
-	RPPI: climate and market-driven change factor (%).
-	"""
-	rppiClimateMarketPctChange: Float
-
-	"""
-	RPPI: baseline value % change.
-	"""
-	rppiBaselinePctChange: Float
-
-	"""
-	RPPI: value given the climate and market effects
-	"""
-	rppiClimateMarket: Float
-
-	"""
-	RPPI: difference between the baseline % change factor and the climate-market % change factor
-	"""
-	rppiClimateMarketImpact: Float
-
-	"""
-	CPPI: climate and market-driven change factor.
-	"""
-	cppiChangeFactorClimateMarket: Float
-
-	"""
-	CPPI: baseline value.
-	"""
-	cppiBaseline: Float
-
-	"""
-	CPPI: climate and market-driven change factor (%).
-	"""
-	cppiClimateMarketPctChange: Float
-
-	"""
-	CPPI: baseline value % change.
-	"""
-	cppiBaselinePctChange: Float
-
-	"""
-	CPPI: value given the climate and market effects
-	"""
-	cppiClimateMarket: Float
-
-	"""
-	CPPI: difference between the baseline % change factor and the climate-market % change factor
-	"""
-	cppiClimateMarketImpact: Float
-
-	"""
-	Unemployment: climate and market-driven change.
-	"""
-	unemploymentChangeFactorClimateMarket: Float
-
-	"""
-	Unemployment: baseline value.
-	"""
-	unemploymentBaseline: Float
-
-	"""
-	Unemployment: climate and market-driven change factor (%).
-	"""
-	unemploymentClimateMarketPctChange: Float
-
-	"""
-	Unemployment: baseline value % change.
-	"""
-	unemploymentBaselinePctChange: Float
-
-	"""
-	Unemployment: value given the climate and market effects
-	"""
-	unemploymentClimateMarket: Float
-
-	"""
-	Unemployment: difference between the baseline % change factor and the climate-market % change factor
-	"""
-	unemploymentClimateMarketImpact: Float
+  """
+  Holding Period.
+  Years available: 0, 5, 10, 15, 20, 25, 30, 45, 60, 75.
+  """
+  relativeYear: Int!
+
+  """Socioeconomic scenario (SSP)"""
+  ssp: SSP!
+
+  """
+  Macroeconomic Factor that includes market trends. Distilling climate-driven economic growth risks into an easy-to-digest score.
+  """
+  econFactorClimateMarket: Int
+
+  """
+  Text descriptor for Macroeconomic Factor that includes market trends. eg: Minimal, Minor, Moderate, Major, Severe, Extreme
+  """
+  econFactorScaleClimateMarket: FactorScale
+
+  """Price of living: climate and market-driven change factor"""
+  priceOfLivingChangeFactorClimateMarket: Float
+
+  """Price of living: baseline value."""
+  priceOfLivingBaseline: Float
+
+  """Price of living: climate and market-driven change factor (%)."""
+  priceOfLivingClimateMarketPctChange: Float
+
+  """Price of living: baseline value % change."""
+  priceOfLivingBaselinePctChange: Float
+
+  """Price of living: value given the climate and market effects"""
+  priceOfLivingClimateMarket: Float
+
+  """
+  Price of living: difference between the baseline % change factor and the climate-market % change factor
+  """
+  priceOfLivingClimateMarketImpact: Float
+
+  """DTG: climate and market-driven change factor."""
+  dtgChangeFactorClimateMarket: Float
+
+  """DTG: baseline value."""
+  dtgBaseline: Float
+
+  """DTG: climate and market-driven change factor (%)."""
+  dtgClimateMarketPctChange: Float
+
+  """DTG: baseline value % change."""
+  dtgBaselinePctChange: Float
+
+  """DTG: value given the climate and market effects"""
+  dtgClimateMarket: Float
+
+  """
+  DTG: difference between the baseline % change factor and the climate-market % change factor
+  """
+  dtgClimateMarketImpact: Float
+
+  """GDP: climate and market-driven change factor."""
+  gdpChangeFactorClimateMarket: Float
+
+  """GDP: baseline value."""
+  gdpBaseline: Float
+
+  """GDP: climate and market-driven change factor (%)."""
+  gdpClimateMarketPctChange: Float
+
+  """GDP: baseline value % change."""
+  gdpBaselinePctChange: Float
+
+  """GDP: value given the climate and market effects"""
+  gdpClimateMarket: Float
+
+  """
+  GDP: difference between the baseline % change factor and the climate-market % change factor
+  """
+  gdpClimateMarketImpact: Float
+
+  """GDP per capita: climate and market-driven change factor."""
+  gdppcChangeFactorClimateMarket: Float
+
+  """GDP per capita: baseline value."""
+  gdppcBaseline: Float
+
+  """GDP per capita: climate and market-driven change factor (%)."""
+  gdppcClimateMarketPctChange: Float
+
+  """GDP per capita: baseline value % change."""
+  gdppcBaselinePctChange: Float
+
+  """GDP per capita: value given the climate and market effects"""
+  gdppcClimateMarket: Float
+
+  """
+  GDP per capita: difference between the baseline % change factor and the climate-market % change factor
+  """
+  gdppcClimateMarketImpact: Float
+
+  """Median age: climate and market-driven change (years)."""
+  medianAgeChangeFactorClimateMarket: Float
+
+  """Median age: baseline value."""
+  medianAgeBaseline: Float
+
+  """Median age: climate and market-driven change factor."""
+  medianAgeClimateMarketPctChange: Float
+
+  """Median age: baseline value % change."""
+  medianAgeBaselinePctChange: Float
+
+  """Median age: value given the climate and market effects"""
+  medianAgeClimateMarket: Float
+
+  """
+  Median age: difference between the baseline % change factor and the climate-market % change factor
+  """
+  medianAgeClimateMarketImpact: Float
+
+  """Average Gross income: climate and market-driven change factor."""
+  averageGrossIncomeChangeFactorClimateMarket: Float
+
+  """Average Gross income: baseline value."""
+  averageGrossIncomeBaseline: Float
+
+  """Average gross income: climate and market-driven change factor (%)."""
+  averageGrossIncomeClimateMarketPctChange: Float
+
+  """Average gross income: baseline value % change."""
+  averageGrossIncomeBaselinePctChange: Float
+
+  """Average gross income: value given the climate and market effects"""
+  averageGrossIncomeClimateMarket: Float
+
+  """
+  Average gross income: difference between the baseline % change factor and the climate-market % change factor
+  """
+  averageGrossIncomeClimateMarketImpact: Float
+
+  """
+  Native-born population percentage: climate and market-driven change (percentage points).
+  """
+  nativeBornPctChangeFactorClimateMarket: Float
+
+  """Native-born population percentage: baseline value."""
+  nativeBornPctBaseline: Float
+
+  """Native-born: climate and market-driven change factor (%)."""
+  nativeBornPctClimateMarketPctChange: Float
+
+  """Native-born: baseline value % change."""
+  nativeBornPctBaselinePctChange: Float
+
+  """Native-born: value given the climate and market effects"""
+  nativeBornPctClimateMarket: Float
+
+  """
+  Native-born: difference between the baseline % change factor and the climate-market % change factor
+  """
+  nativeBornPctClimateMarketImpact: Float
+
+  """Population: climate and market-driven change factor."""
+  populationChangeFactorClimateMarket: Float
+
+  """Population: baseline value."""
+  populationBaseline: Float
+
+  """Population: climate and market-driven change factor (%)."""
+  populationClimateMarketPctChange: Float
+
+  """Population: baseline value % change."""
+  populationBaselinePctChange: Float
+
+  """Population: value given the climate and market effects"""
+  populationClimateMarket: Float
+
+  """
+  Population: difference between the baseline % change factor and the climate-market % change factor
+  """
+  populationClimateMarketImpact: Float
+
+  """Deprivation index: climate and market-driven change factor."""
+  deprivationIndexChangeFactorClimateMarket: Float
+
+  """Poverty index: baseline value."""
+  deprivationIndexBaseline: Float
+
+  """Deprivation index: climate and market-driven change factor (%)."""
+  deprivationIndexClimateMarketPctChange: Float
+
+  """Deprivation index: baseline value % change."""
+  deprivationIndexBaselinePctChange: Float
+
+  """Deprivation index: value given the climate and market effects"""
+  deprivationIndexClimateMarket: Float
+
+  """
+  Deprivation index: difference between the baseline % change factor and the climate-market % change factor
+  """
+  deprivationIndexClimateMarketImpact: Float
+
+  """RPPI: climate and market-driven change factor."""
+  rppiChangeFactorClimateMarket: Float
+
+  """RPPI: baseline value."""
+  rppiBaseline: Float
+
+  """RPPI: climate and market-driven change factor (%)."""
+  rppiClimateMarketPctChange: Float
+
+  """RPPI: baseline value % change."""
+  rppiBaselinePctChange: Float
+
+  """RPPI: value given the climate and market effects"""
+  rppiClimateMarket: Float
+
+  """
+  RPPI: difference between the baseline % change factor and the climate-market % change factor
+  """
+  rppiClimateMarketImpact: Float
+
+  """CPPI: climate and market-driven change factor."""
+  cppiChangeFactorClimateMarket: Float
+
+  """CPPI: baseline value."""
+  cppiBaseline: Float
+
+  """CPPI: climate and market-driven change factor (%)."""
+  cppiClimateMarketPctChange: Float
+
+  """CPPI: baseline value % change."""
+  cppiBaselinePctChange: Float
+
+  """CPPI: value given the climate and market effects"""
+  cppiClimateMarket: Float
+
+  """
+  CPPI: difference between the baseline % change factor and the climate-market % change factor
+  """
+  cppiClimateMarketImpact: Float
+
+  """Unemployment: climate and market-driven change."""
+  unemploymentChangeFactorClimateMarket: Float
+
+  """Unemployment: baseline value."""
+  unemploymentBaseline: Float
+
+  """Unemployment: climate and market-driven change factor (%)."""
+  unemploymentClimateMarketPctChange: Float
+
+  """Unemployment: baseline value % change."""
+  unemploymentBaselinePctChange: Float
+
+  """Unemployment: value given the climate and market effects"""
+  unemploymentClimateMarket: Float
+
+  """
+  Unemployment: difference between the baseline % change factor and the climate-market % change factor
+  """
+  unemploymentClimateMarketImpact: Float
 }
 
 input LocalityMacroeconomicFilter {
-	"""
-	Socioeconomic scenario (SSP)
-	"""
-	ssp: SSP = SSP_2_45
+  """Socioeconomic scenario (SSP)"""
+  ssp: SSP = SSP_2_45
 
-	"""
-	Holding Period
-	Years available: 0, 5, 10, 15, 20, 25, 30, 45, 60, 75
-	"""
-	relativeYear: Int = 30
+  """
+  Holding Period
+  Years available: 0, 5, 10, 15, 20, 25, 30, 45, 60, 75
+  """
+  relativeYear: Int = 30
 
-	"""
-	The locality administrative level
-	"""
-	adminLevel: AdministrativeLevel!
+  """The locality administrative level"""
+  adminLevel: AdministrativeLevel!
 
-	"""
-	Locality name search
-	"""
-	searchValue: String
+  """Locality name search"""
+  searchValue: String
 
-	"""
-	Filter by admin level 0 locality Ids (countries)
-	"""
-	locality0Ids: [Int64!]
+  """Filter by admin level 0 locality Ids (countries)"""
+  locality0Ids: [Int64!]
 
-	"""
-	Filter by admin level 1 locality Ids (e.g. States or Provinces)
-	"""
-	locality1Ids: [Int64!]
+  """Filter by admin level 1 locality Ids (e.g. States or Provinces)"""
+  locality1Ids: [Int64!]
 
-	"""
-	Filter by admin level 2 locality Ids (e.g. Counties)
-	"""
-	locality2Ids: [Int64!]
+  """Filter by admin level 2 locality Ids (e.g. Counties)"""
+  locality2Ids: [Int64!]
 
-	"""
-	Filter by admin level metro Ids (e.g. Cities)
-	"""
-	localityMetroIds: [Int64!]
+  """Filter by admin level metro Ids (e.g. Cities)"""
+  localityMetroIds: [Int64!]
 }
 
 """
-Sort order for the localities connection.
+Scopes a Locality's macroeconomic time series to specific scenarios/years instead of
+returning every SSP x relativeYear combination.
 """
+input LocalityMacroeconomicInput {
+  """Socioeconomic scenario (SSP)"""
+  ssp: [SSP!]
+
+  """
+  Holding Period
+  Years available: 0, 5, 10, 15, 20, 25, 30, 45, 60, 75
+  """
+  relativeYear: [Int!]
+}
+
+"""Sort order for the localities connection."""
 enum LocalityMacroeconomicSort {
-	NAME_ASC
-	NAME_DESC
-	ADMIN_0_NAME_ASC_SUBLOCALITY_NAME_ASC
-	ADMIN_0_NAME_ASC_SUBLOCALITY_NAME_DESC
-	ADMIN_0_NAME_DESC_SUBLOCALITY_NAME_ASC
-	ADMIN_0_NAME_DESC_SUBLOCALITY_NAME_DESC
-	ECON_FACTOR_CLIMATE_MARKET_ASC
-	ECON_FACTOR_CLIMATE_MARKET_DESC
-	POPULATION_BASELINE_ASC
-	POPULATION_BASELINE_DESC
-	POPULATION_CHANGE_FACTOR_CLIMATE_MARKET_ASC
-	POPULATION_CHANGE_FACTOR_CLIMATE_MARKET_DESC
-	GDP_BASELINE_ASC
-	GDP_BASELINE_DESC
-	GDP_CHANGE_FACTOR_CLIMATE_MARKET_ASC
-	GDP_CHANGE_FACTOR_CLIMATE_MARKET_DESC
-	GDPPC_BASELINE_ASC
-	GDPPC_BASELINE_DESC
-	GDPPC_CHANGE_FACTOR_CLIMATE_MARKET_ASC
-	GDPPC_CHANGE_FACTOR_CLIMATE_MARKET_DESC
-	PRICE_OF_LIVING_BASELINE_ASC
-	PRICE_OF_LIVING_BASELINE_DESC
-	PRICE_OF_LIVING_CHANGE_FACTOR_CLIMATE_MARKET_ASC
-	PRICE_OF_LIVING_CHANGE_FACTOR_CLIMATE_MARKET_DESC
-	AVERAGE_GROSS_INCOME_BASELINE_ASC
-	AVERAGE_GROSS_INCOME_BASELINE_DESC
-	AVERAGE_GROSS_INCOME_CHANGE_FACTOR_CLIMATE_MARKET_ASC
-	AVERAGE_GROSS_INCOME_CHANGE_FACTOR_CLIMATE_MARKET_DESC
+  NAME_ASC
+  NAME_DESC
+  ADMIN_0_NAME_ASC_SUBLOCALITY_NAME_ASC
+  ADMIN_0_NAME_ASC_SUBLOCALITY_NAME_DESC
+  ADMIN_0_NAME_DESC_SUBLOCALITY_NAME_ASC
+  ADMIN_0_NAME_DESC_SUBLOCALITY_NAME_DESC
+  ECON_FACTOR_CLIMATE_MARKET_ASC
+  ECON_FACTOR_CLIMATE_MARKET_DESC
+  POPULATION_BASELINE_ASC
+  POPULATION_BASELINE_DESC
+  POPULATION_CHANGE_FACTOR_CLIMATE_MARKET_ASC
+  POPULATION_CHANGE_FACTOR_CLIMATE_MARKET_DESC
+  GDP_BASELINE_ASC
+  GDP_BASELINE_DESC
+  GDP_CHANGE_FACTOR_CLIMATE_MARKET_ASC
+  GDP_CHANGE_FACTOR_CLIMATE_MARKET_DESC
+  GDPPC_BASELINE_ASC
+  GDPPC_BASELINE_DESC
+  GDPPC_CHANGE_FACTOR_CLIMATE_MARKET_ASC
+  GDPPC_CHANGE_FACTOR_CLIMATE_MARKET_DESC
+  PRICE_OF_LIVING_BASELINE_ASC
+  PRICE_OF_LIVING_BASELINE_DESC
+  PRICE_OF_LIVING_CHANGE_FACTOR_CLIMATE_MARKET_ASC
+  PRICE_OF_LIVING_CHANGE_FACTOR_CLIMATE_MARKET_DESC
+  AVERAGE_GROSS_INCOME_BASELINE_ASC
+  AVERAGE_GROSS_INCOME_BASELINE_DESC
+  AVERAGE_GROSS_INCOME_CHANGE_FACTOR_CLIMATE_MARKET_ASC
+  AVERAGE_GROSS_INCOME_CHANGE_FACTOR_CLIMATE_MARKET_DESC
 }
 
-"""
-Map tile type for choropleth overlays.
-"""
+"""Map tile type for choropleth overlays."""
 enum LocalityMapType {
-	MACROECONOMIC
-	INSURANCE
+  MACROECONOMIC
+  INSURANCE
+  HAZARD
+}
+
+"""The locality's rank and the size of the field it was ranked against."""
+type LocalityRankScope {
+  rank: Int!
+  total: Int!
+}
+
+type LocalityWind {
+  windFactors: [LocalityWindFactor!]
+  speed: [LocalityWindSpeed!]
+}
+
+type LocalityWindFactor implements ByRelativeYearBySSP {
+  relativeYear: Int!
+  ssp: SSP!
+  windFactor: Int
+  factorScale: FactorScale
+  rank: LocalityHazardRank
+}
+
+"""Three-second gust wind max speed (in miles per hour) in the area."""
+type LocalityWindSpeed implements ByRelativeYearBySSPByRP {
+  relativeYear: Int!
+  ssp: SSP!
+  returnPeriod: ReturnPeriod!
+  maxSpeed: Float
 }
 
 enum MeasurementSystem {
-	"""
-	Convert return values to imperial. This is the default MeasurementSystem.
-	"""
-	IMPERIAL
+  """
+  Convert return values to imperial. This is the default MeasurementSystem.
+  """
+  IMPERIAL
 
-	"""
-	Convert return values to metric.
-	"""
-	METRIC
+  """Convert return values to metric."""
+  METRIC
 }
 
 type MetadataLookup {
-	"""
-	The list of available vintages.
-	"""
-	vintages: [Vintage!]!
+  """The list of available vintages."""
+  vintages: [Vintage!]!
 
-	"""
-	List of all industries.
-	"""
-	industries: [Industry!]!
+  """List of all industries."""
+  industries: [Industry!]!
 
-	"""
-	List of all sectors.
-	"""
-	sectors: [Sector!]!
+  """List of all sectors."""
+  sectors: [Sector!]!
 }
 
 enum MissileEnvironment {
-	LOW
-	HIGH
+  LOW
+  HIGH
 }
 
-"""
-A union to encompass all possible Node types for pagination
-"""
+"""A union to encompass all possible Node types for pagination"""
 union Node = Locality
 
 enum OccupancyType {
-	OWNER
-	OPERATOR
-	OWNER_OPERATOR
+  OWNER
+  OPERATOR
+  OWNER_OPERATOR
 }
 
 """
 PageInfo is returned for a connection. It contains pagination-related info, as well as connection edges (page entries).
 """
 type PageInfo {
-	"""
-	hasPreviousPage informs if there is a previous page
-	"""
-	hasPreviousPage: Boolean!
+  """hasPreviousPage informs if there is a previous page"""
+  hasPreviousPage: Boolean!
 
-	"""
-	hasNextPage informs if there is a next page
-	"""
-	hasNextPage: Boolean!
+  """hasNextPage informs if there is a next page"""
+  hasNextPage: Boolean!
 
-	"""
-	startCursor refers to the cursor at start of the first page.
+  """
+  startCursor refers to the cursor at start of the first page.
 
-	Example: *Y3Vyc29yOjEwMDU=*
-	"""
-	startCursor: String
+  Example: *Y3Vyc29yOjEwMDU=*
+  """
+  startCursor: String
 
-	"""
-	endCursor refers to the the last item of the last page.
+  """
+  endCursor refers to the the last item of the last page.
 
-	Example: *Y3Vyc29yOjEwMTI=*
-	"""
-	endCursor: String
+  Example: *Y3Vyc29yOjEwMTI=*
+  """
+  endCursor: String
 }
 
-"""
-Name and administrative level of a parent locality.
-"""
+"""Name and administrative level of a parent locality."""
 type ParentLocality {
-	"""
-	Unique ID for the Locality
-	"""
-	localityId: Int64!
+  """Unique ID for the Locality"""
+  localityId: Int64!
 
-	"""
-	The administrative level of the parent locality.
-	"""
-	adminLevel: AdministrativeLevel!
+  """The administrative level of the parent locality."""
+  adminLevel: AdministrativeLevel!
 
-	"""
-	The name of the parent locality.
-	"""
-	name: String!
+  """The name of the parent locality."""
+  name: String!
 
-	"""
-	Two-digit country ISO code for the locality
-	"""
-	countryId: String!
+  """Two-digit country ISO code for the locality"""
+  countryId: String!
 }
 
 type PaybackYears {
-	"""
-	Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
-	"""
-	percentile: Int
+  """
+  Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+  """
+  percentile: Int
 
-	"""
-	The first full year in which the proposed change yields net savings (avoided losses exceed costs).
-	"""
-	year: Int
+  """
+  The first full year in which the proposed change yields net savings (avoided losses exceed costs).
+  """
+  year: Int
 }
 
 type Place implements PlaceResponse {
-	"""
-	The vintage version for the returned data. Vintage uniquely identifies the property and peril data version.
-	"""
-	vintage: Vintage!
+  """
+  The vintage version for the returned data. Vintage uniquely identifies the property and peril data version.
+  """
+  vintage: Vintage!
 
-	"""
-	First Street place ID.
-	"""
-	placeId: String!
+  """First Street place ID."""
+  placeId: String!
 
-	"""
-	ISO-3166-a3 country code.
-	"""
-	countryCode: String
+  """ISO-3166-a3 country code."""
+  countryCode: String
 
-	"""
-	Street address.
-	"""
-	address: String
+  """Street address."""
+  address: String
 
-	"""
-	The type of place.
-	"""
-	placeType: PlaceType!
+  """The type of place."""
+  placeType: PlaceType!
 
-	"""
-	The geometry details of place.
-	"""
-	geometry: PlaceGeometry!
+  """The geometry details of place."""
+  geometry: PlaceGeometry!
 
-	"""
-	Flag indicating if the place has known buildings.
-	"""
-	hasBuildings: Boolean
-	flood: PlaceFlood
-	wildfire: PlaceWildfire
-	wind: PlaceWind
-	heat: PlaceHeat
-	cold: PlaceCold
-	drought: PlaceDrought
-	primaryPeril: PlacePrimaryPeril
-	allPeril: PlaceAllPeril
-	placeBuilding: PlaceBuilding
-	adaptations(input: PlaceAdaptationsInput): PlaceAdaptations
-	building: Building @deprecated(reason: "Use placeBuilding instead.")
-	locality: PlaceLocality
+  """Flag indicating if the place has known buildings."""
+  hasBuildings: Boolean
+  flood: PlaceFlood
+  wildfire: PlaceWildfire
+  wind: PlaceWind
+  hail: PlaceHail
+  heat: PlaceHeat
+  cold: PlaceCold
+  drought: PlaceDrought
+  primaryPeril: PlacePrimaryPeril
+  allPeril: PlaceAllPeril
+  placeBuilding: PlaceBuilding
+  adaptations(input: PlaceAdaptationsInput): PlaceAdaptations
+  building: Building @deprecated(reason: "Use placeBuilding instead.")
+  locality: PlaceLocality
 }
 
 type PlaceAdaptations {
-	"""
-	Cumulative Annual Average Cash Loss for the building over the specified hold period.
-	"""
-	averageAnnualCashLossCumulative: [AverageAnnualCashLossCumulative!]!
+  """
+  Cumulative Annual Average Cash Loss for the building over the specified hold period.
+  """
+  averageAnnualCashLossCumulative: [AverageAnnualCashLossCumulative!]!
 
-	"""
-	Possible adaptations for the building and their potential costs and savings.
-	"""
-	possibleAdaptations: [Adaptation!]
+  """
+  Possible adaptations for the building and their potential costs and savings.
+  """
+  possibleAdaptations: [Adaptation!]
 
-	"""
-	Recommended adaptations for the building based on potential savings.
-	"""
-	recommendedAdaptations: [RecommendedAdaptation!]
+  """Recommended adaptations for the building based on potential savings."""
+  recommendedAdaptations: [RecommendedAdaptation!]
 }
 
 input PlaceAdaptationsInput {
-	"""
-	Hold Period of the asset in years.
-	"""
-	holdPeriod: Int!
+  """Hold Period of the asset in years."""
+  holdPeriod: Int!
 
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: SSP!
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: [Int!]
+  """Year, as relative to the current year."""
+  relativeYear: [Int!]
+
+  """
+  Adaptation catalog version. Defaults to 1. 2 features an expanded catalog.
+  """
+  version: Int = 1
 }
 
 type PlaceAllPeril implements ResponseStatus {
-	status: FSModelResponseStatus!
-	data: PlaceAllPerilData
+  status: FSModelResponseStatus!
+  data: PlaceAllPerilData
 }
 
 type PlaceAllPerilData implements Excluding {
-	"""
-	Peril score and factor by relative year and SSP
-	"""
-	allPerilFactors: [PlaceAllPerilFactor!]
+  """Peril score and factor by relative year and SSP"""
+  allPerilFactors: [PlaceAllPerilFactor!]
 
-	"""
-	If property is excluded, the reason for exclusion. Property is considered excluded in the all hazards case if there are peril scores for only 1 or 0 of the component peril factors.
-	"""
-	exclusion: Exclusion
+  """
+  If property is excluded, the reason for exclusion. Property is considered excluded in the all hazards case if there are peril scores for only 1 or 0 of the component peril factors.
+  """
+  exclusion: Exclusion
 }
 
 type PlaceAllPerilFactor implements ByRelativeYearBySSP {
-	"""
-	The asset's All Peril Factor, a numeric integer from 1-100 (where 1 = minimal and 100 = extreme)
-	"""
-	allPerilFactor: Int
+  """
+  The asset's All Peril Factor, a numeric integer from 1-100 (where 1 = minimal and 100 = extreme)
+  """
+  allPerilFactor: Int
 
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: SSP!
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: Int!
+  """Year, as relative to the current year."""
+  relativeYear: Int!
 
-	"""
-	The corresponding text description that describes the `factor` score that is associated with the property.
-	"""
-	factorScale: FactorScale
+  """
+  The corresponding text description that describes the `factor` score that is associated with the property.
+  """
+  factorScale: FactorScale
 }
 
 type PlaceBuilding implements ResponseStatus {
-	status: FSModelResponseStatus!
-	data: Building
+  status: FSModelResponseStatus!
+  data: Building
 }
 
 type PlaceCold implements ResponseStatus {
-	status: FSModelResponseStatus!
-	data: PlaceColdData
+  status: FSModelResponseStatus!
+  data: PlaceColdData
 }
 
 type PlaceColdData implements Excluding {
-	"""
-	The place's Cold Factors
-	"""
-	coldFactors: [PlaceColdFactor!]
+  """The place's Cold Factors"""
+  coldFactors: [PlaceColdFactor!]
 
-	"""
-	The place's Cold Factor
-	"""
-	coldFactor: Int
-		@deprecated(
-			reason: "Replaced by coldFactors.coldFactor for scores by SSP and Year."
-		)
+  """The place's Cold Factor"""
+  coldFactor: Int @deprecated(reason: "Replaced by coldFactors.coldFactor for scores by SSP and Year.")
 
-	"""
-	Text representation of the Cold Factor. Possible values are: minimal, minor, moderate, major, severe, extreme.
-	"""
-	factorScale: FactorScale
-		@deprecated(
-			reason: "Replaced by coldFactors.factorScale for scores by SSP and Year."
-		)
+  """
+  Text representation of the Cold Factor. Possible values are: minimal, minor, moderate, major, severe, extreme.
+  """
+  factorScale: FactorScale @deprecated(reason: "Replaced by coldFactors.factorScale for scores by SSP and Year.")
 
-	"""
-	Cold probability details for place.
-	"""
-	probability: PlaceColdProbability
+  """Cold probability details for place."""
+  probability: PlaceColdProbability
 
-	"""
-	If property is excluded, the reason for exclusion.
-	"""
-	exclusion: Exclusion
+  """If property is excluded, the reason for exclusion."""
+  exclusion: Exclusion
 }
 
 type PlaceColdFactor implements ByRelativeYearBySSP {
-	"""
-	The building's Cold Factor, a numeric integer from 1-100 (where 1 = minimal and 100 = extreme) based on the risk to the building footprint.
-	"""
-	coldFactor: Int!
+  """
+  The building's Cold Factor, a numeric integer from 1-100 (where 1 = minimal and 100 = extreme) based on the risk to the building footprint.
+  """
+  coldFactor: Int!
 
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: SSP!
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: Int!
+  """Year, as relative to the current year."""
+  relativeYear: Int!
 
-	"""
-	Text representation of the Cold Factor. Possible values are: minimal, minor, moderate, major, severe, extreme.
-	"""
-	factorScale: FactorScale!
+  """
+  Text representation of the Cold Factor. Possible values are: minimal, minor, moderate, major, severe, extreme.
+  """
+  factorScale: FactorScale!
 }
 
 type PlaceColdProbability {
-	coldDays(
-		input: PlaceColdProbabilityColdDaysInput
-	): [PlaceColdProbabilityColdDays!]
-	heatingDays(
-		input: PlaceColdProbabilityHeatingDaysInput
-	): [PlaceColdProbabilityHeatingDays!]
+  coldDays(input: PlaceColdProbabilityColdDaysInput): [PlaceColdProbabilityColdDays!]
+  heatingDays(input: PlaceColdProbabilityHeatingDaysInput): [PlaceColdProbabilityHeatingDays!]
 }
 
 type PlaceColdProbabilityColdDays implements ByRelativeYearBySSP {
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: SSP!
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: Int!
+  """Year, as relative to the current year."""
+  relativeYear: Int!
 
-	"""
-	Threshold temperature in °F cold index.
-	"""
-	threshold: Int!
+  """Threshold temperature in °F cold index."""
+  threshold: Int!
 
-	"""
-	Days with wind chill index below a threshold (°F)
-	"""
-	windchillDays: Int
+  """Days with wind chill index below a threshold (°F)"""
+  windchillDays: Int
 }
 
-"""
-Return number of days at or above given cold index thresholds.
-"""
+"""Return number of days at or above given cold index thresholds."""
 input PlaceColdProbabilityColdDaysInput {
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: [SSP]
+  """Socio-economic pathway of the prediction model."""
+  ssp: [SSP]
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: [Int]
+  """Year, as relative to the current year."""
+  relativeYear: [Int]
 
-	"""
-	Thresholds are in °F cold index.
-	"""
-	threshold: [Int]
+  """Thresholds are in °F cold index."""
+  threshold: [Int]
 }
 
 type PlaceColdProbabilityHeatingDays implements ByRelativeYearBySSP {
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: SSP!
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: Int!
+  """Year, as relative to the current year."""
+  relativeYear: Int!
 
-	"""
-	Heating degree days for a given indoor temp (°F)
-	"""
-	heatingDegreeDays: Int
+  """Heating degree days for a given indoor temp (°F)"""
+  heatingDegreeDays: Int
 }
 
 input PlaceColdProbabilityHeatingDaysInput {
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: [SSP]
+  """Socio-economic pathway of the prediction model."""
+  ssp: [SSP]
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: [Int]
+  """Year, as relative to the current year."""
+  relativeYear: [Int]
 
-	"""
-	Indoor temp is in °F, heatingdegreedays is °F-based, default is 70 °F.
-	"""
-	indoorTemperature: Int
+  """Indoor temp is in °F, heatingdegreedays is °F-based, default is 70 °F."""
+  indoorTemperature: Int
 }
 
 type PlaceDrought implements ResponseStatus {
-	status: FSModelResponseStatus!
-	data: PlaceDroughtData
+  status: FSModelResponseStatus!
+  data: PlaceDroughtData
 }
 
 type PlaceDroughtData implements Excluding {
-	"""
-	The place's Drought Factors
-	"""
-	droughtFactors: [PlaceDroughtFactor!]
+  """The place's Drought Factors"""
+  droughtFactors: [PlaceDroughtFactor!]
 
-	"""
-	The place's Drought Factor
-	"""
-	droughtFactor: Int
-		@deprecated(
-			reason: "Replaced by droughtFactors.droughtFactor for scores by SSP and Year."
-		)
+  """The place's Drought Factor"""
+  droughtFactor: Int @deprecated(reason: "Replaced by droughtFactors.droughtFactor for scores by SSP and Year.")
 
-	"""
-	Text representation of the Drought Factor. Possible values are: minimal, minor, moderate, major, severe, extreme.
-	"""
-	factorScale: FactorScale
-		@deprecated(
-			reason: "Replaced by droughtFactors.factorScale for scores by SSP and Year."
-		)
+  """
+  Text representation of the Drought Factor. Possible values are: minimal, minor, moderate, major, severe, extreme.
+  """
+  factorScale: FactorScale @deprecated(reason: "Replaced by droughtFactors.factorScale for scores by SSP and Year.")
 
-	"""
-	Drought probability details for place.
-	"""
-	probability: PlaceDroughtProbability
+  """Drought probability details for place."""
+  probability: PlaceDroughtProbability
 
-	"""
-	If property is excluded, the reason for exclusion.
-	"""
-	exclusion: Exclusion
+  """If property is excluded, the reason for exclusion."""
+  exclusion: Exclusion
 }
 
 type PlaceDroughtFactor implements ByRelativeYearBySSP {
-	"""
-	The building's Drought Factor, a numeric integer from 1-100 (where 1 = minimal and 100 = extreme) based on risk to the building footprint.
-	"""
-	droughtFactor: Int!
+  """
+  The building's Drought Factor, a numeric integer from 1-100 (where 1 = minimal and 100 = extreme) based on risk to the building footprint.
+  """
+  droughtFactor: Int!
 
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: SSP!
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: Int!
+  """Year, as relative to the current year."""
+  relativeYear: Int!
 
-	"""
-	Text representation of the Drought Factor. Possible values are: minimal, minor, moderate, major, severe, extreme.
-	"""
-	factorScale: FactorScale!
+  """
+  Text representation of the Drought Factor. Possible values are: minimal, minor, moderate, major, severe, extreme.
+  """
+  factorScale: FactorScale!
 }
 
 type PlaceDroughtProbability {
-	"""
-	Return lengths of drought by return period for a given location
-	"""
-	duration(
-		input: PlaceDroughtProbabilityDurationInput
-	): [PlaceDroughtProbabilityDuration!]
+  """Return lengths of drought by return period for a given location"""
+  duration(input: PlaceDroughtProbabilityDurationInput): [PlaceDroughtProbabilityDuration!]
 }
 
 type PlaceDroughtProbabilityDuration implements ByRelativeYearBySSPByRP {
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: SSP!
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
 
-	"""
-	Return period for the drought probability.
-	"""
-	returnPeriod: ReturnPeriod!
+  """Return period for the drought probability."""
+  returnPeriod: ReturnPeriod!
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: Int!
+  """Year, as relative to the current year."""
+  relativeYear: Int!
 
-	"""
-	Length of drought in duration, in weeks
-	"""
-	weeks: Int
+  """Length of drought in duration, in weeks"""
+  weeks: Int
 }
 
 input PlaceDroughtProbabilityDurationInput {
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: [SSP]
+  """Socio-economic pathway of the prediction model."""
+  ssp: [SSP]
 
-	"""
-	Return period for the drought probability.
-	"""
-	returnPeriod: [ReturnPeriod]
+  """Return period for the drought probability."""
+  returnPeriod: [ReturnPeriod]
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: [Int]
+  """Year, as relative to the current year."""
+  relativeYear: [Int]
 }
 
 type PlaceFireFactor implements ByRelativeYearBySSP {
-	"""
-	The building's Fire Factor, a numeric integer from 1-100 (where 1 = minimal and 100 = extreme) based on the risk to the building footprint.
-	"""
-	fireFactor: Int!
+  """
+  The building's Fire Factor, a numeric integer from 1-100 (where 1 = minimal and 100 = extreme) based on the risk to the building footprint.
+  """
+  fireFactor: Int!
 
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: SSP!
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: Int!
+  """Year, as relative to the current year."""
+  relativeYear: Int!
 
-	"""
-	Text representation of the Fire Factor. Possible values are: minimal, minor, moderate, major, severe, extreme.
-	"""
-	factorScale: FactorScale!
+  """
+  Text representation of the Fire Factor. Possible values are: minimal, minor, moderate, major, severe, extreme.
+  """
+  factorScale: FactorScale!
 }
 
 type PlaceFlood implements ResponseStatus {
-	status: FSModelResponseStatus!
-	data: PlaceFloodData
+  status: FSModelResponseStatus!
+  data: PlaceFloodData
 }
 
-"""
-Details for building flood losses.
-"""
+"""Details for building flood losses."""
 type PlaceFloodDamages {
-	building(input: PlaceFloodDamagesBuildingInput): [PlaceFloodDamagesBuilding!]
-	aal(input: PlaceFloodDamagesAALInput): [PlaceFloodDamagesAAL!]
+  building(input: PlaceFloodDamagesBuildingInput): [PlaceFloodDamagesBuilding!]
+  aal(input: PlaceFloodDamagesAALInput): [PlaceFloodDamagesAAL!]
 }
 
 """
 Annualized damage cost to the structure in the current year due to flood.
 """
 type PlaceFloodDamagesAAL implements ByRelativeYearBySSP {
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: SSP!
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: Int!
+  """Year, as relative to the current year."""
+  relativeYear: Int!
 
-	"""
-	Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
-	"""
-	percentile: Int!
+  """
+  Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+  """
+  percentile: Int!
 
-	"""
-	Annualized damage cost to the structure in the current year due to flood.
-	"""
-	aal: Int64
+  """
+  Annualized damage cost to the structure in the current year due to flood.
+  """
+  aal: Int64
 
-	"""
-	Average annual loss due to flood, accumulated annually.
-	"""
-	aalCumulative: Int64
+  """Average annual loss due to flood, accumulated annually."""
+  aalCumulative: Int64
 
-	"""
-	Average annual downtime in days.
-	"""
-	repairDays: Int
+  """Average annual downtime in days."""
+  repairDays: Int
 
-	"""
-	Cumulative average annual downtime in days.
-	"""
-	repairDaysCumulative: Int
+  """Cumulative average annual downtime in days."""
+  repairDaysCumulative: Int
 
-	"""
-	Average annual downtime in forgone revenue. Assumes that every day of the year has the same revenue (1/365.25 share of the annual revenue)
-	"""
-	interruptionLoss: Int64
+  """
+  Average annual downtime in forgone revenue. Assumes that every day of the year has the same revenue (1/365.25 share of the annual revenue)
+  """
+  interruptionLoss: Int64
 
-	"""
-	Cumulative annual downtime in forgone revenue. Assumes that every day of the year has the same revenue (1/365.25 share of the annual revenue)
-	"""
-	interruptionLossCumulative: Int64
+  """
+  Cumulative annual downtime in forgone revenue. Assumes that every day of the year has the same revenue (1/365.25 share of the annual revenue)
+  """
+  interruptionLossCumulative: Int64
 
-	"""
-	Sum of AAL and average annual interruption loss.
-	"""
-	cashLoss: Int64
+  """Sum of AAL and average annual interruption loss."""
+  cashLoss: Int64
 
-	"""
-	Sum of cumulative AAL and cumulative average annual interruption loss.
-	"""
-	cashLossCumulative: Int64
+  """Sum of cumulative AAL and cumulative average annual interruption loss."""
+  cashLossCumulative: Int64
 
-	"""
-	Annualized cost from lost inventory, lost contents, and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
-	"""
-	operatorLoss: Int64
+  """
+  Annualized cost from lost inventory, lost contents, and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
+  """
+  operatorLoss: Int64
 
-	"""
-	Cumulative annualized cost from lost inventory, lost contents, and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
-	"""
-	operatorLossCumulative: Int64
+  """
+  Cumulative annualized cost from lost inventory, lost contents, and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
+  """
+  operatorLossCumulative: Int64
 }
 
 input PlaceFloodDamagesAALInput {
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: [SSP]
+  """Socio-economic pathway of the prediction model."""
+  ssp: [SSP]
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: [Int]
+  """Year, as relative to the current year."""
+  relativeYear: [Int]
 }
 
 type PlaceFloodDamagesBuilding implements ByRelativeYearBySSPByRP {
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: SSP!
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: Int!
+  """Year, as relative to the current year."""
+  relativeYear: Int!
 
-	"""
-	Return period of flooding.
-	"""
-	returnPeriod: ReturnPeriod!
+  """Return period of flooding."""
+  returnPeriod: ReturnPeriod!
 
-	"""
-	Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
-	"""
-	percentile: Int!
+  """
+  Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+  """
+  percentile: Int!
 
-	"""
-	Estimated number of days to rebuild or repair damage due to flood.
-	"""
-	repairDays: Int
+  """Estimated number of days to rebuild or repair damage due to flood."""
+  repairDays: Int
 
-	"""
-	Estimated cost to repair damage due to flood.
-	"""
-	repairCost: Int64
+  """Estimated cost to repair damage due to flood."""
+  repairCost: Int64
 
-	"""
-	Estimated downtime loss of revenue due to flood.
-	"""
-	interruptionLoss: Int64
+  """Estimated downtime loss of revenue due to flood."""
+  interruptionLoss: Int64
 
-	"""
-	Sum of repair cost and interruption loss due to flood.
-	"""
-	cashLoss: Int64
+  """Sum of repair cost and interruption loss due to flood."""
+  cashLoss: Int64
 
-	"""
-	Annualized cost from lost inventory, lost contents, and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
-	"""
-	operatorLoss: Int64
+  """
+  Annualized cost from lost inventory, lost contents, and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
+  """
+  operatorLoss: Int64
 }
 
 input PlaceFloodDamagesBuildingInput {
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: [SSP]
+  """Socio-economic pathway of the prediction model."""
+  ssp: [SSP]
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: [Int]
+  """Year, as relative to the current year."""
+  relativeYear: [Int]
 
-	"""
-	Return period of flooding.
-	"""
-	returnPeriod: [ReturnPeriod]
+  """Return period of flooding."""
+  returnPeriod: [ReturnPeriod]
 }
 
 type PlaceFloodData implements Excluding {
-	floodFactors: [PlaceFloodFactor!]
+  floodFactors: [PlaceFloodFactor!]
 
-	"""
-	The building's Flood Factor, a numeric integer from 1-10 (where 1 = minimal and 10 = extreme) based on flooding risk to the building footprint.
-	Flood risk is defined as a combination of cumulative risk over 30 years and flood depth.
-	Flood depth is calculated at the lowest elevation of the building footprint.
-	"""
-	floodFactor: Int
-		@deprecated(
-			reason: "Replaced by floodFactors.floodFactor for scores by SSP and Year."
-		)
-	source: [PlaceFloodSource!]
+  """
+  The building's Flood Factor, a numeric integer from 1-10 (where 1 = minimal and 10 = extreme) based on flooding risk to the building footprint.
+  Flood risk is defined as a combination of cumulative risk over 30 years and flood depth.
+  Flood depth is calculated at the lowest elevation of the building footprint.
+  """
+  floodFactor: Int @deprecated(reason: "Replaced by floodFactors.floodFactor for scores by SSP and Year.")
+  source: [PlaceFloodSource!]
 
-	"""
-	Text representation of the Flood Factor. Possible values are: minimal, minor, moderate, major, severe, extreme.
-	"""
-	factorScale: FactorScale
-		@deprecated(
-			reason: "Replaced by floodFactors.factorScale for scores by SSP and Year."
-		)
+  """
+  Text representation of the Flood Factor. Possible values are: minimal, minor, moderate, major, severe, extreme.
+  """
+  factorScale: FactorScale @deprecated(reason: "Replaced by floodFactors.factorScale for scores by SSP and Year.")
 
-	"""
-	Flood probability details for building.
-	"""
-	probability: PlaceFloodProbability
+  """Flood probability details for building."""
+  probability: PlaceFloodProbability
 
-	"""
-	Details for building flood losses.
-	"""
-	floodDamages: PlaceFloodDamages
+  """Details for building flood losses."""
+  floodDamages: PlaceFloodDamages
 
-	"""
-	If property is excluded, the reason for exclusion.
-	"""
-	exclusion: Exclusion
+  """
+  Flood hazard-zone designation for the property. In the US this is the FEMA flood
+  hazard zone; coverage is provider-specific, so this is null for assets outside a
+  supported provider's coverage (e.g. non-US assets). Not subject to flood modeling
+  exclusions — it is a regulatory designation independent of the modeled flood data.
+  """
+  hazardZone: PlaceFloodHazardZone
+
+  """If property is excluded, the reason for exclusion."""
+  exclusion: Exclusion
 }
 
 type PlaceFloodFactor implements ByRelativeYearBySSP {
-	"""
-	The building's Flood Factor, a numeric integer from 1-100 (where 1 = minimal and 100 = extreme) based on flooding risk to the building footprint.
-	Flood risk is defined as a combination of cumulative risk over 30 years and flood depth.
-	Flood depth is calculated at the lowest elevation of the building footprint.
-	"""
-	floodFactor: Int!
+  """
+  The building's Flood Factor, a numeric integer from 1-100 (where 1 = minimal and 100 = extreme) based on flooding risk to the building footprint.
+  Flood risk is defined as a combination of cumulative risk over 30 years and flood depth.
+  Flood depth is calculated at the lowest elevation of the building footprint.
+  """
+  floodFactor: Int!
 
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: SSP!
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: Int!
+  """Year, as relative to the current year."""
+  relativeYear: Int!
 
-	"""
-	Text representation of the Flood Factor. Possible values are: minimal, minor, moderate, major, severe, extreme.
-	"""
-	factorScale: FactorScale!
+  """
+  Text representation of the Flood Factor. Possible values are: minimal, minor, moderate, major, severe, extreme.
+  """
+  factorScale: FactorScale!
 }
 
 """
-Flood probability details for building.
+A flood hazard-zone designation for a property, determined by a spatial lookup of the
+property location against published flood hazard-zone maps. In the US this is the FEMA
+flood hazard zone. The field is null where no provider applies (e.g. non-US assets).
+Not versioned by vintage — refreshed in place as providers update their maps.
 """
-type PlaceFloodProbability {
-	"""
-	The flood depth for flooding to the building footprint.
-	"""
-	depth(input: PlaceFloodProbabilityDepthInput): [PlaceFloodProbabilityDepth!]
+type PlaceFloodHazardZone {
+  """
+  The flood hazard-zone label for the property, e.g: A, AE, V, X (FEMA flood zones in
+  the US). Null if the property does not fall within a mapped flood hazard zone.
+  """
+  label: String
 
-	"""
-	Cumulative probability of depth reaching given thresholds for a location. Expressed in % probability, from 0 to 1, where 1 represents 100%.
-	"""
-	cumulative(
-		input: PlaceFloodProbabilityCumulativeInput
-	): [PlaceFloodProbabilityCumulative]
+  """
+  Indicates whether the property falls within a high-risk flood hazard zone — for FEMA,
+  a Special Flood Hazard Area (SFHA), generally zones beginning with A or V. Null when
+  the provider has no "special" concept for the zone.
+  """
+  isSpecial: Boolean
+}
+
+"""Flood probability details for building."""
+type PlaceFloodProbability {
+  """The flood depth for flooding to the building footprint."""
+  depth(input: PlaceFloodProbabilityDepthInput): [PlaceFloodProbabilityDepth!]
+
+  """
+  Cumulative probability of depth reaching given thresholds for a location. Expressed in % probability, from 0 to 1, where 1 represents 100%.
+  """
+  cumulative(input: PlaceFloodProbabilityCumulativeInput): [PlaceFloodProbabilityCumulative]
 }
 
 type PlaceFloodProbabilityCumulative {
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: SSP!
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: Int!
+  """Year, as relative to the current year."""
+  relativeYear: Int!
 
-	"""
-	Threshold to calculate cumulative probability of flooding in feet.
-	"""
-	depth: Float
+  """Threshold to calculate cumulative probability of flooding in feet."""
+  depth: Float
 
-	"""
-	Cumulative probability of floods of reaching the given mean depth at the building.
-	"""
-	mean: Float
+  """
+  Cumulative probability of floods of reaching the given mean depth at the building.
+  """
+  mean: Float
 
-	"""
-	Cumulative probability of floods of a given depth reaching the building.
-	"""
-	lowPoint: Float
+  """
+  Cumulative probability of floods of a given depth reaching the building.
+  """
+  lowPoint: Float
 }
 
 input PlaceFloodProbabilityCumulativeInput {
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: [SSP]
+  """Socio-economic pathway of the prediction model."""
+  ssp: [SSP]
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: [Int]
+  """Year, as relative to the current year."""
+  relativeYear: [Int]
 
-	"""
-	Threshold to calculate cumulative probability of flooding in feet. Default is 3 feet, maximum is 50 feet.
-	"""
-	depth: [Float]
+  """
+  Threshold to calculate cumulative probability of flooding in feet. Default is 3 feet, maximum is 50 feet.
+  """
+  depth: [Float]
 }
 
 type PlaceFloodProbabilityDepth implements ByRelativeYearBySSPByRP {
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: SSP!
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
 
-	"""
-	Return period of flooding.
-	"""
-	returnPeriod: ReturnPeriod!
+  """Return period of flooding."""
+  returnPeriod: ReturnPeriod!
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: Int!
+  """Year, as relative to the current year."""
+  relativeYear: Int!
 
-	"""
-	Flood depth at the selected point or the mean depth along building outline if there's a building outline (in feet).
-	"""
-	mean: Float
+  """
+  Flood depth at the selected point or the mean depth along building outline if there's a building outline (in feet).
+  """
+  mean: Float
 
-	"""
-	Flood depth at the low point along a building outline. Same as depth if there's no building outline (in feet).
-	"""
-	lowPoint: Float
+  """
+  Flood depth at the low point along a building outline. Same as depth if there's no building outline (in feet).
+  """
+  lowPoint: Float
 }
 
 input PlaceFloodProbabilityDepthInput {
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: [SSP]
+  """Socio-economic pathway of the prediction model."""
+  ssp: [SSP]
 
-	"""
-	Return period of flooding.
-	"""
-	returnPeriod: [ReturnPeriod]
+  """Return period of flooding."""
+  returnPeriod: [ReturnPeriod]
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: [Int]
+  """Year, as relative to the current year."""
+  relativeYear: [Int]
 }
 
-"""
-The flood source modeled at this location based on SSP.
-"""
+"""The flood source modeled at this location based on SSP."""
 type PlaceFloodSource {
-	"""
-	The flood source modeled at this location.
-	"""
-	source: [FloodSource!]
+  """The flood source modeled at this location."""
+  source: [FloodSource!]
 
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: SSP!
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
 }
 
 type PlaceGeometry {
-	center: Center
+  center: Center
+}
+
+type PlaceHail implements ResponseStatus {
+  status: FSModelResponseStatus!
+  data: PlaceHailData
+}
+
+"""Details for property hail damages."""
+type PlaceHailDamages {
+  """Roof-replacement probability by return period."""
+  building(input: PlaceHailDamagesBuildingInput): [PlaceHailDamagesBuilding!]
+
+  """
+  Annualized damage cost to the structure in the current year due to hail.
+  """
+  aal(input: PlaceHailDamagesAALInput): [PlaceHailDamagesAAL!]
+}
+
+"""
+Annualized damage cost to the structure in the current year due to hail.
+"""
+type PlaceHailDamagesAAL implements ByRelativeYearBySSP {
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
+
+  """Year, as relative to the current year."""
+  relativeYear: Int!
+
+  """
+  Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+  """
+  percentile: Int!
+
+  """Annualized damage cost to the structure due to hail."""
+  aal: Int64
+
+  """Average annual loss due to hail, accumulated annually."""
+  aalCumulative: Int64
+
+  """Average annual downtime in days."""
+  repairDays: Int
+
+  """
+  Average annual downtime in forgone revenue. Assumes that every day of the year has the same revenue (1/365.25 share of the annual revenue).
+  """
+  interruptionLoss: Int64
+
+  """Sum of AAL and average annual interruption loss."""
+  cashLoss: Int64
+
+  """
+  Annualized cost from lost inventory, lost contents, and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
+  """
+  operatorLoss: Int64
+}
+
+input PlaceHailDamagesAALInput {
+  """Socio-economic pathway of the prediction model."""
+  ssp: [SSP]
+
+  """Year, as relative to the current year."""
+  relativeYear: [Int]
+
+  """
+  Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+  """
+  percentile: [Int]
+}
+
+type PlaceHailDamagesBuilding implements ByRelativeYearBySSPByRP {
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
+
+  """Year, as relative to the current year."""
+  relativeYear: Int!
+
+  """Return period for the hail probability."""
+  returnPeriod: ReturnPeriod!
+
+  """
+  Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+  """
+  percentile: Int!
+
+  """
+  Probability (0-1) that hail requires roof replacement at this return period and percentile. Multiply by Building.roofReplacementCost for an expected dollar figure; annualized loss is available via hailDamages.aal.
+  """
+  probabilityRoofReplacement: Float
+}
+
+input PlaceHailDamagesBuildingInput {
+  ssp: [SSP]
+
+  """Year, as relative to the current year."""
+  relativeYear: [Int]
+
+  """Return period for the hail probability."""
+  returnPeriod: [ReturnPeriod]
+
+  """
+  Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+  """
+  percentile: [Int]
+}
+
+type PlaceHailData implements Excluding {
+  """The building's Hail Factors"""
+  hailFactors: [PlaceHailFactor!]
+
+  """Hail probability details for building."""
+  probability: PlaceHailProbability
+
+  """Details of damages caused by hail."""
+  hailDamages: PlaceHailDamages
+
+  """If property is excluded, the reason for exclusion."""
+  exclusion: Exclusion
+}
+
+type PlaceHailFactor implements ByRelativeYearBySSP {
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
+
+  """Year, as relative to the current year."""
+  relativeYear: Int!
+
+  """
+  The building's Hail Factor, a numeric integer from 1-100 (where 1 = minimal and 100 = extreme) based on the risk to the building footprint.
+  """
+  hailFactor: Int!
+
+  """
+  Text representation of the Hail Factor. Possible values are: minimal, minor, moderate, major, severe, extreme.
+  """
+  factorScale: FactorScale!
+}
+
+type PlaceHailProbability {
+  """Hail size by return period, in inches."""
+  size(input: PlaceHailProbabilitySizeInput): [PlaceHailProbabilitySize!]
+
+  """Cumulative exceedance probability of hail of a given size (threshold)."""
+  cumulative(input: PlaceHailProbabilityCumulativeInput): [PlaceHailProbabilityCumulative]
+}
+
+type PlaceHailProbabilityCumulative {
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
+
+  """Year, as relative to the current year."""
+  relativeYear: Int!
+
+  """Hail size threshold, in inches."""
+  threshold: Float
+
+  """Cumulative exceedance probability of hail of a given size."""
+  probability: Float
+}
+
+input PlaceHailProbabilityCumulativeInput {
+  """Socio-economic pathway of the prediction model."""
+  ssp: [SSP]
+
+  """Year, as relative to the current year."""
+  relativeYear: [Int]
+
+  """
+  Hail size threshold, in inches. Design-annotated options are 0.75-3.0 in 0.25-inch steps (default 1.0).
+  """
+  threshold: [Float]
+}
+
+type PlaceHailProbabilitySize implements ByRelativeYearBySSPByRP {
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
+
+  """Year, as relative to the current year."""
+  relativeYear: Int!
+
+  """Return period for the hail probability."""
+  returnPeriod: ReturnPeriod!
+
+  """Hail size, in inches."""
+  size: Float
+}
+
+input PlaceHailProbabilitySizeInput {
+  """Socio-economic pathway of the prediction model."""
+  ssp: [SSP]
+
+  """Year, as relative to the current year."""
+  relativeYear: [Int]
+
+  """Return period for the hail probability."""
+  returnPeriod: [ReturnPeriod]
 }
 
 type PlaceHeat implements ResponseStatus {
-	status: FSModelResponseStatus!
-	data: PlaceHeatData
+  status: FSModelResponseStatus!
+  data: PlaceHeatData
 }
 
 type PlaceHeatData implements Excluding {
-	"""
-	The building's Heat Factor
-	"""
-	heatFactors: [PlaceHeatFactor!]
+  """The building's Heat Factor"""
+  heatFactors: [PlaceHeatFactor!]
 
-	"""
-	The building's Heat Factor
-	"""
-	heatFactor: Int
-		@deprecated(
-			reason: "Replaced by heatFactors.heatFactor for scores by SSP and Year."
-		)
+  """The building's Heat Factor"""
+  heatFactor: Int @deprecated(reason: "Replaced by heatFactors.heatFactor for scores by SSP and Year.")
 
-	"""
-	Text representation of the Heat Factor. Possible values are: minimal, minor, moderate, major, severe, extreme.
-	"""
-	factorScale: FactorScale
-		@deprecated(
-			reason: "Replaced by heatFactors.factorScale for scores by SSP and Year."
-		)
+  """
+  Text representation of the Heat Factor. Possible values are: minimal, minor, moderate, major, severe, extreme.
+  """
+  factorScale: FactorScale @deprecated(reason: "Replaced by heatFactors.factorScale for scores by SSP and Year.")
 
-	"""
-	Heat probability details for building.
-	"""
-	probability: PlaceHeatProbability
+  """Heat probability details for building."""
+  probability: PlaceHeatProbability
 
-	"""
-	If property is excluded, the reason for exclusion.
-	"""
-	exclusion: Exclusion
+  """If property is excluded, the reason for exclusion."""
+  exclusion: Exclusion
 }
 
 type PlaceHeatFactor implements ByRelativeYearBySSP {
-	"""
-	The building's Heat Factor, a numeric integer from 1-100 (where 1 = minimal and 100 = extreme) based on the risk to the building footprint.
-	"""
-	heatFactor: Int!
+  """
+  The building's Heat Factor, a numeric integer from 1-100 (where 1 = minimal and 100 = extreme) based on the risk to the building footprint.
+  """
+  heatFactor: Int!
 
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: SSP!
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: Int!
+  """Year, as relative to the current year."""
+  relativeYear: Int!
 
-	"""
-	Text representation of the Heat Factor. Possible values are: minimal, minor, moderate, major, severe, extreme.
-	"""
-	factorScale: FactorScale!
+  """
+  Text representation of the Heat Factor. Possible values are: minimal, minor, moderate, major, severe, extreme.
+  """
+  factorScale: FactorScale!
 }
 
 type PlaceHeatProbability {
-	heatDays(
-		input: PlaceHeatProbabilityHeatDaysInput
-	): [PlaceHeatProbabilityHeatDays!]
-	coolingDays(
-		input: PlaceHeatProbabilityCoolingDaysInput
-	): [PlaceHeatProbabilityCoolingDays!]
+  heatDays(input: PlaceHeatProbabilityHeatDaysInput): [PlaceHeatProbabilityHeatDays!]
+  coolingDays(input: PlaceHeatProbabilityCoolingDaysInput): [PlaceHeatProbabilityCoolingDays!]
 }
 
 type PlaceHeatProbabilityCoolingDays implements ByRelativeYearBySSP {
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: SSP!
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: Int!
+  """Year, as relative to the current year."""
+  relativeYear: Int!
 
-	"""
-	Cooling degree days for a given indoor temp (°F)
-	"""
-	coolingDegreeDays: Int
+  """Cooling degree days for a given indoor temp (°F)"""
+  coolingDegreeDays: Int
 }
 
 input PlaceHeatProbabilityCoolingDaysInput {
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: [SSP]
+  """Socio-economic pathway of the prediction model."""
+  ssp: [SSP]
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: [Int]
+  """Year, as relative to the current year."""
+  relativeYear: [Int]
 
-	"""
-	Indoor temp is in °F, coolingdegreedays is °F-based, default is 70 °F.
-	"""
-	indoorTemperature: Int
+  """Indoor temp is in °F, coolingdegreedays is °F-based, default is 70 °F."""
+  indoorTemperature: Int
 }
 
 type PlaceHeatProbabilityHeatDays {
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: SSP!
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: Int!
+  """Year, as relative to the current year."""
+  relativeYear: Int!
 
-	"""
-	Threshold temperature in °F heat index.
-	"""
-	threshold: Int!
+  """Threshold temperature in °F heat index."""
+  threshold: Int!
 
-	"""
-	Days with high heat index at or above a threshold (°F).
-	"""
-	heatIndexDays: Int
+  """Days with high heat index at or above a threshold (°F)."""
+  heatIndexDays: Int
 }
 
-"""
-Return number of days at or above given heat index thresholds.
-"""
+"""Return number of days at or above given heat index thresholds."""
 input PlaceHeatProbabilityHeatDaysInput {
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: [SSP]
+  """Socio-economic pathway of the prediction model."""
+  ssp: [SSP]
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: [Int]
+  """Year, as relative to the current year."""
+  relativeYear: [Int]
 
-	"""
-	Thresholds are in °F heat index.
-	"""
-	threshold: [Int]
+  """Thresholds are in °F heat index."""
+  threshold: [Int]
 }
 
 type PlaceLocality {
-	admin0: Locality
-	admin1: Locality
-	admin2: Locality
-	metro: Locality
+  admin0: Locality
+  admin1: Locality
+  admin2: Locality
+  metro: Locality
 }
 
 type PlacePrimaryPeril implements ResponseStatus {
-	status: FSModelResponseStatus!
-	data: PlacePrimaryPerilData
+  status: FSModelResponseStatus!
+  data: PlacePrimaryPerilData
 }
 
 type PlacePrimaryPerilDamages {
-	aal(input: PlacePrimaryPerilDamagesAALInput): [PlacePrimaryPerilDamagesAAL!]
+  aal(input: PlacePrimaryPerilDamagesAALInput): [PlacePrimaryPerilDamagesAAL!]
+
+  """
+  Points on the All Hazards Exceedance Curve, one per return period. Empty if the data vintage
+  does not model the All Hazards Exceedance Curve, or if the asset has no modeled damage.
+  """
+  exceedance(input: PlacePrimaryPerilDamagesExceedanceInput): [PlacePrimaryPerilDamagesExceedance!]
 }
 
 """
-Combined Average Annualized Loss (Flood+Wind+Fire)
+Combined Average Annualized Loss across Flood, Wind and Fire. On vintages with the all-hazard
+exceedance curve this is correlation-aware and does not equal the sum of the per-peril AALs.
 """
 type PlacePrimaryPerilDamagesAAL implements ByRelativeYearBySSP {
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: SSP!
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: Int!
+  """Year, as relative to the current year."""
+  relativeYear: Int!
 
-	"""
-	Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
-	"""
-	percentile: Int!
+  """
+  Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+  """
+  percentile: Int!
 
-	"""
-	Combined Average Annualized Loss (Flood+Wind+Fire)
-	"""
-	aal: Int64
+  """
+  Combined Average Annualized Loss across Flood, Wind and Fire. Not the sum of the per-peril AALs
+  where the all-hazard exceedance curve applies.
+  """
+  aal: Int64
 
-	"""
-	Combined Average Annualized Loss (Flood+Wind+Fire), accumulated annually.
-	"""
-	aalCumulative: Int64
+  """
+  Combined Average Annualized Loss across Flood, Wind and Fire, accumulated annually.
+  """
+  aalCumulative: Int64
 
-	"""
-	Average annual downtime in days.
-	"""
-	repairDays: Int
+  """Average annual downtime in days."""
+  repairDays: Int
 
-	"""
-	Cumulative average annual downtime in days.
-	"""
-	repairDaysCumulative: Int
+  """Cumulative average annual downtime in days."""
+  repairDaysCumulative: Int
 
-	"""
-	Average annual downtime in forgone revenue. Assumes that every day of the year has the same revenue (1/365.25 share of the annual revenue)
-	"""
-	interruptionLoss: Int64
+  """
+  Average annual downtime in forgone revenue. Assumes that every day of the year has the same revenue (1/365.25 share of the annual revenue)
+  """
+  interruptionLoss: Int64
 
-	"""
-	Cumulative annual downtime in forgone revenue. Assumes that every day of the year has the same revenue (1/365.25 share of the annual revenue)
-	"""
-	interruptionLossCumulative: Int64
+  """
+  Cumulative annual downtime in forgone revenue. Assumes that every day of the year has the same revenue (1/365.25 share of the annual revenue)
+  """
+  interruptionLossCumulative: Int64
 
-	"""
-	Sum of AAL and average annual interruption loss.
-	"""
-	cashLoss: Int64
+  """Sum of AAL and average annual interruption loss."""
+  cashLoss: Int64
 
-	"""
-	Sum of cumulative AAL and cumulative average annual interruption loss.
-	"""
-	cashLossCumulative: Int64
+  """Sum of cumulative AAL and cumulative average annual interruption loss."""
+  cashLossCumulative: Int64
 
-	"""
-	Annualized cost from lost inventory, lost contents, and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
-	"""
-	operatorLoss: Int64
+  """
+  Annualized cost from lost inventory, lost contents, and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
+  """
+  operatorLoss: Int64
 
-	"""
-	Cumulative annualized cost from lost inventory, lost contents, and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
-	"""
-	operatorLossCumulative: Int64
+  """
+  Cumulative annualized cost from lost inventory, lost contents, and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
+  """
+  operatorLossCumulative: Int64
 }
 
 input PlacePrimaryPerilDamagesAALInput {
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: [SSP]
+  """Socio-economic pathway of the prediction model."""
+  ssp: [SSP]
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: [Int]
+  """Year, as relative to the current year."""
+  relativeYear: [Int]
+}
+
+"""
+A point on the All Hazards Exceedance Curve: loss to the structure at a given return period from
+all hazards combined, accounting for the likelihood that more than one hazard affects the asset in
+the same event.
+"""
+type PlacePrimaryPerilDamagesExceedance implements ByRelativeYearBySSPByRP {
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
+
+  """Year, as relative to the current year."""
+  relativeYear: Int!
+
+  """Return period of the combined-hazard exceedance estimate."""
+  returnPeriod: ReturnPeriod!
+
+  """
+  Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+  """
+  percentile: Int!
+
+  """
+  Sum of repair cost, interruption loss and losses to contents and inventory due to all hazards. NULL when the asset's modeled hazards do not include a cash-loss estimate.
+  """
+  cashLoss: Int64
+
+  """Estimated cost to repair damage due to all hazards."""
+  repairCost: Int64
+
+  """
+  Cost from lost inventory, lost contents, and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
+  """
+  operatorLoss: Int64
+
+  """Estimated downtime loss of revenue due to all hazards."""
+  interruptionLoss: Int64
+
+  """
+  Estimated number of days to rebuild or repair damage due to all hazards.
+  """
+  repairDays: Int
+}
+
+input PlacePrimaryPerilDamagesExceedanceInput {
+  """Socio-economic pathway of the prediction model."""
+  ssp: [SSP]
+
+  """Year, as relative to the current year."""
+  relativeYear: [Int]
+
+  """Return period of the combined-hazard exceedance estimate."""
+  returnPeriod: [ReturnPeriod]
 }
 
 type PlacePrimaryPerilData implements Excluding {
-	primaryPerilDamages: PlacePrimaryPerilDamages!
+  primaryPerilDamages: PlacePrimaryPerilDamages!
 
-	"""
-	If property is excluded, the reason for exclusion.
-	"""
-	exclusion: Exclusion
+  """If property is excluded, the reason for exclusion."""
+  exclusion: Exclusion
 }
 
 interface PlaceResponse {
-	"""
-	The vintage version for the returned data. Vintage uniquely identifies the property and peril data version.
-	"""
-	vintage: Vintage!
+  """
+  The vintage version for the returned data. Vintage uniquely identifies the property and peril data version.
+  """
+  vintage: Vintage!
 
-	"""
-	First Street place ID
-	"""
-	placeId: String!
+  """First Street place ID"""
+  placeId: String!
 
-	"""
-	The type of place.
-	"""
-	placeType: PlaceType!
+  """The type of place."""
+  placeType: PlaceType!
 
-	"""
-	The geometry details of place
-	"""
-	geometry: PlaceGeometry!
+  """The geometry details of place"""
+  geometry: PlaceGeometry!
 }
 
 enum PlaceType {
-	CITY
-	COUNTY
-	STATE
-	ZCTA
-	TRACT
-	CD
-	NEIGHBORHOOD
-	COUSUB
-	PLACE
+  CITY
+  COUNTY
+  STATE
+  ZCTA
+  TRACT
+  CD
+  NEIGHBORHOOD
+  COUSUB
+  PLACE
 }
 
 type PlaceWildfire {
-	status: FSModelResponseStatus!
-	data: PlaceWildfireData
+  status: FSModelResponseStatus!
+  data: PlaceWildfireData
 }
 
-"""
-Details for property fire losses.
-"""
+"""Details for property fire losses."""
 type PlaceWildfireDamages {
-	building(
-		input: PlaceWildfireDamagesBuildingInput
-	): [PlaceWildfireDamagesBuilding!]
+  building(input: PlaceWildfireDamagesBuildingInput): [PlaceWildfireDamagesBuilding!]
 
-	"""
-	Annualized damage cost to the structure in the current year due to wildfire
-	"""
-	aal(input: PlaceWildfireDamagesAALInput): [PlaceWildfireDamagesAAL!]
+  """
+  Annualized damage cost to the structure in the current year due to wildfire
+  """
+  aal(input: PlaceWildfireDamagesAALInput): [PlaceWildfireDamagesAAL!]
 }
 
 """
 Annualized damage cost to the structure in the current year due to wildfire.
 """
 type PlaceWildfireDamagesAAL implements ByRelativeYearBySSP {
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: SSP!
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: Int!
+  """Year, as relative to the current year."""
+  relativeYear: Int!
 
-	"""
-	Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
-	"""
-	percentile: Int!
+  """
+  Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+  """
+  percentile: Int!
 
-	"""
-	Annualized damage cost to the structure in the current year due to wildfire.
-	"""
-	aal: Int64
+  """
+  Annualized damage cost to the structure in the current year due to wildfire.
+  """
+  aal: Int64
 
-	"""
-	Average annual loss due to wildfire, accumulated annually.
-	"""
-	aalCumulative: Int64
+  """Average annual loss due to wildfire, accumulated annually."""
+  aalCumulative: Int64
 
-	"""
-	Average annual downtime in days.
-	"""
-	repairDays: Int
+  """Average annual downtime in days."""
+  repairDays: Int
 
-	"""
-	Cumulative average annual downtime in days.
-	"""
-	repairDaysCumulative: Int
+  """Cumulative average annual downtime in days."""
+  repairDaysCumulative: Int
 
-	"""
-	Average annual downtime in forgone revenue. Assumes that every day of the year has the same revenue (1/365.25 share of the annual revenue)
-	"""
-	interruptionLoss: Int64
+  """
+  Average annual downtime in forgone revenue. Assumes that every day of the year has the same revenue (1/365.25 share of the annual revenue)
+  """
+  interruptionLoss: Int64
 
-	"""
-	Cumulative annual downtime in forgone revenue. Assumes that every day of the year has the same revenue (1/365.25 share of the annual revenue)
-	"""
-	interruptionLossCumulative: Int64
+  """
+  Cumulative annual downtime in forgone revenue. Assumes that every day of the year has the same revenue (1/365.25 share of the annual revenue)
+  """
+  interruptionLossCumulative: Int64
 
-	"""
-	Sum of AAL and average annual interruption loss.
-	"""
-	cashLoss: Int64
+  """Sum of AAL and average annual interruption loss."""
+  cashLoss: Int64
 
-	"""
-	Sum of cumulative AAL and cumulative average annual interruption loss.
-	"""
-	cashLossCumulative: Int64
+  """Sum of cumulative AAL and cumulative average annual interruption loss."""
+  cashLossCumulative: Int64
 
-	"""
-	Annualized cost from lost inventory, lost contents and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
-	"""
-	operatorLoss: Int64
+  """
+  Annualized cost from lost inventory, lost contents and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
+  """
+  operatorLoss: Int64
 
-	"""
-	Cumulative annualized cost from lost inventory, lost contents and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
-	"""
-	operatorLossCumulative: Int64
+  """
+  Cumulative annualized cost from lost inventory, lost contents and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
+  """
+  operatorLossCumulative: Int64
 }
 
 input PlaceWildfireDamagesAALInput {
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: [SSP]
+  """Socio-economic pathway of the prediction model."""
+  ssp: [SSP]
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: [Int]
+  """Year, as relative to the current year."""
+  relativeYear: [Int]
 }
 
 type PlaceWildfireDamagesBuilding implements ByRelativeYearBySSP {
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: SSP!
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: Int!
+  """Year, as relative to the current year."""
+  relativeYear: Int!
 
-	"""
-	Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean. At this moment, only 50th percentile is available for this node.
-	"""
-	percentile: Int!
+  """
+  Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean. At this moment, only 50th percentile is available for this node.
+  """
+  percentile: Int!
 
-	"""
-	Estimated number of days to rebuild or repair damage due to wildfire.
-	"""
-	repairDays: Int
+  """Estimated number of days to rebuild or repair damage due to wildfire."""
+  repairDays: Int
 
-	"""
-	Probability of building combustion by flames given a modeled wildfire and based on building characteristics.
-	"""
-	combustionProbability: Float
+  """
+  Probability of building combustion by flames given a modeled wildfire and based on building characteristics.
+  """
+  combustionProbability: Float
 
-	"""
-	Probability of wildfire flames destroying building in given year.
-	"""
-	destructionProbability: Float
+  """Probability of wildfire flames destroying building in given year."""
+  destructionProbability: Float
 
-	"""
-	Cumulative probability of wildfire flames destroying building up to given year.
-	"""
-	cumulativeDestructionProbability: Float
+  """
+  Cumulative probability of wildfire flames destroying building up to given year.
+  """
+  cumulativeDestructionProbability: Float
 
-	"""
-	Estimated downtime loss of revenue due to wildfire.
-	"""
-	interruptionLoss: Int64
+  """Estimated downtime loss of revenue due to wildfire."""
+  interruptionLoss: Int64
 
-	"""
-	Sum of repair cost and interruption loss due to wildfire.
-	"""
-	cashLoss: Int64
+  """Sum of repair cost and interruption loss due to wildfire."""
+  cashLoss: Int64
 
-	"""
-	Annualized cost from lost inventory, lost contents, and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
-	"""
-	operatorLoss: Int64
+  """
+  Annualized cost from lost inventory, lost contents, and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
+  """
+  operatorLoss: Int64
 
-	"""
-	Probability of building combustion by direct flame contact given a modeled wildfire and based on building characteristics.
-	"""
-	combustionProbabilityFlame: Float
+  """
+  Probability of building combustion by direct flame contact given a modeled wildfire and based on building characteristics.
+  """
+  combustionProbabilityFlame: Float
 
-	"""
-	Probability of direct flame contact destroying building in given year.
-	"""
-	destructionProbabilityFlame: Float
+  """Probability of direct flame contact destroying building in given year."""
+  destructionProbabilityFlame: Float
 
-	"""
-	Estimated number of days to rebuild or repair damage due to direct flame contact.
-	"""
-	repairDaysFlame: Int
+  """
+  Estimated number of days to rebuild or repair damage due to direct flame contact.
+  """
+  repairDaysFlame: Int
 
-	"""
-	Probability of building combustion by wind-borne embers given a modeled wildfire and based on building characteristics.
-	"""
-	combustionProbabilityEmber: Float
+  """
+  Probability of building combustion by wind-borne embers given a modeled wildfire and based on building characteristics.
+  """
+  combustionProbabilityEmber: Float
 
-	"""
-	Probability of wind-borne embers destroying building in given year.
-	"""
-	destructionProbabilityEmber: Float
+  """Probability of wind-borne embers destroying building in given year."""
+  destructionProbabilityEmber: Float
 
-	"""
-	Estimated number of days to rebuild or repair damage due to wind-borne embers.
-	"""
-	repairDaysEmber: Int
+  """
+  Estimated number of days to rebuild or repair damage due to wind-borne embers.
+  """
+  repairDaysEmber: Int
 }
 
 input PlaceWildfireDamagesBuildingInput {
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: [SSP]
+  """Socio-economic pathway of the prediction model."""
+  ssp: [SSP]
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: [Int]
+  """Year, as relative to the current year."""
+  relativeYear: [Int]
 }
 
 type PlaceWildfireData implements Excluding {
-	"""
-	The building's Fire Factors
-	"""
-	fireFactors: [PlaceFireFactor!]
+  """The building's Fire Factors"""
+  fireFactors: [PlaceFireFactor!]
 
-	"""
-	The building's Fire Factor
-	"""
-	fireFactor: Int
-		@deprecated(
-			reason: "Replaced by fireFactors.fireFactor for scores by SSP and Year."
-		)
+  """The building's Fire Factor"""
+  fireFactor: Int @deprecated(reason: "Replaced by fireFactors.fireFactor for scores by SSP and Year.")
 
-	"""
-	Text representation of the Fire Factor. Possible values are: minimal, minor, moderate, major, severe, extreme.
-	"""
-	factorScale: FactorScale
-		@deprecated(
-			reason: "Replaced by fireFactors.factorScale for scores by SSP and Year."
-		)
+  """
+  Text representation of the Fire Factor. Possible values are: minimal, minor, moderate, major, severe, extreme.
+  """
+  factorScale: FactorScale @deprecated(reason: "Replaced by fireFactors.factorScale for scores by SSP and Year.")
 
-	"""
-	Probability of fire impact to the building.
-	"""
-	probability: PlaceWildfireProbability
+  """Probability of fire impact to the building."""
+  probability: PlaceWildfireProbability
 
-	"""
-	Details for property fire losses.
-	"""
-	wildfireDamages: PlaceWildfireDamages
+  """Details for property fire losses."""
+  wildfireDamages: PlaceWildfireDamages
 
-	"""
-	If property is excluded, the reason for exclusion.
-	"""
-	exclusion: Exclusion
+  """
+  Historic fires whose perimeter burned within 25 miles of the place, nearest first. Null on a
+  vintage that does not carry historic wildfire data; empty when the vintage carries it but no
+  fire burned in range.
+  """
+  historicWildfires(
+    """
+    Narrows the list to this one fire, so a caller drawing one perimeter doesn't pay for them all.
+    """
+    wildfireId: Int
+  ): [HistoricWildfire!]
+
+  """If property is excluded, the reason for exclusion."""
+  exclusion: Exclusion
 }
 
-"""
-Probability of fire impact to the building.
-"""
+"""Probability of fire impact to the building."""
 type PlaceWildfireProbability {
-	"""
-	Wildfire probability details for building
-	"""
-	burn(
-		input: PlaceWildfireProbabilityBurnInput
-	): [PlaceWildfireProbabilityBurn!]
+  """Wildfire probability details for building"""
+  burn(input: PlaceWildfireProbabilityBurnInput): [PlaceWildfireProbabilityBurn!]
 
-	"""
-	The wildfire risk likelihood (% probability) to the building footprint by cumulative year based on combined wildfire risk (greater of burn and ember).
-	"""
-	cumulative(
-		input: PlaceWildfireProbabilityCumulativeInput
-	): [PlaceWildfireProbabilityCumulative!]
+  """
+  The wildfire risk likelihood (% probability) to the building footprint by cumulative year based on combined wildfire risk (greater of burn and ember).
+  """
+  cumulative(input: PlaceWildfireProbabilityCumulativeInput): [PlaceWildfireProbabilityCumulative!]
 }
 
 type PlaceWildfireProbabilityBurn implements ByRelativeYearBySSP {
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: SSP!
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: Int!
+  """Year, as relative to the current year."""
+  relativeYear: Int!
 
-	"""
-	The probability of wildfire flamesreaching this building.
-	"""
-	flameProbability: Float
+  """The probability of wildfire flamesreaching this building."""
+  flameProbability: Float
 
-	"""
-	The probability of wildfire embers reaching this building.
-	"""
-	emberProbability: Float
+  """The probability of wildfire embers reaching this building."""
+  emberProbability: Float
 
-	"""
-	The probability of wildfire flames or embers reaching this building.
-	"""
-	probability: Float
+  """The probability of wildfire flames or embers reaching this building."""
+  probability: Float
 }
 
 input PlaceWildfireProbabilityBurnInput {
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: [SSP]
+  """Socio-economic pathway of the prediction model."""
+  ssp: [SSP]
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: [Int]
+  """Year, as relative to the current year."""
+  relativeYear: [Int]
 }
 
 type PlaceWildfireProbabilityCumulative {
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: SSP!
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: Int!
+  """Year, as relative to the current year."""
+  relativeYear: Int!
 
-	"""
-	Cumulative probability of wildfire flamesreaching this building.
-	"""
-	flameProbability: Float
+  """Cumulative probability of wildfire flamesreaching this building."""
+  flameProbability: Float
 
-	"""
-	Cumulative probability of wildfire embers reaching this building.
-	"""
-	emberProbability: Float
+  """Cumulative probability of wildfire embers reaching this building."""
+  emberProbability: Float
 
-	"""
-	Cumulative probability of wildfire flames at the given place.
-	"""
-	probability: Float
+  """Cumulative probability of wildfire flames at the given place."""
+  probability: Float
 }
 
 input PlaceWildfireProbabilityCumulativeInput {
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: [SSP]
+  """Socio-economic pathway of the prediction model."""
+  ssp: [SSP]
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: [Int]
+  """Year, as relative to the current year."""
+  relativeYear: [Int]
 }
 
 type PlaceWind implements ResponseStatus {
-	status: FSModelResponseStatus!
-	data: PlaceWindData
+  status: FSModelResponseStatus!
+  data: PlaceWindData
 }
 
-"""
-Details for property wind damages.
-"""
+"""Details for property wind damages."""
 type PlaceWindDamages {
-	"""
-	Annualized damage cost to the structure in the current year due to wind.
-	"""
-	building(input: PlaceWindDamagesBuildingInput): [PlaceWindDamagesBuilding!]
+  """
+  Annualized damage cost to the structure in the current year due to wind.
+  """
+  building(input: PlaceWindDamagesBuildingInput): [PlaceWindDamagesBuilding!]
 
-	"""
-	Annualized damage cost to the structure in the current year due to wind.
-	"""
-	aal(input: PlaceWindDamagesAALInput): [PlaceWindDamagesAAL!]
+  """
+  Damage cost in a given modeled event, broken out by source. Null on a vintage that does not
+  support sources.
+  """
+  buildingBySource(input: PlaceWindDamagesBuildingBySourceInput): [PlaceWindDamagesBuildingBySource!]
+
+  """
+  Annualized damage cost to the structure in the current year due to wind.
+  """
+  aal(input: PlaceWindDamagesAALInput): [PlaceWindDamagesAAL!]
+
+  """
+  Annualized damage cost, broken out by source. Null on an unsupported vintage; carries no
+  cumulative measures since AAL is a per-year figure.
+  """
+  aalBySource(input: PlaceWindDamagesAalBySourceInput): [PlaceWindDamagesAalBySource!]
 }
 
 """
 Annualized damage cost to the structure in the current year due to wind.
 """
 type PlaceWindDamagesAAL implements ByRelativeYearBySSP {
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: SSP!
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: Int!
+  """Year, as relative to the current year."""
+  relativeYear: Int!
 
-	"""
-	Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
-	"""
-	percentile: Int!
+  """
+  Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+  """
+  percentile: Int!
 
-	"""
-	Annualized damage cost to the structure due to wind.
-	"""
-	aal: Int64
+  """Annualized damage cost to the structure due to wind."""
+  aal: Int64
 
-	"""
-	Average annual loss due to wind, accumulated annually.
-	"""
-	aalCumulative: Int64
+  """Average annual loss due to wind, accumulated annually."""
+  aalCumulative: Int64
 
-	"""
-	Average annual downtime in days.
-	"""
-	repairDays: Int
+  """Average annual downtime in days."""
+  repairDays: Int
 
-	"""
-	Cumulative average annual downtime in days.
-	"""
-	repairDaysCumulative: Int
+  """Cumulative average annual downtime in days."""
+  repairDaysCumulative: Int
 
-	"""
-	Average annual downtime in forgone revenue. Assumes that every day of the year has the same revenue (1/365.25 share of the annual revenue)
-	"""
-	interruptionLoss: Int64
+  """
+  Average annual downtime in forgone revenue. Assumes that every day of the year has the same revenue (1/365.25 share of the annual revenue)
+  """
+  interruptionLoss: Int64
 
-	"""
-	Cumulative annual downtime in forgone revenue. Assumes that every day of the year has the same revenue (1/365.25 share of the annual revenue)
-	"""
-	interruptionLossCumulative: Int64
+  """
+  Cumulative annual downtime in forgone revenue. Assumes that every day of the year has the same revenue (1/365.25 share of the annual revenue)
+  """
+  interruptionLossCumulative: Int64
 
-	"""
-	Sum of AAL and average annual interruption loss.
-	"""
-	cashLoss: Int64
+  """Sum of AAL and average annual interruption loss."""
+  cashLoss: Int64
 
-	"""
-	Sum of cumulative AAL and cumulative average annual interruption loss.
-	"""
-	cashLossCumulative: Int64
+  """Sum of cumulative AAL and cumulative average annual interruption loss."""
+  cashLossCumulative: Int64
 
-	"""
-	Annualized cost from lost inventory, lost contents, and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
-	"""
-	operatorLoss: Int64
+  """
+  Annualized cost from lost inventory, lost contents, and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
+  """
+  operatorLoss: Int64
 
-	"""
-	Cumulative annualized cost from lost inventory, lost contents, and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
-	"""
-	operatorLossCumulative: Int64
+  """
+  Cumulative annualized cost from lost inventory, lost contents, and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
+  """
+  operatorLossCumulative: Int64
 }
 
 input PlaceWindDamagesAALInput {
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: [SSP]
+  """Socio-economic pathway of the prediction model."""
+  ssp: [SSP]
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: [Int]
+  """Year, as relative to the current year."""
+  relativeYear: [Int]
+}
+
+"""
+Annualized damage cost, attributed to one wind source. Carries no cumulative measures: AAL is
+a per-year figure and the by-source functions return no running totals.
+"""
+type PlaceWindDamagesAalBySource implements ByRelativeYearBySSPByWindSource {
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
+
+  """Year, as relative to the current year."""
+  relativeYear: Int!
+
+  """The wind source this loss is attributed to."""
+  source: WindSource!
+
+  """
+  Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+  """
+  percentile: Int!
+
+  """Annualized damage cost to the structure due to wind from this source."""
+  aal: Int64
+
+  """Average annual downtime in days."""
+  repairDays: Int
+
+  """
+  Average annual downtime in forgone revenue. Assumes that every day of the year has the same revenue (1/365.25 share of the annual revenue)
+  """
+  interruptionLoss: Int64
+
+  """Sum of AAL and average annual interruption loss."""
+  cashLoss: Int64
+
+  """
+  Annualized cost from lost inventory, lost contents, and business interruption. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
+  """
+  operatorLoss: Int64
+}
+
+input PlaceWindDamagesAalBySourceInput {
+  """Socio-economic pathway of the prediction model."""
+  ssp: [SSP]
+
+  """Year, as relative to the current year."""
+  relativeYear: [Int]
+
+  """
+  Wind sources to return. Defaults to the three disaggregated sources; PlaceWindData.windDamages is the maintained home for All Wind.
+  """
+  source: [WindSource]
 }
 
 type PlaceWindDamagesBuilding implements ByRelativeYearBySSPByRP {
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: SSP!
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: Int!
+  """Year, as relative to the current year."""
+  relativeYear: Int!
 
-	"""
-	Return period for the wind probability.
-	"""
-	returnPeriod: ReturnPeriod!
+  """Return period for the wind probability."""
+  returnPeriod: ReturnPeriod!
 
-	"""
-	Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
-	"""
-	percentile: Int!
+  """
+  Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+  """
+  percentile: Int!
 
-	"""
-	Estimated number of days to rebuild or repair damage due to wind.
-	"""
-	repairDays: Int
+  """Estimated number of days to rebuild or repair damage due to wind."""
+  repairDays: Int
 
-	"""
-	Estimated cost to repair damage due to wind.
-	"""
-	repairCost: Int64
+  """Estimated cost to repair damage due to wind."""
+  repairCost: Int64
 
-	"""
-	Estimated downtime loss of revenue due to wind.
-	"""
-	interruptionLoss: Int64
+  """Estimated downtime loss of revenue due to wind."""
+  interruptionLoss: Int64
 
-	"""
-	Sum of repair cost and interruption loss due to wind.
-	"""
-	cashLoss: Int64
+  """Sum of repair cost and interruption loss due to wind."""
+  cashLoss: Int64
 
-	"""
-	Annualized cost from lost inventory, lost contents, and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
-	"""
-	operatorLoss: Int64
+  """
+  Annualized cost from lost inventory, lost contents, and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
+  """
+  operatorLoss: Int64
+}
+
+"""
+Damage cost to the structure in a given modeled event, attributed to one wind source.
+"""
+type PlaceWindDamagesBuildingBySource implements ByRelativeYearBySSPByRPByWindSource {
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
+
+  """Year, as relative to the current year."""
+  relativeYear: Int!
+
+  """Return period for the damage estimate."""
+  returnPeriod: ReturnPeriod!
+
+  """The wind source this damage is attributed to."""
+  source: WindSource!
+
+  """
+  Percentile value for estimates, one of: 10, 50, 90. 10th percentile estimate is low value, 90th percentile is high value, and 50th is mean.
+  """
+  percentile: Int!
+
+  """
+  Estimated number of days to rebuild or repair damage due to wind from this source.
+  """
+  repairDays: Int
+
+  """Estimated cost to repair damage due to wind from this source."""
+  repairCost: Int64
+
+  """Estimated downtime loss of revenue due to wind from this source."""
+  interruptionLoss: Int64
+
+  """Sum of repair cost and interruption loss due to wind from this source."""
+  cashLoss: Int64
+
+  """
+  Annualized cost from lost inventory, lost contents, and business interruption in the given modeled event. NULL if contents or inventory curve is unavailable for given asset type, or if NOI (revenue) is missing.
+  """
+  operatorLoss: Int64
+}
+
+input PlaceWindDamagesBuildingBySourceInput {
+  """Socio-economic pathway of the prediction model."""
+  ssp: [SSP]
+
+  """Year, as relative to the current year."""
+  relativeYear: [Int]
+
+  """Return period for the damage estimate."""
+  returnPeriod: [ReturnPeriod]
+
+  """
+  Wind sources to return. Defaults to the three disaggregated sources; PlaceWindData.windDamages is the maintained home for All Wind.
+  """
+  source: [WindSource]
 }
 
 input PlaceWindDamagesBuildingInput {
-	ssp: [SSP]
+  ssp: [SSP]
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: [Int]
+  """Year, as relative to the current year."""
+  relativeYear: [Int]
 
-	"""
-	Return period for the wind probability.
-	"""
-	returnPeriod: [ReturnPeriod]
+  """Return period for the wind probability."""
+  returnPeriod: [ReturnPeriod]
 }
 
 type PlaceWindData implements Excluding {
-	"""
-	The building's Wind Factors
-	"""
-	windFactors: [PlaceWindFactor!]
+  """The building's Wind Factors"""
+  windFactors: [PlaceWindFactor!]
 
-	"""
-	The building's Wind Factor
-	"""
-	windFactor: Int
-		@deprecated(
-			reason: "Replaced by windFactors.windFactor for scores by SSP and Year."
-		)
+  """The building's Wind Factor"""
+  windFactor: Int @deprecated(reason: "Replaced by windFactors.windFactor for scores by SSP and Year.")
 
-	"""
-	Text representation of the Wind Factor. Possible values are: minimal, minor, moderate, major, severe, extreme.
-	"""
-	factorScale: FactorScale
-		@deprecated(
-			reason: "Replaced by windFactors.factorScale for scores by SSP and Year."
-		)
+  """
+  Text representation of the Wind Factor. Possible values are: minimal, minor, moderate, major, severe, extreme.
+  """
+  factorScale: FactorScale @deprecated(reason: "Replaced by windFactors.factorScale for scores by SSP and Year.")
 
-	"""
-	Wind probability details for building.
-	"""
-	probability: PlaceWindProbability
+  """Wind probability details for building."""
+  probability: PlaceWindProbability
 
-	"""
-	Details of damages caused by wind.
-	"""
-	windDamages: PlaceWindDamages
+  """Details of damages caused by wind."""
+  windDamages: PlaceWindDamages
 
-	"""
-	If property is excluded, the reason for exclusion.
-	"""
-	exclusion: Exclusion
+  """
+  Historic tropical cyclones whose wind swath covered the place, strongest band first. Null on a
+  vintage that does not carry historic cyclone data; empty when the vintage carries it but no
+  storm covered the place.
+  """
+  historicCyclones(
+    """
+    Narrows the list to this one storm, so a caller drawing one swath doesn't pay for them all.
+    """
+    cycloneId: Int
+  ): [HistoricCyclone!]
+
+  """If property is excluded, the reason for exclusion."""
+  exclusion: Exclusion
 }
 
 type PlaceWindFactor implements ByRelativeYearBySSP {
-	"""
-	The building's Wind Factor, a numeric integer from 1-100 (where 1 = minimal and 100 = extreme) based on the risk to the building footprint.
-	"""
-	windFactor: Int!
+  """
+  The building's Wind Factor, a numeric integer from 1-100 (where 1 = minimal and 100 = extreme) based on the risk to the building footprint.
+  """
+  windFactor: Int!
 
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: SSP!
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: Int!
+  """Year, as relative to the current year."""
+  relativeYear: Int!
 
-	"""
-	Text representation of the Wind Factor. Possible values are: minimal, minor, moderate, major, severe, extreme.
-	"""
-	factorScale: FactorScale!
+  """
+  Text representation of the Wind Factor. Possible values are: minimal, minor, moderate, major, severe, extreme.
+  """
+  factorScale: FactorScale!
 }
 
 type PlaceWindProbability {
-	"""
-	Cumulative probability of 3-sec wind gusts of a given speed reaching the building, in miles per hour.
-	"""
-	speed(input: PlaceWindProbabilitySpeedInput): [PlaceWindProbabilitySpeed!]
+  """
+  Cumulative probability of 3-sec wind gusts of a given speed reaching the building, in miles per hour.
+  """
+  speed(input: PlaceWindProbabilitySpeedInput): [PlaceWindProbabilitySpeed!]
 
-	"""
-	Cumulative probability of 3-sec wind gusts of a given speed (threshold) reaching the building.
-	"""
-	cumulative(
-		input: PlaceWindProbabilityCumulativeInput
-	): [PlaceWindProbabilityCumulative]
+  """
+  Three-second gust wind speed, broken out by source. Null on a vintage that does not support
+  sources.
+  """
+  speedBySource(input: PlaceWindProbabilitySpeedBySourceInput): [PlaceWindProbabilitySpeedBySource!]
 
-	"""
-	Predominant wind direction
-	"""
-	direction(
-		input: PlaceWindProbabilityDirectionInput
-	): [PlaceWindProbabilityDirection!]
+  """
+  Cumulative probability of 3-sec wind gusts of a given speed (threshold) reaching the building.
+  """
+  cumulative(input: PlaceWindProbabilityCumulativeInput): [PlaceWindProbabilityCumulative]
+
+  """
+  Cumulative probability of a given wind speed (threshold), broken out by source. Null on a
+  vintage that does not support sources.
+  """
+  cumulativeBySource(input: PlaceWindProbabilityCumulativeBySourceInput): [PlaceWindProbabilityCumulativeBySource!]
+
+  """Predominant wind direction"""
+  direction(input: PlaceWindProbabilityDirectionInput): [PlaceWindProbabilityDirection!]
 }
 
 type PlaceWindProbabilityCumulative {
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: SSP!
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: Int!
+  """Year, as relative to the current year."""
+  relativeYear: Int!
 
-	"""
-	Wind 3-sec speed threshold for the probability.
-	"""
-	threshold: Float
+  """Wind 3-sec speed threshold for the probability."""
+  threshold: Float
 
-	"""
-	Cumulative probability of winds of a given speed (3-sec) reaching the building.
-	"""
-	probability: Float
+  """
+  Cumulative probability of winds of a given speed (3-sec) reaching the building.
+  """
+  probability: Float
+}
+
+type PlaceWindProbabilityCumulativeBySource implements ByRelativeYearBySSPByWindSource {
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
+
+  """Year, as relative to the current year."""
+  relativeYear: Int!
+
+  """The wind source this probability is attributed to."""
+  source: WindSource!
+
+  """Wind 3-sec speed threshold for the probability."""
+  threshold: Float
+
+  """
+  Cumulative probability of winds of a given speed (3-sec) reaching the building.
+  """
+  probability: Float
+}
+
+input PlaceWindProbabilityCumulativeBySourceInput {
+  """Socio-economic pathway of the prediction model."""
+  ssp: [SSP]
+
+  """Year, as relative to the current year."""
+  relativeYear: [Int]
+
+  """Wind speed threshold, in miles per hour."""
+  threshold: [Int]
+
+  """
+  Wind sources to return. Defaults to the three disaggregated sources; PlaceWindData.probability is the maintained home for All Wind.
+  """
+  source: [WindSource]
 }
 
 input PlaceWindProbabilityCumulativeInput {
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: [SSP]
+  """Socio-economic pathway of the prediction model."""
+  ssp: [SSP]
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: [Int]
+  """Year, as relative to the current year."""
+  relativeYear: [Int]
 
-	"""
-	Wind speed threshold, in miles per hour.
-	"""
-	threshold: [Int]
+  """Wind speed threshold, in miles per hour."""
+  threshold: [Int]
 }
 
 type PlaceWindProbabilityDirection implements ByRelativeYearBySSP {
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: SSP!
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: Int!
+  """Year, as relative to the current year."""
+  relativeYear: Int!
 
-	"""
-	Predominant wind direction. Options are N, NE, E, SE, S, SW, W, NW.
-	"""
-	direction: CompassDirection
+  """Predominant wind direction. Options are N, NE, E, SE, S, SW, W, NW."""
+  direction: CompassDirection
 }
 
 input PlaceWindProbabilityDirectionInput {
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: [SSP]
+  """Socio-economic pathway of the prediction model."""
+  ssp: [SSP]
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: [Int]
+  """Year, as relative to the current year."""
+  relativeYear: [Int]
 }
 
 type PlaceWindProbabilitySpeed implements ByRelativeYearBySSPByRP {
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: SSP!
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: Int!
+  """Year, as relative to the current year."""
+  relativeYear: Int!
 
-	"""
-	Return period for the wind probability.
-	"""
-	returnPeriod: ReturnPeriod!
+  """Return period for the wind probability."""
+  returnPeriod: ReturnPeriod!
 
-	"""
-	Three-second gust wind speed, in miles per hour.
-	"""
-	speed3sec: Int
+  """Three-second gust wind speed, in miles per hour."""
+  speed3sec: Int
+}
+
+type PlaceWindProbabilitySpeedBySource implements ByRelativeYearBySSPByRPByWindSource {
+  """Socio-economic pathway of the prediction model."""
+  ssp: SSP!
+
+  """Year, as relative to the current year."""
+  relativeYear: Int!
+
+  """Return period for the wind speed."""
+  returnPeriod: ReturnPeriod!
+
+  """The wind source this speed is attributed to."""
+  source: WindSource!
+
+  """Three-second gust wind speed, in miles per hour."""
+  speed3sec: Int
+}
+
+input PlaceWindProbabilitySpeedBySourceInput {
+  """Socio-economic pathway of the prediction model."""
+  ssp: [SSP]
+
+  """Year, as relative to the current year."""
+  relativeYear: [Int]
+
+  """Return period for the wind speed."""
+  returnPeriod: [ReturnPeriod]
+
+  """
+  Wind sources to return. Defaults to the three disaggregated sources; PlaceWindData.probability is the maintained home for All Wind.
+  """
+  source: [WindSource]
 }
 
 input PlaceWindProbabilitySpeedInput {
-	"""
-	Socio-economic pathway of the prediction model.
-	"""
-	ssp: [SSP]
+  """Socio-economic pathway of the prediction model."""
+  ssp: [SSP]
 
-	"""
-	Year, as relative to the current year.
-	"""
-	relativeYear: [Int]
+  """Year, as relative to the current year."""
+  relativeYear: [Int]
 
-	"""
-	Return period for the wind probability.
-	"""
-	returnPeriod: [ReturnPeriod]
+  """Return period for the wind probability."""
+  returnPeriod: [ReturnPeriod]
 }
 
 type Query {
-	"""
-	Locality lookup by locality ID.
-	"""
-	locality(
-		"""
-		First Street Locality ID.
-		"""
-		localityId: Int64!
+  """Locality lookup by locality ID."""
+  locality(
+    """First Street Locality ID."""
+    localityId: Int64!
 
-		"""
-		Input options.
-		"""
-		options: InputOptions
-	): Locality
-	localitiesByMacroeconomicConnection(
-		"""
-		Number of records(edges) to return. A number between 0 and 50.
-		"""
-		first: Int
+    """Input options."""
+    options: InputOptions
+  ): Locality
 
-		"""
-		Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.
-		"""
-		after: String
+  """Locality macroeconomics data."""
+  localitiesByMacroeconomicConnection(
+    """Number of records(edges) to return. A number between 0 and 50."""
+    first: Int
 
-		"""
-		Sort the localities
-		"""
-		sort: LocalityMacroeconomicSort
+    """
+    Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.
+    """
+    after: String
 
-		"""
-		Filter the localities
-		"""
-		filter: LocalityMacroeconomicFilter!
+    """Sort the localities"""
+    sort: LocalityMacroeconomicSort
 
-		"""
-		Input options.
-		"""
-		options: InputOptions
-	): LocalitiesConnection
-	localitiesByInsuranceConnection(
-		"""
-		Number of records(edges) to return. A number between 0 and 50.
-		"""
-		first: Int
+    """Filter the localities"""
+    filter: LocalityMacroeconomicFilter!
 
-		"""
-		Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.
-		"""
-		after: String
+    """Input options."""
+    options: InputOptions
+  ): LocalitiesConnection
 
-		"""
-		Sort the localities
-		"""
-		sort: LocalityInsuranceSort
+  """Locality insurance data."""
+  localitiesByInsuranceConnection(
+    """Number of records(edges) to return. A number between 0 and 50."""
+    first: Int
 
-		"""
-		Filter the localities
-		"""
-		filter: LocalityInsuranceFilter!
+    """
+    Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.
+    """
+    after: String
 
-		"""
-		Input options.
-		"""
-		options: InputOptions
-	): LocalitiesConnection
+    """Sort the localities"""
+    sort: LocalityInsuranceSort
 
-	"""
-	Place lookup by placeId.
-	"""
-	place(
-		"""
-		First Street Place ID.
-		"""
-		placeId: String!
+    """Filter the localities"""
+    filter: LocalityInsuranceFilter!
 
-		"""
-		Building details for damages estimation.
-		"""
-		building: BuildingInput
+    """Input options."""
+    options: InputOptions
+  ): LocalitiesConnection
 
-		"""
-		Input options.
-		"""
-		options: InputOptions
-	): Place
+  """Locality hazards data."""
+  localitiesByHazardConnection(
+    """Number of records(edges) to return. A number between 0 and 100."""
+    first: Int
 
-	"""
-	Place lookup by address.
-	"""
-	placeByAddress(
-		"""
-		The address of the place.
-		"""
-		address: String!
+    """
+    Cursor value of a record(edge) past which records should be returned. Cursor can be obtained from an earlier call. Cursor is a string between 10 and 32 characters long.
+    """
+    after: String
 
-		"""
-		The latitude of the place. If provided, lookup will attempt to match the address to the closest point.
-		"""
-		lat: Float
+    """Sort the localities"""
+    sort: LocalityHazardSort
 
-		"""
-		The longitude of the place. If provided, lookup will attempt to match the address to the closest point.
-		"""
-		lng: Float
+    """Filter the localities"""
+    filter: LocalityHazardFilter!
 
-		"""
-		Building details for damages estimation.
-		"""
-		building: BuildingInput
+    """Input options."""
+    options: InputOptions
+  ): LocalitiesConnection
 
-		"""
-		Input options.
-		"""
-		options: InputOptions
-	): Place
+  """Place lookup by placeId."""
+  place(
+    """First Street Place ID."""
+    placeId: String!
 
-	"""
-	Place lookup by coordinate.
-	"""
-	placeByCoordinate(
-		"""
-		The latitude of the place.
-		"""
-		lat: Float!
+    """Building details for damages estimation."""
+    building: BuildingInput
 
-		"""
-		The longitude of the place.
-		"""
-		lng: Float!
+    """Input options."""
+    options: InputOptions
+  ): Place
 
-		"""
-		Building details for damages estimation.
-		"""
-		building: BuildingInput
+  """Place lookup by address."""
+  placeByAddress(
+    """The address of the place."""
+    address: String!
 
-		"""
-		Input options.
-		"""
-		options: InputOptions
-	): Place
+    """
+    The latitude of the place. If provided, lookup will attempt to match the address to the closest point.
+    """
+    lat: Float
 
-	"""
-	Asset type IDs along with human-readable descriptions.
-	"""
-	assetTypes: [AssetType!]!
+    """
+    The longitude of the place. If provided, lookup will attempt to match the address to the closest point.
+    """
+    lng: Float
 
-	"""
-	Metadata lookup.
-	"""
-	metadataLookup: MetadataLookup!
+    """Building details for damages estimation."""
+    building: BuildingInput
 
-	"""
-	Current API version
-	"""
-	version: ReleaseVersion!
+    """Input options."""
+    options: InputOptions
+  ): Place
 
-	"""
-	Geospatial operations.
-	"""
-	geospatial: Geospatial!
+  """Place lookup by coordinate."""
+  placeByCoordinate(
+    """The latitude of the place."""
+    lat: Float!
 
-	"""
-	Adaptation costs and savings for place.
-	"""
-	adaptations(
-		"""
-		First Street Place ID.
-		"""
-		placeId: String!
+    """The longitude of the place."""
+    lng: Float!
 
-		"""
-		Building details for damages estimation.
-		"""
-		building: BuildingInput
+    """Building details for damages estimation."""
+    building: BuildingInput
 
-		"""
-		Adaptations input.
-		"""
-		input: AdaptationsInput!
+    """Input options."""
+    options: InputOptions
+  ): Place
 
-		"""
-		Input options.
-		"""
-		options: InputOptions
-	): AdaptationsResponse
+  """Asset type IDs along with human-readable descriptions."""
+  assetTypes: [AssetType!]!
+
+  """Metadata lookup."""
+  metadataLookup: MetadataLookup!
+
+  """Current API version"""
+  version: ReleaseVersion!
+
+  """Geospatial operations."""
+  geospatial: Geospatial!
+
+  """Adaptation costs and savings for place."""
+  adaptations(
+    """First Street Place ID."""
+    placeId: String!
+
+    """Building details for damages estimation."""
+    building: BuildingInput
+
+    """Adaptations input."""
+    input: AdaptationsInput!
+
+    """Input options."""
+    options: InputOptions
+  ): AdaptationsResponse
 }
 
 type RecommendedAdaptation {
-	"""
-	The type of adaptation.
-	"""
-	type: AdaptationType!
+  """The type of adaptation."""
+  type: AdaptationType!
 
-	"""
-	The display name of the adaptation.
-	"""
-	name: String!
+  """The display name of the adaptation."""
+  name: String!
 
-	"""
-	The savings on investment due to the recommended adaptation.
-	"""
-	adaptationSOI: Int64
+  """The savings on investment due to the recommended adaptation."""
+  adaptationSOI: Int64
 
-	"""
-	Payback period information.
-	"""
-	paybackYear: PaybackYears
+  """Payback period information."""
+  paybackYear: PaybackYears
+
+  """
+  The mechanism slot this adaptation occupies. Adaptations within a mechanism
+  are mutually exclusive.
+  """
+  mechanism: AdaptationMechanism!
+
+  """
+  The user-facing measure group this adaptation belongs to. Parameter variants
+  of the same measure (e.g. flood-barrier heights) share a group.
+  """
+  group: AdaptationGroup!
 }
 
 input RefreshStatisticsInput {
-	placeIDs: [String!]!
-	vintageID: Int64!
+  placeIDs: [String!]!
+  vintageID: Int64!
 }
 
 type RefreshStatisticsResponse {
-	places: [StatisticResponse!]!
+  places: [StatisticResponse!]!
 }
 
 type ReleaseVersion {
-	"""
-	The current release version
-	"""
-	release: String
+  """The current release version"""
+  release: String
 
-	"""
-	The date of the release
-	"""
-	date: Time
+  """The date of the release"""
+  date: Time
 }
 
 interface ResponseStatus {
-	status: FSModelResponseStatus!
+  status: FSModelResponseStatus!
 }
 
 enum ReturnPeriod {
-	"""
-	2-year return period (50% chance)
-	"""
-	RP2
+  """2-year return period (50% chance)"""
+  RP2
 
-	"""
-	5-year return period (20% chance)
-	"""
-	RP5
+  """5-year return period (20% chance)"""
+  RP5
 
-	"""
-	20-year return period (5% chance)
-	"""
-	RP20
+  """20-year return period (5% chance)"""
+  RP20
 
-	"""
-	100-year return period (1% chance)
-	"""
-	RP100
+  """100-year return period (1% chance)"""
+  RP100
 
-	"""
-	200-year return period (0.5% chance)
-	"""
-	RP200
+  """200-year return period (0.5% chance)"""
+  RP200
 
-	"""
-	300-year return period (0.33% chance)
-	"""
-	RP300
+  """300-year return period (0.33% chance)"""
+  RP300
 
-	"""
-	500-year return period (0.2% chance)
-	"""
-	RP500
+  """500-year return period (0.2% chance)"""
+  RP500
 }
 
 enum RoofCombustibilityLevel {
-	LOW
-	MEDIUM
-	HIGH
+  LOW
+  MEDIUM
+  HIGH
 }
 
 enum RoofType {
-	ASBESTOS
-	BUILT_UP
-	COMPOSITION_SHINGLE
-	CONCRETE
-	METAL
-	SLATE
-	GRAVEL_OR_ROCK
-	TAR_AND_GRAVEL
-	BERMUDA
-	MASONITE_OR_CEMENT_SHAKE
-	FIBERGLASS
-	ALUMINUM
-	WOOD_SHAKE_OR_SHINGLES
-	OTHER
-	ASPHALT
-	ROLL_COMPOSITION
-	STEEL
-	TILE
-	URETHANE
-	NON_WOODEN_SHINGLES
-	WOOD
-	GYPSUM
-	SOLAR
-	CERAMIC_TILE
-	CLAY_TILE
-	CONCRETE_TILE
-	COPPER
-	TIN
+  ASBESTOS
+  BUILT_UP
+  COMPOSITION_SHINGLE
+  CONCRETE
+  METAL
+  SLATE
+  GRAVEL_OR_ROCK
+  TAR_AND_GRAVEL
+  BERMUDA
+  MASONITE_OR_CEMENT_SHAKE
+  FIBERGLASS
+  ALUMINUM
+  WOOD_SHAKE_OR_SHINGLES
+  OTHER
+  ASPHALT
+  ROLL_COMPOSITION
+  STEEL
+  TILE
+  URETHANE
+  NON_WOODEN_SHINGLES
+  WOOD
+  GYPSUM
+  SOLAR
+  CERAMIC_TILE
+  CLAY_TILE
+  CONCRETE_TILE
+  COPPER
+  TIN
 }
 
-"""
-Supported Shared Socio-economic Pathways.
-"""
+"""Supported Shared Socio-economic Pathways."""
 enum SSP {
-	"""
-	The most optimistic climate scenario, projecting the lowest temperature increase.
-	Assumes strong climate action leading to warming limited to about 2°C by 2100.
-	"""
-	SSP_1_26
+  """
+  The most optimistic climate scenario, projecting the lowest temperature increase.
+  Assumes strong climate action leading to warming limited to about 2°C by 2100.
+  """
+  SSP_1_26
 
-	"""
-	A middle-ground climate scenario with moderate emissions reductions.
-	Projects medium levels of climate change and warming by 2100.
-	"""
-	SSP_2_45
+  """
+  A middle-ground climate scenario with moderate emissions reductions.
+  Projects medium levels of climate change and warming by 2100.
+  """
+  SSP_2_45
 
-	"""
-	The most pessimistic climate scenario with highest emissions.
-	Projects the most severe climate impacts and warming by 2100.
-	"""
-	SSP_5_85
+  """
+  The most pessimistic climate scenario with highest emissions.
+  Projects the most severe climate impacts and warming by 2100.
+  """
+  SSP_5_85
 }
 
-"""
-Industry classifications for companies
-"""
+"""Industry classifications for companies"""
 type Sector {
-	"""
-	Unique identifier for the sector.
-	"""
-	sectorId: Int!
+  """Unique identifier for the sector."""
+  sectorId: Int!
 
-	"""
-	The name of the sector.
-	"""
-	name: String!
+  """The name of the sector."""
+  name: String!
 }
 
 enum Service {
-	LOCALITY
-	PLACE
-	GEOSPATIAL
-	BUILDING
-	FEMA
-	FLOOD
-	FIRE
-	HEAT
-	COLD
-	WIND
-	AIR
-	DROUGHT
-	HAIL
-	PRIMARY_PERIL
-	ALL_PERIL
-	ENTERPRISE
-	EXTERNALAVM
-	FLOODCONSEQUENCES
-	FIRECONSEQUENCES
-	HEATCONSEQUENCES
-	WINDCONSEQUENCES
-	AIRCONSEQUENCES
-	HAILCONSEQUENCES
-	PLACEINSURANCE
-	KEYINSIGHTS
-	BUILDINGINSURANCE
-	MACROECONOMIC
+  LOCALITY
+  PLACE
+  GEOSPATIAL
+  BUILDING
+  FEMA
+  FLOOD
+  FIRE
+  HEAT
+  COLD
+  WIND
+  AIR
+  DROUGHT
+  HAIL
+  PRIMARY_PERIL
+  ALL_PERIL
+  ENTERPRISE
+  EXTERNALAVM
+  FLOODCONSEQUENCES
+  FIRECONSEQUENCES
+  HEATCONSEQUENCES
+  WINDCONSEQUENCES
+  AIRCONSEQUENCES
+  HAILCONSEQUENCES
+  PLACEINSURANCE
+  KEYINSIGHTS
+  BUILDINGINSURANCE
+  MACROECONOMIC
 }
 
 type StatisticResponse {
-	placeID: String!
-	status: FSModelStatusName!
-	statistics: String!
+  placeID: String!
+  status: FSModelStatusName!
+  statistics: String!
 }
 
 scalar Time
 
 type Vintage {
-	"""
-	The vintage version for the returned data. Vintage uniquely identifies a set of property and peril data versions.
-	"""
-	vintageId: Int64!
+  """
+  The vintage version for the returned data. Vintage uniquely identifies a set of property and peril data versions.
+  """
+  vintageId: Int64!
 
-	"""
-	The human-readable name for the vintage.
-	"""
-	name: String!
+  """The human-readable name for the vintage."""
+  name: String!
 
-	"""
-	The date of the release of the vintage.
-	"""
-	releaseDate: Date!
+  """The date of the release of the vintage."""
+  releaseDate: Date!
 }
 
 enum WindDesignStandard {
-	LOW
-	MEDIUM
-	HIGH
+  LOW
+  MEDIUM
+  HIGH
+}
+
+"""
+A wind source. First Street's own surfaces read All Wind from PlaceWindData.probability and
+windDamages and request only the three disaggregated sources here.
+"""
+enum WindSource {
+  """
+  Every source combined. Also available for all vintages from `PlaceWindData.probability` and `PlaceWindData.windDamages`.
+  """
+  ALL
+
+  """Tropical cyclone, including hurricanes and typhoons."""
+  TC
+
+  """Extra-tropical storm."""
+  ETC
+
+  """Severe convective storm, including thunderstorm and tornadic wind."""
+  SCS
 }
